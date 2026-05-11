@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
 import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dao.AutenticacaoDAO;
+import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dao.DocenteDAO;
 import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.controller.DisciplinaController;
 import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.controller.DocenteController;
 import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.controller.EstudanteController;
@@ -16,7 +17,10 @@ import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Docente;
 import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Estudante;
 import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Reserva;
 import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Sala;
+import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Secretario;
 import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Disciplina;
+import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dao.EstudanteDAO;
+import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dao.SecretarioDAO;
 
 public class UsuarioUI {
     private Validacao vd = new Validacao();
@@ -27,6 +31,9 @@ public class UsuarioUI {
     private DocenteController docenteController = new DocenteController();
     private ReservaController reservaController = new ReservaController();
     private SecretarioController secretarioController = new SecretarioController();
+    private EstudanteDAO esDAO=new EstudanteDAO();
+    private DocenteDAO dcDAO=new DocenteDAO();
+    private SecretarioDAO scDAO=new SecretarioDAO();
     private AdminUI adminUI = new AdminUI();
     private InscricaoService inscricaoService = new InscricaoService();
     private int usuarioLogadoId;
@@ -79,13 +86,51 @@ public class UsuarioUI {
         }
     }
 
+    
+    public int retornarID(String perfil, String email){
+        List<Estudante> listaEs=esDAO.listaEstudante();
+        List<Docente> listaDc=dcDAO.listaDocente();
+        List<Secretario> listaSec= scDAO.listaSecretario();
+
+        if(perfil.equals("Estudante")){
+            for(Estudante es:listaEs){
+                if(es.getEmail().equals(email)){
+                    return es.getId();   
+                }
+              
+            }
+            
+            
+        }
+        
+        else if(perfil.equals("Docente")){
+            for(Docente dc:listaDc){
+                if(dc.getEmail().equals(email)){
+                    return dc.getId();
+                }
+                  
+            }
+        }
+
+        else if(perfil.equals("Secretario")){
+            for(Secretario sc:listaSec){
+                if(sc.getEmail().equals(email)){
+                    return sc.getId();
+                }
+            }
+        }
+        return 0;
+    }
+
     private boolean attemptLogin(String perfil){
         System.out.println("\n--- Login de " + perfil + " ---");
+        
         String email = vd.validarString("Digite o seu email:");
         String senha = vd.validarString("Digite a sua senha:");
+        usuarioLogadoId=retornarID(perfil, email);
+
         return autenticacao.autenticarLogin(perfil, email, senha);
     }
-    
 
     public void menuEstudante(){
         
@@ -98,7 +143,8 @@ public class UsuarioUI {
                     if(estudante == null){
                         System.out.println("Estudante nao encontrado.");
                     } else {
-                        System.out.println("Perfil: " + estudante.toString());
+                        System.out.println("Perfil:\nId: " + estudante.getId()+"\nNome: "+estudante.getNomeCompleto()+"\nEmail: "
+                                            +estudante.getEmail()+"\nCurso: "+estudante.getCurso()+"\nContacto: "+estudante.getNumCel());
                     }
                     break;
                 case 2:
@@ -148,7 +194,8 @@ public class UsuarioUI {
                     if(docente == null){
                         System.out.println("Docente nao encontrado.");
                     } else {
-                        System.out.println("Perfil: " + docente.toString());
+                        System.out.println("Perfil: "+"\nId: "+docente.getId()+"\nNome: "+docente.getNomeCompleto()+"\nNivel Academico: "+docente.getNivelAcademico()+
+                                        "\nEmail: "+docente.getEmail()+"\nContacto: "+docente.getNumCel());
                     }
                     break;
                 case 2:
@@ -204,12 +251,12 @@ public class UsuarioUI {
             int opcao = vd.validarNumero("1. Perfil\n2. Ver Reservas\n3. Cancelar Reserva\n0. Sair");
             switch(opcao){
                 case 1:
-                    int secretarioId = vd.validarNumero("Digite o seu ID de secretario:");
-                    String nome = secretarioController.buscarPorId(secretarioId);
-                    if(nome == null || nome.equals("Secretario nao encontrado")){
+                    Secretario secretario = secretarioController.buscarPorId(usuarioLogadoId);
+                    if(secretario == null){
                         System.out.println("Secretario nao encontrado.");
                     } else {
-                        System.out.println("Nome: " + nome);
+                        System.out.println("Perfil: \nId:" +secretario.getId()+"\nNome: "+secretario.getNomeCompleto()+"\nEmail:"+secretario.getEmail()+
+                                            "\nContacto: "+secretario.getNumCel());
                     }
                     break;
                 case 2:

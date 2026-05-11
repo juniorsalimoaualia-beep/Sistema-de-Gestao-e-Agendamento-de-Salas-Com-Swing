@@ -67,17 +67,15 @@ public class SecretarioDAO {
         return new String[]{nome, apelido};
     }
 
-    public String buscarPorSecretario(int id){
+    public Secretario buscarPorSecretario(int id){
         List<Secretario> lista=listaSecretario();
-        String nome;
 
-        for(Secretario dp:lista){
-            if(id==dp.getId()){
-                nome=dp.getNome();
-                return nome;
+        for(Secretario sc:lista){
+            if(id==sc.getId()){
+                return sc;
             }
         }
-        return "Secretario nao encontrado";
+        return null;
     }
 
     public int gerarProximoId(){

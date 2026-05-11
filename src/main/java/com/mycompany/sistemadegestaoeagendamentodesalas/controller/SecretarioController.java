@@ -15,7 +15,7 @@ public class SecretarioController {
         return dao.listaSecretario();
     }
 
-    public String buscarPorId(int id) {
+    public Secretario buscarPorId(int id) {
         return dao.buscarPorSecretario(id);
     }
 

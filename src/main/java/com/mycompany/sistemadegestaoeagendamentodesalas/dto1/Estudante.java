@@ -6,7 +6,7 @@ public class Estudante extends Usuario{
         this.curso=curso;
     }
 
-    public String getcurso(){return this.curso;}
+    public String getCurso(){return this.curso;}
     
     public String toString(){
         return super.toString()+"; "+curso;
