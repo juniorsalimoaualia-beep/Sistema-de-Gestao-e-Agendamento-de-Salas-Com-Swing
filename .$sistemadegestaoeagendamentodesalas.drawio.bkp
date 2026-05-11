@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net" modified="2026-05-08T12:00:00.000Z" agent="GitHub Copilot" etag="12345" version="20.4.3" type="device">
+  <diagram id="Diagram1" name="Page-1">
+    <mxGraphModel dx="1230" dy="779" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <!-- Usuario -->
+        <mxCell id="2" value="&lt;div&gt;&lt;b&gt;Usuario&lt;/b&gt;&lt;/div&gt;&lt;div&gt;&lt;u&gt;Atributos:&lt;/u&gt;&lt;/div&gt;&lt;div&gt;- id: int&lt;/div&gt;&lt;div&gt;- nome: String&lt;/div&gt;&lt;div&gt;- apelido: String&lt;/div&gt;&lt;div&gt;- nomeCompleto: String&lt;/div&gt;&lt;div&gt;- numCel: int&lt;/div&gt;&lt;div&gt;- email: String&lt;/div&gt;&lt;div&gt;- senha: String&lt;/div&gt;&lt;div&gt;&lt;u&gt;Métodos:&lt;/u&gt;&lt;/div&gt;&lt;div&gt;+ Usuario(id, nome, apelido, numCel, email, senha)&lt;/div&gt;&lt;div&gt;+ getId(): int&lt;/div&gt;&lt;div&gt;+ getNome(): String&lt;/div&gt;&lt;div&gt;+ setNome(nome: String)&lt;/div&gt;&lt;div&gt;+ getApelido(): String&lt;/div&gt;&lt;div&gt;+ setApelido(apel: String)&lt;/div&gt;&lt;div&gt;+ getNomeCompleto(): String&lt;/div&gt;&lt;div&gt;+ getNumCel(): int&lt;/div&gt;&lt;div&gt;+ setNumCel(num: int)&lt;/div&gt;&lt;div&gt;+ getEmail(): String&lt;/div&gt;&lt;div&gt;+ setEmail(em: String)&lt;/div&gt;&lt;div&gt;+ getSenha(): String&lt;/div&gt;&lt;div&gt;+ setSenha(senha: String)&lt;/div&gt;&lt;div&gt;+ toString(): String&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;fontColor=#074a7d;" vertex="1" parent="1">
+          <mxGeometry x="20" y="20" width="200" height="300" as="geometry"/>
+        </mxCell>
+        <!-- Secretario -->
+        <mxCell id="3" value="&lt;div&gt;&lt;b&gt;Secretario&lt;/b&gt;&lt;/div&gt;&lt;div&gt;&lt;u&gt;Atributos:&lt;/u&gt;&lt;/div&gt;&lt;div&gt;- cargo: String&lt;/div&gt;&lt;div&gt;&lt;u&gt;Métodos:&lt;/u&gt;&lt;/div&gt;&lt;div&gt;+ Secretario(id, nome, apelido, cargo, numCel, email, senha)&lt;/div&gt;&lt;div&gt;+ getCargo(): String&lt;/div&gt;&lt;div&gt;+ setCargo(cargo: String)&lt;/div&gt;&lt;div&gt;+ toString(): String&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;fontColor=#7f6000;" vertex="1" parent="1">
+          <mxGeometry x="250" y="20" width="200" height="150" as="geometry"/>
+        </mxCell>
+        <!-- Docente -->
+        <mxCell id="4" value="&lt;div&gt;&lt;b&gt;Docente&lt;/b&gt;&lt;/div&gt;&lt;div&gt;&lt;u&gt;Atributos:&lt;/u&gt;&lt;/div&gt;&lt;div&gt;- nivelAcademico: String&lt;/div&gt;&lt;div&gt;&lt;u&gt;Métodos:&lt;/u&gt;&lt;/div&gt;&lt;div&gt;+ Docente(id, nome, apelido, nivel, numCel, email, senha)&lt;/div&gt;&lt;div&gt;+ getNivelAcademico(): String&lt;/div&gt;&lt;div&gt;+ setNivelAcademico(nivel: String)&lt;/div&gt;&lt;div&gt;+ toString(): String&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;fontColor=#7f6000;" vertex="1" parent="1">
+          <mxGeometry x="480" y="20" width="200" height="150" as="geometry"/>
+        </mxCell>
+        <!-- Estudante -->
+        <mxCell id="5" value="&lt;div&gt;&lt;b&gt;Estudante&lt;/b&gt;&lt;/div&gt;&lt;div&gt;&lt;u&gt;Atributos:&lt;/u&gt;&lt;/div&gt;&lt;div&gt;- curso: String&lt;/div&gt;&lt;div&gt;&lt;u&gt;Métodos:&lt;/u&gt;&lt;/div&gt;&lt;div&gt;+ Estudante(id, nome, apelido, curso, numCel, email, senha)&lt;/div&gt;&lt;div&gt;+ getcurso(): String&lt;/div&gt;&lt;div&gt;+ toString(): String&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;fontColor=#7f6000;" vertex="1" parent="1">
+          <mxGeometry x="710" y="20" width="200" height="150" as="geometry"/>
+        </mxCell>
+        <!-- Departamento -->
+        <mxCell id="6" value="&lt;div&gt;&lt;b&gt;Departamento&lt;/b&gt;&lt;/div&gt;&lt;div&gt;&lt;u&gt;Atributos:&lt;/u&gt;&lt;/div&gt;&lt;div&gt;- id: int&lt;/div&gt;&lt;div&gt;- nome: String&lt;/div&gt;&lt;div&gt;- curso: Curso&lt;/div&gt;&lt;div&gt;- sala: Sala&lt;/div&gt;&lt;div&gt;&lt;u&gt;Métodos:&lt;/u&gt;&lt;/div&gt;&lt;div&gt;+ Departamento(id, nome)&lt;/div&gt;&lt;div&gt;+ getId(): int&lt;/div&gt;&lt;div&gt;+ getNome(): String&lt;/div&gt;&lt;div&gt;+ setNome(nome: String)&lt;/div&gt;&lt;div&gt;+ getCurso(): String&lt;/div&gt;&lt;div&gt;+ getSala(): String&lt;/div&gt;&lt;div&gt;+ toString(): String&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;fontColor=#274e13;" vertex="1" parent="1">
+          <mxGeometry x="20" y="350" width="200" height="200" as="geometry"/>
+        </mxCell>
+        <!-- Curso -->
+        <mxCell id="7" value="&lt;div&gt;&lt;b&gt;Curso&lt;/b&gt;&lt;/div&gt;&lt;div&gt;&lt;u&gt;Atributos:&lt;/u&gt;&lt;/div&gt;&lt;div&gt;- id: int&lt;/div&gt;&lt;div&gt;- nome: String&lt;/div&gt;&lt;div&gt;&lt;u&gt;Métodos:&lt;/u&gt;&lt;/div&gt;&lt;div&gt;+ Curso(id, nome)&lt;/div&gt;&lt;div&gt;+ getId(): int&lt;/div&gt;&lt;div&gt;+ getNome(): String&lt;/div&gt;&lt;div&gt;+ setNome(nome: String)&lt;/div&gt;&lt;div&gt;+ toString(): String&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;fontColor=#274e13;" vertex="1" parent="1">
+          <mxGeometry x="250" y="350" width="200" height="150" as="geometry"/>
+        </mxCell>
+        <!-- Disciplina -->
+        <mxCell id="8" value="&lt;div&gt;&lt;b&gt;Disciplina&lt;/b&gt;&lt;/div&gt;&lt;div&gt;&lt;u&gt;Atributos:&lt;/u&gt;&lt;/div&gt;&lt;div&gt;- id: int&lt;/div&gt;&lt;div&gt;- nome: String&lt;/div&gt;&lt;div&gt;- docente: String&lt;/div&gt;&lt;div&gt;&lt;u&gt;Métodos:&lt;/u&gt;&lt;/div&gt;&lt;div&gt;+ Disciplina(id, nome, docente)&lt;/div&gt;&lt;div&gt;+ getId(): int&lt;/div&gt;&lt;div&gt;+ getNome(): String&lt;/div&gt;&lt;div&gt;+ setNome(nome: String)&lt;/div&gt;&lt;div&gt;+ getDocente(): String&lt;/div&gt;&lt;div&gt;+ setDocente(docente: String)&lt;/div&gt;&lt;div&gt;+ toString(): String&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;fontColor=#274e13;" vertex="1" parent="1">
+          <mxGeometry x="480" y="350" width="200" height="180" as="geometry"/>
+        </mxCell>
+        <!-- Sala -->
+        <mxCell id="9" value="&lt;div&gt;&lt;b&gt;Sala&lt;/b&gt;&lt;/div&gt;&lt;div&gt;&lt;u&gt;Atributos:&lt;/u&gt;&lt;/div&gt;&lt;div&gt;- id: int&lt;/div&gt;&lt;div&gt;- nome: String&lt;/div&gt;&lt;div&gt;- estado: EstadoSala&lt;/div&gt;&lt;div&gt;&lt;u&gt;Métodos:&lt;/u&gt;&lt;/div&gt;&lt;div&gt;+ Sala(id, nome)&lt;/div&gt;&lt;div&gt;+ getId(): int&lt;/div&gt;&lt;div&gt;+ getNome(): String&lt;/div&gt;&lt;div&gt;+ setNome(nome: String)&lt;/div&gt;&lt;div&gt;+ getEstado(): EstadoSala&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;fontColor=#274e13;" vertex="1" parent="1">
+          <mxGeometry x="710" y="350" width="200" height="150" as="geometry"/>
+        </mxCell>
+        <!-- Reserva -->
+        <mxCell id="10" value="&lt;div&gt;&lt;b&gt;Reserva&lt;/b&gt;&lt;/div&gt;&lt;div&gt;&lt;u&gt;Atributos:&lt;/u&gt;&lt;/div&gt;&lt;div&gt;- id: int&lt;/div&gt;&lt;div&gt;- sala: String&lt;/div&gt;&lt;div&gt;- docente: String&lt;/div&gt;&lt;div&gt;- disciplina: String&lt;/div&gt;&lt;div&gt;- turma: String&lt;/div&gt;&lt;div&gt;- data: LocalDate&lt;/div&gt;&lt;div&gt;- horaInicio: LocalTime&lt;/div&gt;&lt;div&gt;- horaFim: LocalTime&lt;/div&gt;&lt;div&gt;- estado: EstadoReserva&lt;/div&gt;&lt;div&gt;&lt;u&gt;Métodos:&lt;/u&gt;&lt;/div&gt;&lt;div&gt;+ Reserva(id, Sala, Docente, disciplina, turma, data, horaInicio, horaFim)&lt;/div&gt;&lt;div&gt;+ getId(): int&lt;/div&gt;&lt;div&gt;+ getSala(): String&lt;/div&gt;&lt;div&gt;+ getDocente(): String&lt;/div&gt;&lt;div&gt;+ getDisciplina(): String&lt;/div&gt;&lt;div&gt;+ getTurma(): String&lt;/div&gt;&lt;div&gt;+ getData(): LocalDate&lt;/div&gt;&lt;div&gt;+ setData(data: LocalDate)&lt;/div&gt;&lt;div&gt;+ getHoraInicio(): LocalTime&lt;/div&gt;&lt;div&gt;+ setHoraInicio(horaInicio: LocalTime)&lt;/div&gt;&lt;div&gt;+ getHoraFim(): LocalTime&lt;/div&gt;&lt;div&gt;+ setHoraFim(horaFim: LocalTime)&lt;/div&gt;&lt;div&gt;+ getEstadoReserva(): EstadoReserva&lt;/div&gt;&lt;div&gt;+ setEstadoReserva(estado: EstadoReserva)&lt;/div&gt;&lt;div&gt;+ toString(): String&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=10;fontColor=#7f3123;" vertex="1" parent="1">
+          <mxGeometry x="20" y="580" width="250" height="250" as="geometry"/>
+        </mxCell>
+        <!-- Inscricao -->
+        <mxCell id="11" value="&lt;div&gt;&lt;b&gt;Inscricao&lt;/b&gt;&lt;/div&gt;&lt;div&gt;&lt;u&gt;Atributos:&lt;/u&gt;&lt;/div&gt;&lt;div&gt;- id: int&lt;/div&gt;&lt;div&gt;- estudante: Estudante&lt;/div&gt;&lt;div&gt;&lt;u&gt;Métodos:&lt;/u&gt;&lt;/div&gt;&lt;div&gt;+ Inscricao(id, estudante)&lt;/div&gt;&lt;div&gt;+ getId(): int&lt;/div&gt;&lt;div&gt;+ setId(id: int)&lt;/div&gt;&lt;div&gt;+ getEstudante(): Estudante&lt;/div&gt;&lt;div&gt;+ setEstudante(estudante: Estudante)&lt;/div&gt;&lt;div&gt;+ toString(): String&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=10;fontColor=#7f3123;" vertex="1" parent="1">
+          <mxGeometry x="300" y="580" width="200" height="150" as="geometry"/>
+        </mxCell>
+        <!-- Horario -->
+        <mxCell id="12" value="&lt;div&gt;&lt;b&gt;Horario&lt;/b&gt;&lt;/div&gt;&lt;div&gt;&lt;u&gt;Atributos:&lt;/u&gt;&lt;/div&gt;&lt;div&gt;- id: int&lt;/div&gt;&lt;div&gt;- nomeCurso: String&lt;/div&gt;&lt;div&gt;- diaSemana: DiaSemana&lt;/div&gt;&lt;div&gt;- horaInicio: LocalTime&lt;/div&gt;&lt;div&gt;- horaFim: LocalTime&lt;/div&gt;&lt;div&gt;&lt;u&gt;Métodos:&lt;/u&gt;&lt;/div&gt;&lt;div&gt;+ Horario(id, nomeCurso, dia, horaInicio, horaFim)&lt;/div&gt;&lt;div&gt;+ getId(): int&lt;/div&gt;&lt;div&gt;+ getNomeCurso(): String&lt;/div&gt;&lt;div&gt;+ setNome(nome: String)&lt;/div&gt;&lt;div&gt;+ getDiaSemana(): DiaSemana&lt;/div&gt;&lt;div&gt;+ setDiaSemana(dia: DiaSemana)&lt;/div&gt;&lt;div&gt;+ getHoraInicio(): LocalTime&lt;/div&gt;&lt;div&gt;+ setHoraInicio(horaIni: LocalTime)&lt;/div&gt;&lt;div&gt;+ getHoraFim(): LocalTime&lt;/div&gt;&lt;div&gt;+ setHoraFim(horaFim: LocalTime)&lt;/div&gt;&lt;div&gt;+ toString(): String&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=10;fontColor=#7f3123;" vertex="1" parent="1">
+          <mxGeometry x="530" y="580" width="250" height="200" as="geometry"/>
+        </mxCell>
+        <!-- Turma -->
+        <mxCell id="13" value="&lt;div&gt;&lt;b&gt;Turma&lt;/b&gt;&lt;/div&gt;&lt;div&gt;&lt;u&gt;Atributos:&lt;/u&gt;&lt;/div&gt;&lt;div&gt;- chave: String&lt;/div&gt;&lt;div&gt;- ano: int&lt;/div&gt;&lt;div&gt;- estudantes: Estudante&lt;/div&gt;&lt;div&gt;- curso: String&lt;/div&gt;&lt;div&gt;&lt;u&gt;Métodos:&lt;/u&gt;&lt;/div&gt;&lt;div&gt;+ Turma(ano, nomeCurso)&lt;/div&gt;&lt;div&gt;+ getAno(): int&lt;/div&gt;&lt;div&gt;+ getChave(): String&lt;/div&gt;&lt;div&gt;+ getCurso(): String&lt;/div&gt;&lt;div&gt;+ getEstudantes(): Estudante&lt;/div&gt;&lt;div&gt;+ toString(): String&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=10;fontColor=#7f3123;" vertex="1" parent="1">
+          <mxGeometry x="810" y="580" width="200" height="150" as="geometry"/>
+        </mxCell>
+        <!-- Enums -->
+        <mxCell id="14" value="&lt;div&gt;&lt;b&gt;DiaSemana&lt;/b&gt;&lt;/div&gt;&lt;div&gt;SEGUNDA, TERCA, QUARTA, QUINTA, SEXTA, SABADO&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=10;fontColor=#42275e;" vertex="1" parent="1">
+          <mxGeometry x="20" y="860" width="150" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="15" value="&lt;div&gt;&lt;b&gt;EstadoSala&lt;/b&gt;&lt;/div&gt;&lt;div&gt;LIVRE, OCUPADA, MANUTENCAO, RESERVADA&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=10;fontColor=#42275e;" vertex="1" parent="1">
+          <mxGeometry x="200" y="860" width="150" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="16" value="&lt;div&gt;&lt;b&gt;EstadoReserva&lt;/b&gt;&lt;/div&gt;&lt;div&gt;PENDENTE, CONFIRMADA, RECUSADA, CANCELADA&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=10;fontColor=#42275e;" vertex="1" parent="1">
+          <mxGeometry x="380" y="860" width="150" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="17" value="&lt;div&gt;&lt;b&gt;Perfil&lt;/b&gt;&lt;/div&gt;&lt;div&gt;ADMIN, SECRETARIO, DOCENTE, ESTUDANTE&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=10;fontColor=#42275e;" vertex="1" parent="1">
+          <mxGeometry x="560" y="860" width="150" height="80" as="geometry"/>
+        </mxCell>
+        <!-- Relacionamentos -->
+        <mxCell id="18" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.5;entryPerimeter=1;strokeColor=#000000;endArrow=block;endFill=1;" edge="1" parent="1" source="2" target="3">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="19" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.5;entryPerimeter=1;strokeColor=#000000;endArrow=block;endFill=1;" edge="1" parent="1" source="2" target="4">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="20" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.5;entryPerimeter=1;strokeColor=#000000;endArrow=block;endFill=1;" edge="1" parent="1" source="2" target="5">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="21" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitPerimeter=1;entryX=0.5;entryY=0;entryPerimeter=1;strokeColor=#000000;endArrow=open;dashed=1;" edge="1" parent="1" source="6" target="7">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="22" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitPerimeter=1;entryX=0.5;entryY=0;entryPerimeter=1;strokeColor=#000000;endArrow=open;dashed=1;" edge="1" parent="1" source="6" target="9">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="23" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitPerimeter=1;entryX=0.5;entryY=0;entryPerimeter=1;strokeColor=#000000;endArrow=open;dashed=1;" edge="1" parent="1" source="10" target="9">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="24" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitPerimeter=1;entryX=0.5;entryY=0;entryPerimeter=1;strokeColor=#000000;endArrow=open;dashed=1;" edge="1" parent="1" source="10" target="4">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="25" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitPerimeter=1;entryX=0.5;entryY=0;entryPerimeter=1;strokeColor=#000000;endArrow=open;dashed=1;" edge="1" parent="1" source="11" target="5">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="26" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitPerimeter=1;entryX=0.5;entryY=0;entryPerimeter=1;strokeColor=#000000;endArrow=open;dashed=1;" edge="1" parent="1" source="12" target="14">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="27" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitPerimeter=1;entryX=0.5;entryY=0;entryPerimeter=1;strokeColor=#000000;endArrow=open;dashed=1;" edge="1" parent="1" source="9" target="15">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="28" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitPerimeter=1;entryX=0.5;entryY=0;entryPerimeter=1;strokeColor=#000000;endArrow=open;dashed=1;" edge="1" parent="1" source="10" target="16">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="29" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitPerimeter=1;entryX=0.5;entryY=0;entryPerimeter=1;strokeColor=#000000;endArrow=open;dashed=1;" edge="1" parent="1" source="13" target="5">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
+

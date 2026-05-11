@@ -1,0 +1,2 @@
+1; Cadeiras gerais
+2; Electrotecnica
