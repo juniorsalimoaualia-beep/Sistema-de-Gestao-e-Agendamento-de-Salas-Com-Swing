@@ -1,6 +1,5 @@
 package main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dao;
 import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Disciplina;
-import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Docente;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.FileReader;
@@ -31,7 +30,7 @@ public class DisciplinaDAO {
                     lista.add(new Disciplina(
                         Integer.parseInt(dados[0]),
                         dados[1],
-                        dados[2]
+                        Integer.parseInt(dados[2])
                     ));
                 }
             }
@@ -42,16 +41,10 @@ public class DisciplinaDAO {
     }
 
     public List<Disciplina> listarPorDocenteId(int docenteId) {
-        DocenteDAO docenteDAO = new DocenteDAO();
-        Docente docente = docenteDAO.buscarPorDocente(docenteId);
-        if (docente == null) {
-            return new ArrayList<>();
-        }
-        String docenteNome = docente.getNomeCompleto();
         List<Disciplina> lista = listaDisciplina();
         List<Disciplina> resultado = new ArrayList<>();
         for (Disciplina ds : lista) {
-            if (docenteNome.equals(ds.getDocente())) {
+            if (docenteId == ds.getDocenteId()) {
                 resultado.add(ds);
             }
         }

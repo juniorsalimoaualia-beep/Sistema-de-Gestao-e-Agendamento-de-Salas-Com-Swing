@@ -1,2 +1,5 @@
 1; Cadeiras gerais
 2; Electrotecnica
+3; Mecanica
+4; Quimica
+5; Civil

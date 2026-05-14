@@ -22,4 +22,36 @@ public class DocenteController {
     public int gerarProximoId() {
         return dao.gerarProximoId();
     }
+
+    public boolean alterarSenha(int id, String senhaAtual, String senhaNova) {
+        return dao.alterarSenha(id, senhaAtual, senhaNova);
+    }
+
+    public void editarDocente(int id, String nome, String apelido, String nivelAcademico, int numCel, String email) {
+        List<Docente> lista = dao.listaDocente();
+        for (int i = 0; i < lista.size(); i++) {
+            if (lista.get(i).getId() == id) {
+                Docente docente = lista.get(i);
+                docente.setNome(nome);
+                docente.setApelido(apelido);
+                docente.setNivelAcademico(nivelAcademico);
+                docente.setNumCel(numCel);
+                docente.setEmail(email);
+                dao.reescreverArquivo(lista);
+                return;
+            }
+        }
+    }
+
+    public boolean deletarDocente(int id) {
+        List<Docente> lista = dao.listaDocente();
+        for (int i = 0; i < lista.size(); i++) {
+            if (lista.get(i).getId() == id) {
+                lista.remove(i);
+                dao.reescreverArquivo(lista);
+                return true;
+            }
+        }
+        return false;
+    }
 }

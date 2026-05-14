@@ -95,4 +95,39 @@ public class EstudanteDAO {
         }
         return max + 1;
     }
+
+    public boolean alterarSenha(int id, String senhaAtual, String senhaNova) {
+        List<Estudante> lista = listaEstudante();
+        Estudante estudanteEncontrado = null;
+        int indice = -1;
+
+        for (int i = 0; i < lista.size(); i++) {
+            if (lista.get(i).getId() == id) {
+                estudanteEncontrado = lista.get(i);
+                indice = i;
+                break;
+            }
+        }
+
+        if (estudanteEncontrado == null || !estudanteEncontrado.getSenha().equals(senhaAtual)) {
+            return false;
+        }
+
+        estudanteEncontrado.setSenha(senhaNova);
+        lista.set(indice, estudanteEncontrado);
+        reescreverArquivo(lista);
+        return true;
+    }
+
+    public void reescreverArquivo(List<Estudante> lista) {
+        File arquivo = ArquivoUtils.prepararArquivo(file);
+        try (BufferedWriter bw = new BufferedWriter(new FileWriter(arquivo, false))) {
+            for (Estudante es : lista) {
+                bw.write(es.toString());
+                bw.newLine();
+            }
+        } catch (IOException e) {
+            System.out.println("Erro ao reescrever arquivo de Estudantes: " + e.getMessage());
+        }
+    }
 }

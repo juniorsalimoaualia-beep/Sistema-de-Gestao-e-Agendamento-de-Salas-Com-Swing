@@ -1,2 +1,6 @@
-1; Analise Matematica 1; Matusse
-2; Programacao Orientada a Objetos; Cristiliano Maculuve
+1; Analise Matematica 1; 1
+2; Programacao Orientada a Objetos; 1
+3; Linguagens de Programacao; 4
+4; Base de Dados 2; 2
+5; Programacao Web e Sistema de Gestao de Conteudo; 3
+6; Electronica Digital; 5

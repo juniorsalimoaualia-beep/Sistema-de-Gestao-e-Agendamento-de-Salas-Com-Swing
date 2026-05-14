@@ -19,6 +19,14 @@ public class CursoController {
         return dao.buscarPorCurso(id);
     }
 
+    public Curso buscarCursoPorId(int id) {
+        return dao.buscarCursoPorId(id);
+    }
+
+    public void editarCurso(int id, String novoNome) {
+        dao.editarCurso(id, novoNome);
+    }
+
     public int gerarProximoId() {
         return dao.gerarProximoId();
     }

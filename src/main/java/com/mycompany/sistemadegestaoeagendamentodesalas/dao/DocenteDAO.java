@@ -93,4 +93,39 @@ public class DocenteDAO {
         }
         return max + 1;
     }
+
+    public boolean alterarSenha(int id, String senhaAtual, String senhaNova) {
+        List<Docente> lista = listaDocente();
+        Docente docenteEncontrado = null;
+        int indice = -1;
+
+        for (int i = 0; i < lista.size(); i++) {
+            if (lista.get(i).getId() == id) {
+                docenteEncontrado = lista.get(i);
+                indice = i;
+                break;
+            }
+        }
+
+        if (docenteEncontrado == null || !docenteEncontrado.getSenha().equals(senhaAtual)) {
+            return false;
+        }
+
+        docenteEncontrado.setSenha(senhaNova);
+        lista.set(indice, docenteEncontrado);
+        reescreverArquivo(lista);
+        return true;
+    }
+
+    public void reescreverArquivo(List<Docente> lista) {
+        File arquivo = ArquivoUtils.prepararArquivo(file);
+        try (BufferedWriter bw = new BufferedWriter(new FileWriter(arquivo, false))) {
+            for (Docente dc : lista) {
+                bw.write(dc.toString());
+                bw.newLine();
+            }
+        } catch (IOException e) {
+            System.out.println("Erro ao reescrever arquivo de Docentes: " + e.getMessage());
+        }
+    }
 }

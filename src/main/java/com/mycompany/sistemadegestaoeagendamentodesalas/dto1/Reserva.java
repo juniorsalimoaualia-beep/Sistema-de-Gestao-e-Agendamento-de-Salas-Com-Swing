@@ -4,8 +4,9 @@ import java.time.LocalTime;
 
 public class Reserva {
     private int id;
-    private String sala;
-    private String docente;
+    private int salaId;
+    private String docenteNome;
+    private int docenteId;
     private String disciplina;
     private String turma;
     private LocalDate data;
@@ -13,10 +14,11 @@ public class Reserva {
     private LocalTime horaFim;
     private EstadoReserva estado;
 
-    public Reserva(int id, Sala sala, Docente docente, String disciplina, String turma, LocalDate data, LocalTime horaInicio, LocalTime horaFim){
+    public Reserva(int id, int salaId, int docenteId, String docenteNome, String disciplina, String turma, LocalDate data, LocalTime horaInicio, LocalTime horaFim){
         this.id = id;
-        this.sala = sala != null ? sala.getNome() : null;
-        this.docente = docente != null ? docente.getNomeCompleto() : null;
+        this.salaId = salaId;
+        this.docenteId = docenteId;
+        this.docenteNome = docenteNome != null ? docenteNome : "";
         this.disciplina = disciplina != null ? disciplina : "";
         this.turma = turma != null ? turma : "";
         this.data = data;
@@ -27,9 +29,14 @@ public class Reserva {
 
     public int getId(){return this.id;}
 
-    public String getSala(){return this.sala;}
+    public int getSalaId(){return this.salaId;}
+    public void setSalaId(int salaId){this.salaId = salaId;}
 
-    public String getDocente(){return this.docente;}
+    public int getDocenteId(){return this.docenteId;}
+    public void setDocenteId(int docenteId){this.docenteId = docenteId;}
+
+    public String getDocenteNome(){return this.docenteNome;}
+    public void setDocenteNome(String docenteNome){this.docenteNome = docenteNome;}
 
     public String getDisciplina(){return this.disciplina;}
 
@@ -46,7 +53,9 @@ public class Reserva {
 
     public EstadoReserva getEstadoReserva(){return this.estado;}
     public void setEstadoReserva(EstadoReserva estado){this.estado=estado;}
+
+    @Override
     public String toString(){
-        return id+"; "+sala+"; "+docente+"; "+disciplina+"; "+/*turma.get*/data+"; "+horaInicio+"; "+horaFim;
+        return id+"; "+salaId+"; "+docenteId+"; "+docenteNome+"; "+disciplina+"; "+turma+"; "+data+"; "+horaInicio+"; "+horaFim+"; "+estado;
     }
 }

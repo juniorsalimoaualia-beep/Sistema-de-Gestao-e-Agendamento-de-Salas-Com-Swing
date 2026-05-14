@@ -25,7 +25,7 @@ public class GestorReservaDAO {
             return false;
         }
         for(Reserva r: rs){
-            boolean mesmaSala=r.getSala().equalsIgnoreCase(nomeSala);
+            boolean mesmaSala = r.getSalaId() == sala.getId();
             boolean mesmaData=r.getData().equals(data);
             boolean reservaAtiva= r.getEstadoReserva()==EstadoReserva.CONFIRMADA||r.getEstadoReserva()==EstadoReserva.PENDENTE;
             if(mesmaSala && mesmaData && reservaAtiva){

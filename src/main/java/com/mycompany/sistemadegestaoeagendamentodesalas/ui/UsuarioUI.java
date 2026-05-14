@@ -232,7 +232,7 @@ public class UsuarioUI {
                     } else if(docenteReserva == null){
                         System.out.println("Docente nao encontrado.");
                     } else {
-                        Reserva reserva = new Reserva(idReserva, sala, docenteReserva, disciplina, turma, data, horaInicio, horaFim);
+                        Reserva reserva = new Reserva(idReserva, sala.getId(), idDocenteReserva, docenteReserva.getNomeCompleto(), disciplina, turma, data, horaInicio, horaFim);
                         reservaController.salvar(reserva);
                         System.out.println("Reserva cadastrada com sucesso. ID: " + idReserva);
                     }

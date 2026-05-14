@@ -1,1 +1,8 @@
 1; Engenharia Informatica
+2; Engenharia Mecanica
+3; Enganharia Quimica
+4; Engenharia de Gestao Industrial
+5; Engenharia Ambiental
+6; Engenharia de Petroleo e Gas
+7; Engenharia Electrica
+8; Engenharia Electronica

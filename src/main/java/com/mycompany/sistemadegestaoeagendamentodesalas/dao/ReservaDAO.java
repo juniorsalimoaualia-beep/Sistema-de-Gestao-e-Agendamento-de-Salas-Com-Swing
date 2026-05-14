@@ -1,7 +1,7 @@
 package main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dao;
 import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Sala;
-import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Docente;
 import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Reserva;
+import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.EstadoReserva;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -26,8 +26,6 @@ public class ReservaDAO {
 
     public List<Reserva> listarReservas(){
         List<Reserva> listar= new ArrayList<>();
-        SalaDAO salaDao=new SalaDAO();
-        DocenteDAO dcDAO=new DocenteDAO();
         
         File arquivo = new File(file);
         if (!arquivo.exists()) {
@@ -38,20 +36,28 @@ public class ReservaDAO {
             
             while((linha=br.readLine())!=null){
                 String dados []= linha.split("; ");
-                String nomeSala= dados[1].trim();
-                int idDocente=Integer.parseInt(dados[2].trim());
-                if(dados.length>=7){
-                    Sala sala =  salaDao.buscarPorSala(nomeSala);
-                    Docente docente =  dcDAO.buscarPorDocente(idDocente);
-                    listar.add(new Reserva(
-                        Integer.parseInt(dados[0]),
-                        sala,
-                        docente,
-                        dados[3],
-                        "",
-                        LocalDate.parse(dados[4].trim()),
-                        LocalTime.parse(dados[5].trim()),
-                        LocalTime.parse(dados[6].trim())));
+                if(dados.length >= 9){
+                    int id = Integer.parseInt(dados[0].trim());
+                    int salaId = Integer.parseInt(dados[1].trim());
+                    int docenteId = Integer.parseInt(dados[2].trim());
+                    String docenteNome = dados[3].trim();
+                    String disciplina = dados[4].trim();
+                    String turma = dados[5].trim();
+                    LocalDate data = LocalDate.parse(dados[6].trim());
+                    LocalTime horaInicio = LocalTime.parse(dados[7].trim());
+                    LocalTime horaFim = LocalTime.parse(dados[8].trim());
+                    
+                    Reserva reserva = new Reserva(id, salaId, docenteId, docenteNome, disciplina, turma, data, horaInicio, horaFim);
+                    
+                    if (dados.length >= 10) {
+                        try {
+                            reserva.setEstadoReserva(EstadoReserva.valueOf(dados[9].trim()));
+                        } catch (IllegalArgumentException e) {
+                            reserva.setEstadoReserva(EstadoReserva.PENDENTE);
+                        }
+                    }
+                    
+                    listar.add(reserva);
                 }
             }
         }
@@ -80,11 +86,18 @@ public class ReservaDAO {
     public boolean excluirReserva(int id){
         List<Reserva> lista = listarReservas();
         boolean encontrado = false;
+        SalaDAO salaDAO = new SalaDAO();
 
         try (BufferedWriter bw = new BufferedWriter(new FileWriter(file, false))) {
             for (Reserva reserva : lista) {
                 if (reserva.getId() == id) {
                     encontrado = true;
+                    // Desvincula a sala
+                    Sala sala = salaDAO.buscarPorId(reserva.getSalaId());
+                    if (sala != null) {
+                        sala.desvinculaReserva();
+                        salaDAO.atualizar(sala);
+                    }
                     continue;
                 }
                 bw.write(reserva.toString());
@@ -96,5 +109,23 @@ public class ReservaDAO {
         }
 
         return encontrado;
+    }
+
+    public void vincularSalaAReserva(int salaId, int reservaId) {
+        SalaDAO salaDAO = new SalaDAO();
+        Sala sala = salaDAO.buscarPorId(salaId);
+        if (sala != null) {
+            sala.vincularReserva(reservaId);
+            salaDAO.atualizar(sala);
+        }
+    }
+
+    public void desvinculaSalaDeReserva(int salaId) {
+        SalaDAO salaDAO = new SalaDAO();
+        Sala sala = salaDAO.buscarPorId(salaId);
+        if (sala != null) {
+            sala.desvinculaReserva();
+            salaDAO.atualizar(sala);
+        }
     }
 }

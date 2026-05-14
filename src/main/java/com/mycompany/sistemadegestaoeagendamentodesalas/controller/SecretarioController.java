@@ -22,4 +22,36 @@ public class SecretarioController {
     public int gerarProximoId() {
         return dao.gerarProximoId();
     }
+
+    public boolean alterarSenha(int id, String senhaAtual, String senhaNova) {
+        return dao.alterarSenha(id, senhaAtual, senhaNova);
+    }
+
+    public void editarSecretario(int id, String nome, String apelido, String cargo, int numCel, String email) {
+        List<Secretario> lista = dao.listaSecretario();
+        for (int i = 0; i < lista.size(); i++) {
+            if (lista.get(i).getId() == id) {
+                Secretario secretario = lista.get(i);
+                secretario.setNome(nome);
+                secretario.setApelido(apelido);
+                secretario.setCargo(cargo);
+                secretario.setNumCel(numCel);
+                secretario.setEmail(email);
+                dao.reescreverArquivo(lista);
+                return;
+            }
+        }
+    }
+
+    public boolean deletarSecretario(int id) {
+        List<Secretario> lista = dao.listaSecretario();
+        for (int i = 0; i < lista.size(); i++) {
+            if (lista.get(i).getId() == id) {
+                lista.remove(i);
+                dao.reescreverArquivo(lista);
+                return true;
+            }
+        }
+        return false;
+    }
 }

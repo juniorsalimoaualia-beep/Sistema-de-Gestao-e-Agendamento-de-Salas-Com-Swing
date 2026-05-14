@@ -85,4 +85,39 @@ public class SecretarioDAO {
         }
         return max + 1;
     }
+
+    public boolean alterarSenha(int id, String senhaAtual, String senhaNova) {
+        List<Secretario> lista = listaSecretario();
+        Secretario secretarioEncontrado = null;
+        int indice = -1;
+
+        for (int i = 0; i < lista.size(); i++) {
+            if (lista.get(i).getId() == id) {
+                secretarioEncontrado = lista.get(i);
+                indice = i;
+                break;
+            }
+        }
+
+        if (secretarioEncontrado == null || !secretarioEncontrado.getSenha().equals(senhaAtual)) {
+            return false;
+        }
+
+        secretarioEncontrado.setSenha(senhaNova);
+        lista.set(indice, secretarioEncontrado);
+        reescreverArquivo(lista);
+        return true;
+    }
+
+    public void reescreverArquivo(List<Secretario> lista) {
+        File arquivo = ArquivoUtils.prepararArquivo(file);
+        try (BufferedWriter bw = new BufferedWriter(new FileWriter(arquivo, false))) {
+            for (Secretario sc : lista) {
+                bw.write(sc.toString());
+                bw.newLine();
+            }
+        } catch (IOException e) {
+            System.out.println("Erro ao reescrever arquivo de Secretários: " + e.getMessage());
+        }
+    }
 }
