@@ -5,22 +5,20 @@ import java.time.LocalTime;
 public class Reserva {
     private int id;
     private int salaId;
-    private String docenteNome;
     private int docenteId;
-    private String disciplina;
-    private String turma;
+    private Disciplina disciplina;
+    private Turma turma;
     private LocalDate data;
     private LocalTime horaInicio;
     private LocalTime horaFim;
     private EstadoReserva estado;
 
-    public Reserva(int id, int salaId, int docenteId, String docenteNome, String disciplina, String turma, LocalDate data, LocalTime horaInicio, LocalTime horaFim){
+    public Reserva(int id, int salaId, int docenteId, Disciplina disciplina, Turma turma, LocalDate data, LocalTime horaInicio, LocalTime horaFim){
         this.id = id;
         this.salaId = salaId;
         this.docenteId = docenteId;
-        this.docenteNome = docenteNome != null ? docenteNome : "";
-        this.disciplina = disciplina != null ? disciplina : "";
-        this.turma = turma != null ? turma : "";
+        this.disciplina = disciplina;
+        this.turma = turma;
         this.data = data;
         this.horaInicio = horaInicio;
         this.horaFim = horaFim;
@@ -35,12 +33,11 @@ public class Reserva {
     public int getDocenteId(){return this.docenteId;}
     public void setDocenteId(int docenteId){this.docenteId = docenteId;}
 
-    public String getDocenteNome(){return this.docenteNome;}
-    public void setDocenteNome(String docenteNome){this.docenteNome = docenteNome;}
+    public Disciplina getDisciplina(){return this.disciplina;}
+    public void setDisciplina(Disciplina disciplina){this.disciplina = disciplina;}
 
-    public String getDisciplina(){return this.disciplina;}
-
-    public String getTurma(){return this.turma;}
+    public Turma getTurma(){return this.turma;}
+    public void setTurma(Turma turma){this.turma = turma;}
 
     public LocalDate getData(){return this.data;}
     public void setData(LocalDate data){this.data = data;}
@@ -56,6 +53,6 @@ public class Reserva {
 
     @Override
     public String toString(){
-        return id+"; "+salaId+"; "+docenteId+"; "+docenteNome+"; "+disciplina+"; "+turma+"; "+data+"; "+horaInicio+"; "+horaFim+"; "+estado;
+        return id+"; "+salaId+"; "+docenteId+"; "+(disciplina!=null?disciplina.getId():0)+"; "+(turma!=null?turma.getChave():"")+"; "+data+"; "+horaInicio+"; "+horaFim+"; "+estado;
     }
 }
