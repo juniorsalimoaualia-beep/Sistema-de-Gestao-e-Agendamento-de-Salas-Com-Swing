@@ -30,11 +30,19 @@ public class SecretarioDAO {
             while((linha=br.readLine())!=null){
                 String []dados=linha.split("; ");
                 if(dados.length==6){
-                    String []nomeParts = dividirNomeCompleto(dados[1]);
+                    // formato antigo: id; nomeCompleto; numCel; email; senha; cargo
+                    String nomeCompleto = dados[1];
+                    String nome = nomeCompleto;
+                    String apelido = "";
+                    String[] partes = nomeCompleto.split(" ", 2);
+                    if(partes.length == 2){
+                        nome = partes[0];
+                        apelido = partes[1];
+                    }
                     lista.add(new Secretario(
                         Integer.parseInt(dados[0]),
-                        nomeParts[0],
-                        nomeParts[1],
+                        nome,
+                        apelido,
                         dados[5],
                         Integer.parseInt(dados[2]),
                         dados[3],
@@ -54,17 +62,6 @@ public class SecretarioDAO {
             }
         }catch(IOException e){System.out.println("Erro ao ler o ficheiro "+e.getMessage());}
         return lista;
-    }
-
-    private String[] dividirNomeCompleto(String nomeCompleto){
-        String nome = nomeCompleto;
-        String apelido = "";
-        String[] partes = nomeCompleto.split(" ", 2);
-        if(partes.length == 2){
-            nome = partes[0];
-            apelido = partes[1];
-        }
-        return new String[]{nome, apelido};
     }
 
     public Secretario buscarPorSecretario(int id){
