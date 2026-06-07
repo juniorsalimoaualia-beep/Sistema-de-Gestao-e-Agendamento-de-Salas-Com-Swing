@@ -46,7 +46,7 @@ public class InscricaoDAO {
                         estudante = new Estudante(estudanteId, "", "", "", 0, "", "");
                     }
                     if (disciplina == null) {
-                        disciplina = new Disciplina(disciplinaId, "", 0);
+                        disciplina = new Disciplina(disciplinaId, "", null);
                     }
                     lista.add(new Inscricao(id, estudante, disciplina));
                 }
