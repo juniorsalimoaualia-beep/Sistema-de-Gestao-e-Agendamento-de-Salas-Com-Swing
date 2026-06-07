@@ -1,4 +1,4 @@
-1; Cristiliano Maculuve; 841616178; cristilianomaculuve419@uem.com; 123456; Lincenciatura
+1; Cristiliano Maculuve; 841616178; cristilianomaculuve419@uem.com; 1234; Lincenciatura
 2; Khalid Bapu; 874512382; khalidbapu847@uem.com; 123456; Lincenciatura
 3; Ruben Manhica; 864561123; rubenmanhica711@uem.com; 123456; Mestrado
 4; Ivone Cipriano; 846787542; ivonecipriano900@uem.com; 123456; Lincenciatura
