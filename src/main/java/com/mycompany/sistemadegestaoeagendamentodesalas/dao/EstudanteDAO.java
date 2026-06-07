@@ -29,17 +29,7 @@ public class EstudanteDAO {
         try(BufferedReader br= new BufferedReader(new FileReader(arquivo))){
             while((linha=br.readLine())!=null){
                 String []dados=linha.split("; ");
-                if(dados.length==6){
-                    String []nomeParts = dividirNomeCompleto(dados[1]);
-                    lista.add(new Estudante(
-                        Integer.parseInt(dados[0]),
-                        nomeParts[0],
-                        nomeParts[1],
-                        dados[5],
-                        Integer.parseInt(dados[2]),
-                        dados[3],
-                        dados[4]));
-                } else if(dados.length==7){
+                if(dados.length==7){
                     lista.add(new Estudante(
                         Integer.parseInt(dados[0]),
                         dados[1],
@@ -52,17 +42,6 @@ public class EstudanteDAO {
             }
         }catch(IOException e){System.out.println("Erro ao ler o ficheiro "+e.getMessage());}
         return lista;
-    }
-
-    private String[] dividirNomeCompleto(String nomeCompleto){
-        String nome = nomeCompleto;
-        String apelido = "";
-        String[] partes = nomeCompleto.split(" ", 2);
-        if(partes.length == 2){
-            nome = partes[0];
-            apelido = partes[1];
-        }
-        return new String[]{nome, apelido};
     }
 
     public Estudante buscarEstudantePorId(int id){
