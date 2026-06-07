@@ -5,12 +5,14 @@ import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.controller.Dep
 import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.controller.DisciplinaController;
 import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.controller.DocenteController;
 import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.controller.EstudanteController;
+import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.controller.SalaController;
 import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.controller.SecretarioController;
 import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Curso;
 import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Departamento;
 import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Disciplina;
 import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Docente;
 import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Estudante;
+import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Sala;
 import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Secretario;
 import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.service.EmailGenarator;
 
@@ -23,11 +25,11 @@ public class AdminUI {
     private DepartamentoController departamentoController = new DepartamentoController();
     private CursoController cursoController = new CursoController();
     private DisciplinaController disciplinaController = new DisciplinaController();
-    
+    private SalaController salaController= new SalaController();
     public void menu() {
         while (true) {
             System.out.println("\n--- Menu Admin ---");
-            int opcao = vd.validarNumero("1. Registrar Secretario\n2. Registrar Docente\n3. Registrar Estudante\n4. Registrar Departamento\n5. Registrar Curso\n6. Registrar Disciplina\n7. Editar Docente\n8. Deletar Docente\n9. Editar Curso\n0. Voltar");
+            int opcao = vd.validarInt("1. Registrar Secretario\n2. Registrar Docente\n3. Registrar Estudante\n4. Registrar Departamento\n5. Registrar Curso\n6. Registrar Disciplina\n7. Registrar Sala\n8. Editar Docente\n9. Deletar Docente\n10. Editar Curso\n0. Voltar");
             switch (opcao) {
                 case 1:
                     cadastrarSecretario();
@@ -48,12 +50,16 @@ public class AdminUI {
                     cadastrarDisciplina();
                     break;
                 case 7:
-                    editarDocente();
+                    cadastrarSala();
                     break;
                 case 8:
+                    editarDocente();
+                    break;
+                    
+                case 9:
                     deletarDocente();
                     break;
-                case 9:
+                case 10:
                     editarCurso();
                     break;
                 case 0:
@@ -70,9 +76,9 @@ public class AdminUI {
         String nome = vd.validarString("Nome:");
         String apelido = vd.validarString("Apelido:");
         String cargo = vd.validarString("Cargo:");
-        int numCel = vd.validarNumero("Numero de celular:");
+        int numCel = vd.validarCell("Numero de celular:");
         String email = emailGen.gerarEmail(nome, apelido);
-        String senha = vd.validarString("Senha:");
+        String senha = vd.validarSenha("Senha:");
         System.out.println("O seu email gerado e:"+email);
         Secretario secretario = new Secretario(id, nome, apelido, cargo, numCel, email, senha);
         secretarioController.salvar(secretario);
@@ -85,9 +91,9 @@ public class AdminUI {
         String nome = vd.validarString("Nome:");
         String apelido = vd.validarString("Apelido:");
         String nivel = vd.validarString("Nivel academico:");
-        int numCel = vd.validarNumero("Numero de celular:");
+        int numCel = vd.validarCell("Numero de celular:");
         String email = emailGen.gerarEmail(nome, apelido);
-        String senha = vd.validarString("Senha:");
+        String senha = vd.validarSenha("Senha:");
         Docente docente = new Docente(id, nome, apelido, nivel, numCel, email, senha);
         docenteController.salvar(docente);
         System.out.println("Docente registrado com sucesso. ID: " + id);
@@ -99,9 +105,9 @@ public class AdminUI {
         String nome = vd.validarString("Nome:");
         String apelido = vd.validarString("Apelido:");
         String curso = vd.validarString("Curso:");
-        int numCel = vd.validarNumero("Numero de celular:");
+        int numCel = vd.validarCell("Numero de celular:");
         String email= emailGen.gerarEmail(nome,apelido);
-        String senha = vd.validarString("Senha:");
+        String senha = vd.validarSenha("Senha:");
         System.out.println("O seu email gerado e:"+email);
         Estudante estudante = new Estudante(id, nome, apelido, curso, numCel, email, senha);
         estudanteController.salvar(estudante);
@@ -143,22 +149,24 @@ public class AdminUI {
             System.out.println(d.getId() + ". " + d.getNomeCompleto() + " (" + d.getNivelAcademico() + ")");
         }
         
-        int docenteId = vd.validarNumero("Digite o ID do docente:");
+        int docenteId = vd.validarInt("Digite o ID do docente:");
         Docente docenteSelecionado = docenteController.buscarPorId(docenteId);
         
         if (docenteSelecionado == null) {
             System.out.println("Docente nao encontrado.");
             return;
         }
+
+        String curso = vd.validarString("Digite o curso (ex: Engenharia, Informatica):");
         
-        Disciplina disciplina = new Disciplina(id, nome, docenteId);
+        Disciplina disciplina = new Disciplina(id, nome, docenteSelecionado, curso);
         disciplinaController.salvar(disciplina);
-        System.out.println("Disciplina registrada com sucesso. ID: " + id + " | Docente: " + docenteSelecionado.getNomeCompleto());
+        System.out.println("Disciplina registrada com sucesso. ID: " + id + " | Docente: " + docenteSelecionado.getNomeCompleto() + " | Curso: " + curso);
     }
 
     private void editarDocente() {
         System.out.println("\n--- Editar Docente ---");
-        int id = vd.validarNumero("Digite o ID do docente a editar:");
+        int id = vd.validarInt("Digite o ID do docente a editar:");
         Docente docente = docenteController.buscarPorId(id);
         
         if (docente == null) {
@@ -176,7 +184,7 @@ public class AdminUI {
         String nivel = vd.validarString("Novo nivel academico (ou pressione Enter para manter):");
         if (nivel.isEmpty()) nivel = docente.getNivelAcademico();
         
-        int numCel = vd.validarNumero("Novo numero de celular (0 para manter):");
+        int numCel = vd.validarCell("Novo numero de celular (0 para manter):");
         if (numCel == 0) numCel = docente.getNumCel();
         
         String email = docente.getEmail();
@@ -186,7 +194,7 @@ public class AdminUI {
 
     private void deletarDocente() {
         System.out.println("\n--- Deletar Docente ---");
-        int id = vd.validarNumero("Digite o ID do docente a deletar:");
+        int id = vd.validarCell("Digite o ID do docente a deletar:");
         Docente docente = docenteController.buscarPorId(id);
         
         if (docente == null) {
@@ -210,7 +218,7 @@ public class AdminUI {
 
     private void editarCurso() {
         System.out.println("\n--- Editar Curso ---");
-        int id = vd.validarNumero("Digite o ID do curso a editar:");
+        int id = vd.validarCell("Digite o ID do curso a editar:");
         Curso curso = cursoController.buscarCursoPorId(id);
         
         if (curso == null) {
@@ -228,6 +236,13 @@ public class AdminUI {
         
         cursoController.editarCurso(id, novoNome);
         System.out.println("Curso atualizado com sucesso.");
+    }
+
+    public void cadastrarSala(){
+        String nome=vd.validarString("Digite o nome da Sala:");
+        int id=salaController.gerarProximoId();
+        Sala sala= new Sala(id, nome);
+        salaController.salvar(sala);
     }
 
 }

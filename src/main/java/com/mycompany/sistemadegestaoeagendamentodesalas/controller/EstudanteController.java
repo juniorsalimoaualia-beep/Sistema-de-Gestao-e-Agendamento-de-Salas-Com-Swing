@@ -3,12 +3,21 @@ package main.java.com.mycompany.sistemadegestaoeagendamentodesalas.controller;
 import java.util.List;
 import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dao.EstudanteDAO;
 import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Estudante;
+import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.service.InscricaoService;
+import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Disciplina;
 
 public class EstudanteController {
     private EstudanteDAO dao = new EstudanteDAO();
+    private InscricaoService inscricaoService = new InscricaoService();
+    private DisciplinaController disciplinaController = new DisciplinaController();
 
     public void salvar(Estudante estudante) {
         dao.salvar(estudante);
+        // Inscrever automaticamente em disciplinas do curso
+        List<Disciplina> disciplinas = disciplinaController.listarPorCurso(estudante.getCurso());
+        for(Disciplina disciplina : disciplinas) {
+            inscricaoService.inscreverEstudanteAutomatico(estudante.getId(), disciplina.getId());
+        }
     }
 
     public List<Estudante> listar() {
