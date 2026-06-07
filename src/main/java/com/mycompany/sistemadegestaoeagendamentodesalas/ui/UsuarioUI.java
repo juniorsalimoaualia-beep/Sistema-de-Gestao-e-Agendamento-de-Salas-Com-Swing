@@ -19,8 +19,11 @@ import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Reserva;
 import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Sala;
 import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Secretario;
 import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Disciplina;
+import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Turma;
 import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dao.EstudanteDAO;
 import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dao.SecretarioDAO;
+import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.controller.CursoController;
+import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Curso;
 
 public class UsuarioUI {
     private Validacao vd = new Validacao();
@@ -36,6 +39,7 @@ public class UsuarioUI {
     private SecretarioDAO scDAO=new SecretarioDAO();
     private AdminUI adminUI = new AdminUI();
     private InscricaoService inscricaoService = new InscricaoService();
+    private CursoController cursoController = new CursoController();
     private int usuarioLogadoId;
     
     public void login(int escolha){
@@ -78,7 +82,7 @@ public class UsuarioUI {
             }
 
             System.out.println("Login falhou.");
-            int opcao = vd.validarNumero("1. Tentar novamente\n0. Voltar");
+            int opcao = vd.validarInt("1. Tentar novamente\n0. Voltar");
             if(opcao != 1){
                 System.out.println("Retornando ao menu principal.");
                 return;
@@ -125,8 +129,8 @@ public class UsuarioUI {
     private boolean attemptLogin(String perfil){
         System.out.println("\n--- Login de " + perfil + " ---");
         
-        String email = vd.validarString("Digite o seu email:");
-        String senha = vd.validarString("Digite a sua senha:");
+        String email = vd.validarEmail("Digite o seu email:");
+        String senha = vd.validarSenha("Digite a sua senha:");
         usuarioLogadoId=retornarID(perfil, email);
 
         return autenticacao.autenticarLogin(perfil, email, senha);
@@ -136,7 +140,7 @@ public class UsuarioUI {
         
         while(true){
             System.out.println("\n--- Menu Estudante ---");
-            int opcao = vd.validarNumero("1. Perfil\n2. Consultar Sala\n3. Ver Disciplinas\n4. Inscrever-se em Disciplina\n0. Sair");
+            int opcao = vd.validarInt("1. Perfil\n2. Consultar Sala\n3. Ver Disciplinas\n4. Inscrever-se em Disciplina\n5. Alterar senha\n0. Sair");
             switch(opcao){
                 case 1:
                     Estudante estudante = estudanteController.buscarPorId(usuarioLogadoId);
@@ -168,13 +172,20 @@ public class UsuarioUI {
                     }
                     break;
                 case 4:
-                    int disciplinaId = vd.validarNumero("Digite o ID da disciplina para se inscrever:");
+                    int disciplinaId = vd.validarInt("Digite o ID da disciplina para se inscrever:");
                     if(inscricaoService.inscreverEstudante(usuarioLogadoId, disciplinaId)){
                         System.out.println("Inscricao realizada com sucesso.");
                     } else {
                         System.out.println("Falha na inscricao. Verifique se a disciplina existe ou se ja esta inscrito.");
                     }
                     break;
+                case 5:
+                    String senhaAtual=vd.validarString("Digite a senha atual:");
+                    String senhaNova=vd.validarString("Digite nova senha:");
+                    estudanteController.alterarSenha(usuarioLogadoId, senhaAtual, senhaNova);
+                    break;
+
+                    
                 case 0:
                     return;
                 default:
@@ -187,7 +198,7 @@ public class UsuarioUI {
         
         while(true){
             System.out.println("\n--- Menu Docente ---");
-            int opcao = vd.validarNumero("1. Perfil\n2. Ver Estudantes\n3. Reservar Sala\n0. Sair");
+            int opcao = vd.validarInt("1. Perfil\n2. Ver Estudantes\n3. Reservar Sala\n4. Estado da Reserva\n5. Alterar senha\n0. Sair");
             switch(opcao){
                 case 1:
                     Docente docente = docenteController.buscarPorId(usuarioLogadoId);
@@ -217,25 +228,82 @@ public class UsuarioUI {
                     }
                     break;
                 case 3:
+                    // Listar disciplinas do docente e selecionar uma
+                    List<Disciplina> disciplinasDoDocente = disciplinaController.listarPorDocente(usuarioLogadoId);
+                    if(disciplinasDoDocente.isEmpty()){
+                        System.out.println("Voce nao tem disciplinas cadastradas para fazer reserva.");
+                        break;
+                    }
+                    
+                    Disciplina disciplinaEscolhida = null;
+                    if (disciplinasDoDocente.size() == 1) {
+                        disciplinaEscolhida = disciplinasDoDocente.get(0);
+                        System.out.println("Disciplina selecionada automaticamente: " + disciplinaEscolhida.getNome());
+                    } else {
+                        System.out.println("Disciplinas disponiveis para reserva:");
+                        for(int i = 0; i < disciplinasDoDocente.size(); i++){
+                            System.out.println((i+1) + ". " + disciplinasDoDocente.get(i).getNome());
+                        }
+                        int escolhaDisciplina = vd.validarInt("Selecione o numero da disciplina:") - 1;
+                        if(escolhaDisciplina < 0 || escolhaDisciplina >= disciplinasDoDocente.size()){
+                            System.out.println("Opcao invalida.");
+                            break;
+                        }
+                        disciplinaEscolhida = disciplinasDoDocente.get(escolhaDisciplina);
+                    }
+
                     int idReserva = reservaController.gerarProximoId();
                     String salaNome = vd.validarString("Nome da sala:");
                     Sala sala = salaController.buscarPorNome(salaNome);
-                    int idDocenteReserva = usuarioLogadoId; // Usar o ID logado
+                    int idDocenteReserva = usuarioLogadoId;
                     Docente docenteReserva = docenteController.buscarPorId(idDocenteReserva);
-                    String disciplina = vd.validarString("Disciplina:");
-                    String turma = vd.validarString("Turma:");
+
+                    // Escolha do curso para a turma
+                    String cursoPadrao = disciplinaEscolhida.getCurso();
+                    List<Curso> cursos = cursoController.listar();
+                    System.out.println("Cursos disponiveis:");
+                    for (int i = 0; i < cursos.size(); i++) {
+                        System.out.println((i+1) + ". " + cursos.get(i).getNome());
+                    }
+                    System.out.println("0. Usar curso da disciplina: " + (cursoPadrao == null || cursoPadrao.isEmpty() ? "(nenhum)" : cursoPadrao));
+                    int escolhaCurso = vd.validarInt("Selecione o numero do curso (0 para usar o padrao):");
+                    String cursoEscolhido = cursoPadrao;
+                    if (escolhaCurso > 0 && escolhaCurso <= cursos.size()) {
+                        cursoEscolhido = cursos.get(escolhaCurso - 1).getNome();
+                    } else if (escolhaCurso == 0 && (cursoPadrao == null || cursoPadrao.isEmpty())) {
+                        System.out.println("Nenhum curso padrao definido. Escolha um curso valido.");
+                        break;
+                    }
+
+                    int anoTurma = vd.validarInt("Digite o ano da turma (ex: 1):");
+                    Turma turma = new Turma(anoTurma, cursoEscolhido);
                     LocalDate data = vd.validarDate("Data (dd/MM/yyyy):");
                     LocalTime horaInicio = vd.validarTime("Hora inicio (HH:mm):");
                     LocalTime horaFim = vd.validarTime("Hora fim (HH:mm):");
+                    
                     if(sala == null){
                         System.out.println("Sala nao encontrada.");
                     } else if(docenteReserva == null){
                         System.out.println("Docente nao encontrado.");
                     } else {
-                        Reserva reserva = new Reserva(idReserva, sala.getId(), idDocenteReserva, docenteReserva.getNomeCompleto(), disciplina, turma, data, horaInicio, horaFim);
+                        Reserva reserva = new Reserva(idReserva, sala.getId(), idDocenteReserva, disciplinaEscolhida, turma, data, horaInicio, horaFim);
                         reservaController.salvar(reserva);
                         System.out.println("Reserva cadastrada com sucesso. ID: " + idReserva);
                     }
+                    break;
+                case 4:
+                    List<Reserva> rs= reservaController.listar();
+                    for(Reserva lista:rs){
+                        if(lista.getDocenteId()==usuarioLogadoId){
+                            System.out.println("Estado da reserva: "+lista.getEstadoReserva()+"\nTurma: "+lista.getTurma()+"\nData: "+lista.getData()+"\nHorario: "+lista.getHoraInicio()+"-"+lista.getHoraFim());
+                        }
+                    }
+                    
+                    break;
+                case 5:
+                    String senhaAtual=vd.validarString("Digite a senha atual:");
+                    String senhaNova=vd.validarString("Digite nova senha:");
+                    docenteController.alterarSenha(usuarioLogadoId, senhaAtual, senhaNova);
                     break;
                 case 0:
                     return;
@@ -248,7 +316,7 @@ public class UsuarioUI {
     public void menuSecretario(){
         while(true){
             System.out.println("\n--- Menu Secretario ---");
-            int opcao = vd.validarNumero("1. Perfil\n2. Ver Reservas\n3. Cancelar Reserva\n0. Sair");
+            int opcao = vd.validarInt("1. Perfil\n2. Ver Reservas\n3. Confirmar Reservas\n4. Cancelar Reserva\n5. Alterar senha\n0. Sair");
             switch(opcao){
                 case 1:
                     Secretario secretario = secretarioController.buscarPorId(usuarioLogadoId);
@@ -271,17 +339,31 @@ public class UsuarioUI {
                     }
                     break;
                 case 3:
-                    int idReserva = vd.validarNumero("Digite o ID da reserva para cancelar:");
+                    int reserva= vd.validarInt("Digite o ID da reserva: ");
+                    if(reservaController.confirmar(reserva)){
+                        System.out.println("Reserva confirmada com sucesso!");
+                    }
+                    else{
+                        System.out.println("Nao foi possivel confirmar a reserva. Verifique se o ID esta correto ou se a reserva ja foi confirmada");
+                    }
+                    break;
+                case 4:
+                    int idReserva = vd.validarInt("Digite o ID da reserva para cancelar:");
                     if(reservaController.cancelar(idReserva)){
                         System.out.println("Reserva cancelada com sucesso.");
                     } else {
                         System.out.println("Nao foi possivel cancelar a reserva.");
                     }
                     break;
+                case 5:
+                    String senhaAtual=vd.validarString("Digite a senha atual:");
+                    String senhaNova=vd.validarString("Digite nova senha:");
+                    secretarioController.alterarSenha(usuarioLogadoId, senhaAtual, senhaNova);
+                    break;
                 case 0:
                     return;
                 default:
-                    System.out.println("Opcao invalida. Digite 0 a 3.");
+                    System.out.println("Opcao invalida. Digite 0 a 4.");
             }
         }
     }

@@ -14,7 +14,7 @@ public class MenuUI {
             System.out.println("4. Secretario");
             System.out.println("5. Departamento");
             System.out.println("0. Sair");
-            int opcao = vd.validarNumero("Digite a opcao:");
+            int opcao = vd.validarInt("Digite a opcao:");
             if(opcao == 0){
                 System.out.println("Saindo do sistema...");
                 break;
