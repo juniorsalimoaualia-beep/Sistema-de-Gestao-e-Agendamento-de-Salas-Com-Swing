@@ -40,27 +40,51 @@ public class GestorReservaDAO {
     }
 
     public boolean confirmarReserva(int idReserva){
-        Reserva r = rsDAO.buscarPorReserva(idReserva);
-        if(r==null){
+        List<Reserva> todasReservas = rsDAO.listarReservas();
+        Reserva reservaEncontrada = null;
+        
+        for(Reserva r : todasReservas){
+            if(r.getId() == idReserva){
+                reservaEncontrada = r;
+                break;
+            }
+        }
+        
+        if(reservaEncontrada == null){
             System.out.println("Reserva nao encontrada.");
             return false;
         }
-        if(r.getEstadoReserva()!=EstadoReserva.PENDENTE){
+        if(reservaEncontrada.getEstadoReserva()!=EstadoReserva.PENDENTE){
             System.out.println("So pode confirmar reserva Pendente.");
             return false;
         }
-        r.setEstadoReserva(EstadoReserva.CONFIRMADA);
+        reservaEncontrada.setEstadoReserva(EstadoReserva.CONFIRMADA);
+        rsDAO.reescreverArquivo(todasReservas);
+        rs = rsDAO.listarReservas();
         return true;
     }
 
     public boolean cancelarReserva(int idReserva){
-        Reserva r= rsDAO.buscarPorReserva(idReserva);
-        if(r==null) return false;
-        if(r.getEstadoReserva()==EstadoReserva.CONFIRMADA){
-            System.out.println("Nao pode ser cancelada, a resserva foi confirmada.");
+        List<Reserva> todasReservas = rsDAO.listarReservas();
+        Reserva reservaEncontrada = null;
+        
+        for(Reserva r : todasReservas){
+            if(r.getId() == idReserva){
+                reservaEncontrada = r;
+                break;
+            }
+        }
+        
+        if(reservaEncontrada == null){
             return false;
         }
-        r.setEstadoReserva(EstadoReserva.CANCELADA);
+        if(reservaEncontrada.getEstadoReserva()==EstadoReserva.CONFIRMADA){
+            System.out.println("Nao pode ser cancelada, a reserva foi confirmada.");
+            return false;
+        }
+        reservaEncontrada.setEstadoReserva(EstadoReserva.CANCELADA);
+        rsDAO.reescreverArquivo(todasReservas);
+        rs = rsDAO.listarReservas();
         return true;
     }
 

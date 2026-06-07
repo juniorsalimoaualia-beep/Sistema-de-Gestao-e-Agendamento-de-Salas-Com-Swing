@@ -2,6 +2,8 @@ package main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dao;
 import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Sala;
 import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Reserva;
 import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.EstadoReserva;
+import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Disciplina;
+import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Turma;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -15,6 +17,8 @@ import java.time.LocalTime;
 
 public class ReservaDAO {
     private static final String file= "files/reserva.txt";
+    private DisciplinaDAO disciplinaDAO = new DisciplinaDAO();
+    
     public void salvar(Reserva rs){
         File arquivo = ArquivoUtils.prepararArquivo(file);
         try(BufferedWriter bw =new BufferedWriter(new FileWriter(arquivo,true))){
@@ -36,33 +40,85 @@ public class ReservaDAO {
             
             while((linha=br.readLine())!=null){
                 String dados []= linha.split("; ");
-                if(dados.length >= 9){
+                if(dados.length >= 8){
                     int id = Integer.parseInt(dados[0].trim());
-                    int salaId = Integer.parseInt(dados[1].trim());
-                    int docenteId = Integer.parseInt(dados[2].trim());
-                    String docenteNome = dados[3].trim();
-                    String disciplina = dados[4].trim();
-                    String turma = dados[5].trim();
-                    LocalDate data = LocalDate.parse(dados[6].trim());
-                    LocalTime horaInicio = LocalTime.parse(dados[7].trim());
-                    LocalTime horaFim = LocalTime.parse(dados[8].trim());
-                    
-                    Reserva reserva = new Reserva(id, salaId, docenteId, docenteNome, disciplina, turma, data, horaInicio, horaFim);
-                    
-                    if (dados.length >= 10) {
+                    int salaId = parseIntSafe(dados[1].trim());
+                    int docenteId = parseIntSafe(dados[2].trim());
+
+                    // Detect format: new format has disciplinaId at index 3 (numeric),
+                    // old format has docenteNome at index 3 (non-numeric) and disciplina name at index 4
+                    Disciplina disciplina = null;
+                    Turma turma = null;
+                    LocalDate data = null;
+                    LocalTime horaInicio = null;
+                    LocalTime horaFim = null;
+
+                    String fourth = dados.length > 3 ? dados[3].trim() : "";
+                    boolean fourthIsNumber = isInteger(fourth);
+
+                    if (fourthIsNumber) {
+                        // new format
+                        int disciplinaId = Integer.parseInt(fourth);
+                        String turmaChave = dados.length > 4 ? dados[4].trim() : "0-";
+                        data = dados.length > 5 ? LocalDate.parse(dados[5].trim()) : null;
+                        horaInicio = dados.length > 6 ? LocalTime.parse(dados[6].trim()) : null;
+                        horaFim = dados.length > 7 ? LocalTime.parse(dados[7].trim()) : null;
+
+                        disciplina = disciplinaDAO.buscarPorId(disciplinaId);
+                        if (disciplina == null) disciplina = new Disciplina(disciplinaId, "", null);
+
+                        String[] turmaParts = turmaChave.split("-");
                         try {
-                            reserva.setEstadoReserva(EstadoReserva.valueOf(dados[9].trim()));
-                        } catch (IllegalArgumentException e) {
-                            reserva.setEstadoReserva(EstadoReserva.PENDENTE);
+                            turma = new Turma(Integer.parseInt(turmaParts[0]), turmaParts[1]);
+                        } catch (Exception e) {
+                            turma = new Turma(0, "");
+                        }
+                    } else {
+                        // old format
+                        // indices: 3=docenteNome,4=disciplinaNome,5=turma,6=data,7=horaInicio,8=horaFim
+                        String disciplinaNome = dados.length > 4 ? dados[4].trim() : "";
+                        String turmaChave = dados.length > 5 ? dados[5].trim() : "0-";
+                        data = dados.length > 6 ? LocalDate.parse(dados[6].trim()) : null;
+                        horaInicio = dados.length > 7 ? LocalTime.parse(dados[7].trim()) : null;
+                        horaFim = dados.length > 8 ? LocalTime.parse(dados[8].trim()) : null;
+
+                        disciplina = disciplinaDAO.buscarPorNome(disciplinaNome);
+                        if (disciplina == null) disciplina = new Disciplina(0, disciplinaNome, null);
+
+                        String[] turmaParts = turmaChave.split("-");
+                        try {
+                            turma = new Turma(Integer.parseInt(turmaParts[0]), turmaParts[1]);
+                        } catch (Exception e) {
+                            turma = new Turma(0, "");
                         }
                     }
-                    
+
+                    Reserva reserva = new Reserva(id, salaId, docenteId, disciplina, turma, data, horaInicio, horaFim);
+
+                    // estado pode estar em posição diferente dependendo do formato; try to read last token
+                    String estadoToken = dados[dados.length - 1].trim();
+                    try {
+                        reserva.setEstadoReserva(EstadoReserva.valueOf(estadoToken));
+                    } catch (Exception e) {
+                        // default to PENDENTE
+                        reserva.setEstadoReserva(EstadoReserva.PENDENTE);
+                    }
+
                     listar.add(reserva);
                 }
             }
         }
         catch(IOException e){System.out.println("Erro ao listar "+e.getMessage());}
         return listar;
+    }
+
+    private boolean isInteger(String s) {
+        if (s == null || s.isEmpty()) return false;
+        try { Integer.parseInt(s); return true; } catch (NumberFormatException e) { return false; }
+    }
+
+    private int parseIntSafe(String s) {
+        try { return Integer.parseInt(s); } catch (Exception e) { return 0; }
     }
 
     public Reserva buscarPorReserva(int id){
@@ -126,6 +182,18 @@ public class ReservaDAO {
         if (sala != null) {
             sala.desvinculaReserva();
             salaDAO.atualizar(sala);
+        }
+    }
+
+    public void reescreverArquivo(List<Reserva> lista) {
+        File arquivo = ArquivoUtils.prepararArquivo(file);
+        try (BufferedWriter bw = new BufferedWriter(new FileWriter(arquivo, false))) {
+            for (Reserva r : lista) {
+                bw.write(r.toString());
+                bw.newLine();
+            }
+        } catch (IOException e) {
+            System.out.println("Erro ao reescrever arquivo de Reservas: " + e.getMessage());
         }
     }
 }
