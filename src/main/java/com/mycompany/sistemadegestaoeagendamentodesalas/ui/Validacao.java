@@ -10,7 +10,7 @@ import java.time.format.DateTimeFormatter;
 public class Validacao{
     private BufferedReader br= new BufferedReader(new InputStreamReader(System.in));
     
-    public int validarNumero(String msg){
+    public int validarInt(String msg){
         int numero;
         while(true){
             try{
@@ -21,6 +21,22 @@ public class Validacao{
                 System.out.println("Erro: Digite um numero inteiro valido. " + e.getMessage());
             }catch(NumberFormatException e){
                 System.out.println("Erro: Digite um numero inteiro valido.");
+            }
+        }
+    }
+
+    public int validarCell(String msg){
+        int numero;
+        while(true){
+            try {
+                System.out.println(msg);
+                numero=Integer.parseInt(br.readLine());
+                if(!(numero>=820000000 && numero<=879999999)){
+                    System.out.println("Numero invalido!");
+                }
+                else{return numero;}
+            } catch (Exception e) {
+                System.out.println("Digite um numero valido. "+e.getMessage());
             }
         }
     }
@@ -36,6 +52,13 @@ public class Validacao{
                 }
                 if(texto == null || texto.isEmpty()){
                     System.out.println("Erro: Campo nao deve ser vazio!");
+                    continue;
+                }
+                // Validar: apenas letras e espaços
+                if(!texto.matches("^[a-zA-Záàâäãéèêëíìîïóòôöõúùûüçñ\\s]+$")){
+                    System.out.println("Erro: Campo deve conter apenas letras e espaços. Numeros, pontuacao e simbolos nao sao permitidos.");
+                    texto = null;
+                    continue;
                 }
             }
             catch (IOException e) {
@@ -44,6 +67,56 @@ public class Validacao{
         }
         while(texto == null || texto.isEmpty());
         return texto;
+    }
+
+    public String validarEmail(String msg){
+        String email = null;
+        do{
+            try {
+                System.out.println(msg);
+                email = br.readLine();
+                if(email != null){
+                    email = email.trim();
+                }
+                if(email == null || email.isEmpty()){
+                    System.out.println("Erro: Email nao deve ser vazio!");
+                    continue;
+                }
+                // Validação simples de email
+                if(!email.matches("^[a-zA-Z0-9._%-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$")){
+                    System.out.println("Erro: Email invalido. Use o formato: usuario@dominio.com");
+                    email = null;
+                    continue;
+                }
+            }
+            catch (IOException e) {
+                System.out.println("Erro de leitura. Tente novamente.");
+            }
+        }
+        while(email == null || email.isEmpty());
+        return email;
+    }
+
+    public String validarSenha(String msg){
+        String senha = null;
+        do{
+            try {
+                System.out.println(msg);
+                senha = br.readLine();
+                if(senha != null){
+                    senha = senha.trim();
+                }
+                if(senha == null || senha.isEmpty()){
+                    System.out.println("Erro: Senha nao deve ser vazia!");
+                    continue;
+                }
+            }
+            catch (IOException e) {
+                System.out.println("Erro de leitura. Tente novamente.");
+            }
+        }
+        while(senha == null || senha.isEmpty());
+        return senha;
     }
 
     public LocalDate validarDate(String msg){
@@ -64,7 +137,7 @@ public class Validacao{
         DateTimeFormatter fmt= DateTimeFormatter.ofPattern("HH:mm");
         while(true){
             try {
-                System.out.println("[HH:mm]: ");
+                System.out.println("Hora:minuto : ");
                 String entrada= br.readLine().trim();
                 return LocalTime.parse(entrada,fmt);
             } catch (IOException e) {
