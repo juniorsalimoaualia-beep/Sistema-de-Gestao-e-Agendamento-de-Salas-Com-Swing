@@ -245,7 +245,7 @@ public class AdminUI {
         Disciplina disc = disciplinaController.buscarPorId(id);
         
         if(disc==null){
-            System.out.println("Discilina nao encontrada");
+            System.out.println("Disciplina nao encontrada");
             return;
         }
         System.out.println("Docente atual da disciplina: "+disc.getDocente().getNomeCompleto());

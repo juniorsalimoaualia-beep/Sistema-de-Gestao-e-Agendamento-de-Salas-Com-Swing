@@ -184,7 +184,7 @@ public class UsuarioUI {
                 case 0:
                     return;
                 default:
-                    System.out.println("Opcao invalida. Digite 0 a 4.");
+                    System.out.println("Opcao invalida. Digite 0 a 5.");
             }
         }
     }
@@ -324,9 +324,14 @@ public class UsuarioUI {
                         System.out.println("Sala nao encontrada.");
                     } else if(docenteReserva == null){
                         System.out.println("Docente nao encontrado.");
+                    } else if(!horaFim.isAfter(horaInicio)){
+                        System.out.println("Hora fim deve ser depois da hora inicio.");
+                    } else if(!reservaController.verificarDisponibilidade(salaNome, data, horaInicio, horaFim)){
+                        System.out.println("Sala indisponivel para este periodo.");
                     } else {
                         Reserva reserva = new Reserva(idReserva, sala.getId(), idDocenteReserva, disciplinaEscolhida, turma, data, horaInicio, horaFim);
                         reservaController.salvar(reserva);
+                        reservaController.vincularSalaAReserva(sala.getId(), idReserva);
                         System.out.println("Reserva cadastrada com sucesso. ID: " + idReserva);
                     }
                     break;

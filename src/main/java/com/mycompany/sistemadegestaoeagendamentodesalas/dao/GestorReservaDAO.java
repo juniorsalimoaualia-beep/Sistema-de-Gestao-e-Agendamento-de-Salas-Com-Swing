@@ -15,6 +15,7 @@ public class GestorReservaDAO {
     private List<Reserva> rs=rsDAO.listarReservas();
 
     public boolean verificarDisponibilidade(String nomeSala, LocalDate data, LocalTime inicio, LocalTime fim){
+        rs = rsDAO.listarReservas();
         Sala sala = salaDao.buscarPorSala(nomeSala);
         if(sala==null){
             System.out.println("Erro: Sala nao existe.");

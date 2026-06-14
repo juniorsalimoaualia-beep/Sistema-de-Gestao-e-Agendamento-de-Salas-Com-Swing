@@ -13,12 +13,20 @@ public class ReservaController {
         reservaDAO.salvar(reserva);
     }
 
+    public void vincularSalaAReserva(int salaId, int reservaId) {
+        reservaDAO.vincularSalaAReserva(salaId, reservaId);
+    }
+
     public List<Reserva> listar() {
         return reservaDAO.listarReservas();
     }
 
     public Reserva buscarPorId(int id) {
         return reservaDAO.buscarPorReserva(id);
+    }
+
+    public boolean verificarDisponibilidade(String nomeSala, java.time.LocalDate data, java.time.LocalTime inicio, java.time.LocalTime fim) {
+        return gestorDAO.verificarDisponibilidade(nomeSala, data, inicio, fim);
     }
 
     public boolean confirmar(int id) {

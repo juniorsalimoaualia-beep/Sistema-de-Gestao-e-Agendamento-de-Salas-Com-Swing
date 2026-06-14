@@ -32,10 +32,11 @@ public class DisciplinaController {
     public void editarDisciplina(int id, String nome, String apelido){
         List<Disciplina> lista =dao.listaDisciplina();
         for(Disciplina ds:lista){
-            if(id==ds.getDocente().getId()){
-                Docente dc=new Docente(id,nome,apelido,"",0,"","");
+            if(ds.getId()==id){
+                int docenteId = ds.getDocente()!=null ? ds.getDocente().getId() : 0;
+                Docente dc=new Docente(docenteId,nome,apelido,"",0,"","");
                 ds.setDocente(dc);
-                
+                dao.reescreverArquivo(lista);
                 return;
             }
         }

@@ -101,4 +101,14 @@ public class DisciplinaDAO {
         return null;
     }
 
+    public void reescreverArquivo(List<Disciplina> lista) {
+        try(BufferedWriter bw = new BufferedWriter(new FileWriter(file, false))){
+            for(Disciplina disciplina : lista){
+                bw.write(disciplina.toString());
+                bw.newLine();
+            }
+        }catch(IOException e){
+            System.out.println("Erro ao reescrever arquivo de disciplinas "+e.getMessage());
+        }
+    }
 }
