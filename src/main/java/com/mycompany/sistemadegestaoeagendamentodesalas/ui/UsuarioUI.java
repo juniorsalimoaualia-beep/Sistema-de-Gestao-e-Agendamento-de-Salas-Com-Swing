@@ -8,6 +8,7 @@ import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dao.DocenteDAO
 import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.controller.DisciplinaController;
 import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.controller.DocenteController;
 import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.controller.EstudanteController;
+import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.controller.HorarioController;
 import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.controller.ReservaController;
 import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.controller.SalaController;
 import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.controller.SecretarioController;
@@ -15,6 +16,7 @@ import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.service.Inscri
 import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Inscricao;
 import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Docente;
 import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Estudante;
+import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Horario;
 import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Reserva;
 import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Sala;
 import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Secretario;
@@ -32,6 +34,7 @@ public class UsuarioUI {
     private SalaController salaController = new SalaController();
     private DisciplinaController disciplinaController = new DisciplinaController();
     private EstudanteController estudanteController = new EstudanteController();
+    private HorarioController horarioController = new HorarioController();
     private DocenteController docenteController = new DocenteController();
     private ReservaController reservaController = new ReservaController();
     private SecretarioController secretarioController = new SecretarioController();
@@ -141,7 +144,7 @@ public class UsuarioUI {
         
         while(true){
             System.out.println("\n--- Menu Estudante ---");
-            int opcao = vd.validarInt("1. Perfil\n2. Consultar Sala\n3. Ver Disciplinas\n4. Inscrever-se em Disciplina\n5. Alterar senha\n0. Sair");
+            int opcao = vd.validarInt("1. Perfil\n2. Consultar Sala\n3. Ver Disciplinas\n4. Inscrever-se em Disciplina\n5. Alterar senha\n6. Ver Horario\n0. Sair");
             switch(opcao){
                 case 1:
                     Estudante estudante = estudanteController.buscarPorId(usuarioLogadoId);
@@ -179,13 +182,48 @@ public class UsuarioUI {
                     String senhaNova=vd.validarString("Digite nova senha:");
                     estudanteController.alterarSenha(usuarioLogadoId, senhaAtual, senhaNova);
                     break;
+                case 6:
+                    mostrarHorarioEstudante();
+                    break;
 
                     
                 case 0:
                     return;
                 default:
-                    System.out.println("Opcao invalida. Digite 0 a 5.");
+                    System.out.println("Opcao invalida. Digite 0 a 6.");
             }
+        }
+    }
+
+    private void mostrarHorarioEstudante() {
+        List<Inscricao> inscricoes = inscricaoService.listarInscricoesPorEstudante(usuarioLogadoId);
+        if(inscricoes.isEmpty()){
+            System.out.println("Voce nao esta inscrito em nenhuma disciplina.");
+            return;
+        }
+
+        boolean encontrouHorario = false;
+        System.out.println("\n--- Seu Horario ---");
+        for(Inscricao inscricao : inscricoes){
+            Disciplina disciplina = inscricao.getDisciplina();
+            List<Horario> horarios = horarioController.listarPorDisciplina(disciplina.getId());
+
+            if(horarios.isEmpty()){
+                System.out.println("Disciplina: " + disciplina.getNome() + " | Sem horario cadastrado.");
+                continue;
+            }
+
+            for(Horario horario : horarios){
+                System.out.println("Disciplina: " + disciplina.getNome()
+                        + " | Curso: " + disciplina.getCurso()
+                        + " | Dia: " + horario.getDiaSemana()
+                        + " | Horario: " + horario.getHoraInicio() + "-" + horario.getHoraFim());
+                encontrouHorario = true;
+            }
+        }
+
+        if(!encontrouHorario){
+            System.out.println("Nenhuma das suas disciplinas tem horario cadastrado.");
         }
     }
 
@@ -368,7 +406,7 @@ public class UsuarioUI {
     public void menuSecretario(){
         while(true){
             System.out.println("\n--- Menu Secretario ---");
-            int opcao = vd.validarInt("1. Perfil\n2. Ver Reservas\n3. Confirmar Reservas\n4. Cancelar Reserva\n5. Estado da Reserva\n6. Alterar senha\n0. Sair");
+            int opcao = vd.validarInt("1. Perfil\n2. Ver Reservas\n3. Confirmar Reservas\n4. Cancelar Reserva\n5. Estado da Reserva\n6. Alterar senha\n7. Relatorios\n0. Sair");
             switch(opcao){
                 case 1:
                     Secretario secretario = secretarioController.buscarPorId(usuarioLogadoId);
@@ -416,12 +454,129 @@ public class UsuarioUI {
                     String senhaNova=vd.validarString("Digite nova senha:");
                     secretarioController.alterarSenha(usuarioLogadoId, senhaAtual, senhaNova);
                     break;
+                case 7:
+                    menuRelatoriosSecretario();
+                    break;
                 case 0:
                     return;
                 default:
-                    System.out.println("Opcao invalida. Digite 0 a 6.");
+                    System.out.println("Opcao invalida. Digite 0 a 7.");
             }
         }
+    }
+
+    private void menuRelatoriosSecretario() {
+        while(true){
+            System.out.println("\n--- Relatorios de Reservas ---");
+            int opcao = vd.validarInt("1. Resumo por estado\n2. Reservas por docente\n3. Reservas por sala\n4. Reservas por data\n5. Todas detalhadas\n0. Voltar");
+            switch(opcao){
+                case 1:
+                    relatorioPorEstado();
+                    break;
+                case 2:
+                    relatorioPorDocente();
+                    break;
+                case 3:
+                    relatorioPorSala();
+                    break;
+                case 4:
+                    relatorioPorData();
+                    break;
+                case 5:
+                    imprimirReservasDetalhadas(reservaController.listar());
+                    break;
+                case 0:
+                    return;
+                default:
+                    System.out.println("Opcao invalida. Digite 0 a 5.");
+            }
+        }
+    }
+
+    private void relatorioPorEstado() {
+        List<Reserva> reservas = reservaController.listar();
+        if(reservas.isEmpty()){
+            System.out.println("Nenhuma reserva encontrada.");
+            return;
+        }
+
+        for(EstadoReserva estado : EstadoReserva.values()){
+            int total = 0;
+            for(Reserva reserva : reservas){
+                if(reserva.getEstadoReserva() == estado){
+                    total++;
+                }
+            }
+            System.out.println(estado + ": " + total);
+        }
+        System.out.println("Total: " + reservas.size());
+    }
+
+    private void relatorioPorDocente() {
+        int docenteId = vd.validarInt("Digite o ID do docente:");
+        List<Reserva> reservas = reservaController.listar();
+        List<Reserva> resultado = new java.util.ArrayList<>();
+
+        for(Reserva reserva : reservas){
+            if(reserva.getDocenteId() == docenteId){
+                resultado.add(reserva);
+            }
+        }
+
+        imprimirReservasDetalhadas(resultado);
+    }
+
+    private void relatorioPorSala() {
+        int salaId = vd.validarInt("Digite o ID da sala:");
+        List<Reserva> reservas = reservaController.listar();
+        List<Reserva> resultado = new java.util.ArrayList<>();
+
+        for(Reserva reserva : reservas){
+            if(reserva.getSalaId() == salaId){
+                resultado.add(reserva);
+            }
+        }
+
+        imprimirReservasDetalhadas(resultado);
+    }
+
+    private void relatorioPorData() {
+        LocalDate data = vd.validarDate("Data do relatorio");
+        List<Reserva> reservas = reservaController.listar();
+        List<Reserva> resultado = new java.util.ArrayList<>();
+
+        for(Reserva reserva : reservas){
+            if(data.equals(reserva.getData())){
+                resultado.add(reserva);
+            }
+        }
+
+        imprimirReservasDetalhadas(resultado);
+    }
+
+    private void imprimirReservasDetalhadas(List<Reserva> reservas) {
+        if(reservas.isEmpty()){
+            System.out.println("Nenhuma reserva encontrada.");
+            return;
+        }
+
+        for(Reserva reserva : reservas){
+            Sala sala = salaController.buscarPorId(reserva.getSalaId());
+            Docente docente = docenteController.buscarPorId(reserva.getDocenteId());
+            String nomeSala = sala != null ? sala.getNome() : "Sala ID " + reserva.getSalaId();
+            String nomeDocente = docente != null ? docente.getNomeCompleto() : "Docente ID " + reserva.getDocenteId();
+            String nomeDisciplina = reserva.getDisciplina() != null ? reserva.getDisciplina().getNome() : "";
+
+            System.out.println("Reserva ID: " + reserva.getId()
+                    + " | Estado: " + reserva.getEstadoReserva()
+                    + " | Sala: " + nomeSala
+                    + " | Docente: " + nomeDocente
+                    + " | Disciplina: " + nomeDisciplina
+                    + " | Turma: " + reserva.getTurma()
+                    + " | Data: " + reserva.getData()
+                    + " | Horario: " + reserva.getHoraInicio() + "-" + reserva.getHoraFim());
+        }
+        System.out.println("Total encontrado: " + reservas.size());
     }
 
     public void menuAdmin(){
