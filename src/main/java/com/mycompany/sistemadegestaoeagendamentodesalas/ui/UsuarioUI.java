@@ -165,11 +165,19 @@ public class UsuarioUI {
                     } else {
                         System.out.println("Disciplinas em que voce esta inscrito:");
                         for(Inscricao inscricao : inscricoes){
-                            System.out.println(inscricao.getDisciplina().toString());
+                            System.out.println(inscricao.getDisciplina().getNome()+" - "+inscricao.getDisciplina().getDocente());
                         }
                     }
                     break;
                 case 4:
+                    List<Disciplina> disciplinasDisponiveis = disciplinaController.listar();
+                    if(disciplinasDisponiveis.isEmpty()){
+                        System.out.println("Nenhuma disciplina disponivel para inscricao.");
+                        break;
+                    }
+                    for(Disciplina disciplina : disciplinasDisponiveis){
+                        System.out.println(disciplina.getId() + " - " + disciplina.getNome());
+                    }
                     int disciplinaId = vd.validarInt("Digite o ID da disciplina para se inscrever:");
                     if(inscricaoService.inscreverEstudante(usuarioLogadoId, disciplinaId)){
                         System.out.println("Inscricao realizada com sucesso.");
@@ -237,7 +245,7 @@ public class UsuarioUI {
         System.out.println("Disciplinas em que voce esta inscrito:");
         for(int i = 0; i < inscricoes.size(); i++){
             Disciplina disciplina = inscricoes.get(i).getDisciplina();
-            System.out.println((i + 1) + ". " + disciplina.getNome() + " | Curso: " + disciplina.getCurso());
+            System.out.println((i + 1) + ". " + disciplina.getNome());
         }
 
         int escolha = vd.validarInt("Selecione o numero da disciplina:");
@@ -298,7 +306,7 @@ public class UsuarioUI {
                             if(!inscricoes.isEmpty()){
                                 System.out.println("Disciplina: " + disciplina.getNome());
                                 for(Inscricao inscricao : inscricoes){
-                                    System.out.println("  - " + inscricao.getEstudante().toString());
+                                    System.out.println(inscricao.getEstudante().getId() + " | " + inscricao.getEstudante().getNomeCompleto()+" | "+inscricao.getEstudante().getCurso()+" | "+inscricao.getEstudante().getEmail());
                                 }
                             }
                         }
