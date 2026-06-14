@@ -19,6 +19,10 @@ public class SalaController {
         return dao.buscarPorSala(nome);
     }
 
+    public Sala buscarPorId(int id) {
+        return dao.buscarPorId(id);
+    }
+
     public int gerarProximoId() {
         return dao.gerarProximoId();
     }

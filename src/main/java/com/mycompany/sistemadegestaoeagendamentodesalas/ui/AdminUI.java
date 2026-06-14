@@ -5,16 +5,21 @@ import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.controller.Dep
 import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.controller.DisciplinaController;
 import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.controller.DocenteController;
 import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.controller.EstudanteController;
+import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.controller.HorarioController;
 import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.controller.SalaController;
 import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.controller.SecretarioController;
 import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Curso;
 import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Departamento;
+import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.DiaSemana;
 import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Disciplina;
 import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Docente;
 import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Estudante;
+import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Horario;
 import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Sala;
 import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Secretario;
 import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.service.EmailGenarator;
+import java.time.LocalTime;
+import java.util.List;
 
 public class AdminUI {
     private Validacao vd = new Validacao();
@@ -25,11 +30,13 @@ public class AdminUI {
     private DepartamentoController departamentoController = new DepartamentoController();
     private CursoController cursoController = new CursoController();
     private DisciplinaController disciplinaController = new DisciplinaController();
+    private HorarioController horarioController = new HorarioController();
     private SalaController salaController= new SalaController();
+    
     public void menu() {
         while (true) {
             System.out.println("\n--- Menu Admin ---");
-            int opcao = vd.validarInt("1. Registrar Secretario\n2. Registrar Docente\n3. Registrar Estudante\n4. Registrar Departamento\n5. Registrar Curso\n6. Registrar Disciplina\n7. Registrar Sala\n8. Editar Docente\n9. Deletar Docente\n10. Editar Curso\n0. Voltar");
+            int opcao = vd.validarInt("1. Registrar Secretario\n2. Registrar Docente\n3. Registrar Estudante\n4. Registrar Departamento\n5. Registrar Curso\n6. Registrar Disciplina\n7. Registrar Sala\n8. Editar Docente\n9. Deletar Docente\n10. Editar Curso\n11. Editar Disciplina\n12. Registrar Horario\n0. Voltar");
             switch (opcao) {
                 case 1:
                     cadastrarSecretario();
@@ -62,10 +69,16 @@ public class AdminUI {
                 case 10:
                     editarCurso();
                     break;
+                case 11:
+                    editarDisciplina();
+                    break;
+                case 12:
+                    cadastrarHorario();
+                    break;
                 case 0:
                     return;
                 default:
-                    System.out.println("Opcao invalida. Digite 0 a 9.");
+                    System.out.println("Opcao invalida. Digite 0 a 12.");
             }
         }
     }
@@ -157,11 +170,92 @@ public class AdminUI {
             return;
         }
 
-        String curso = vd.validarString("Digite o curso (ex: Engenharia, Informatica):");
+        Curso cursoSelecionado = selecionarCurso();
+        if (cursoSelecionado == null) {
+            return;
+        }
         
-        Disciplina disciplina = new Disciplina(id, nome, docenteSelecionado, curso);
+        Disciplina disciplina = new Disciplina(id, nome, docenteSelecionado, cursoSelecionado.getNome());
         disciplinaController.salvar(disciplina);
-        System.out.println("Disciplina registrada com sucesso. ID: " + id + " | Docente: " + docenteSelecionado.getNomeCompleto() + " | Curso: " + curso);
+        System.out.println("Disciplina registrada com sucesso. ID: " + id + " | Docente: " + docenteSelecionado.getNomeCompleto() + " | Curso: " + cursoSelecionado.getNome());
+    }
+
+    private void cadastrarHorario() {
+        System.out.println("\n--- Registrar Horario ---");
+        Curso cursoSelecionado = selecionarCurso();
+        if (cursoSelecionado == null) {
+            return;
+        }
+
+        List<Disciplina> disciplinas = disciplinaController.listarPorCurso(cursoSelecionado.getNome());
+        if (disciplinas.isEmpty()) {
+            System.out.println("Nenhuma disciplina encontrada para este curso.");
+            return;
+        }
+
+        System.out.println("\n--- Selecione uma Disciplina ---");
+        for (Disciplina disciplina : disciplinas) {
+            System.out.println(disciplina.getId() + ". " + disciplina.getNome());
+        }
+
+        int disciplinaId = vd.validarInt("Digite o ID da disciplina:");
+        Disciplina disciplinaSelecionada = disciplinaController.buscarPorId(disciplinaId);
+        if (disciplinaSelecionada == null || !cursoSelecionado.getNome().equalsIgnoreCase(disciplinaSelecionada.getCurso())) {
+            System.out.println("Disciplina nao encontrada para o curso selecionado.");
+            return;
+        }
+
+        int id = horarioController.gerarProximoId();
+        DiaSemana diaSemana = vd.validarReserva("Dia da semana:", DiaSemana.class);
+        LocalTime horaInicio = vd.validarTime("Hora inicio (HH:mm):");
+        LocalTime horaFim = vd.validarTime("Hora fim (HH:mm):");
+        if (!horaFim.isAfter(horaInicio)) {
+            System.out.println("Hora fim deve ser depois da hora inicio.");
+            return;
+        }
+
+        Horario horario = new Horario(id, cursoSelecionado, disciplinaSelecionada, diaSemana, horaInicio, horaFim);
+        horarioController.salvar(horario);
+        System.out.println("Horario registrado com sucesso. ID: " + id + " | Curso: " + cursoSelecionado.getNome() + " | Disciplina: " + disciplinaSelecionada.getNome());
+    }
+
+    private Curso selecionarCurso() {
+        List<Curso> cursos = cursoController.listar();
+        if (cursos.isEmpty()) {
+            System.out.println("Nenhum curso disponivel. Por favor, registre um curso primeiro.");
+            return null;
+        }
+
+        System.out.println("\n--- Selecione um Curso ---");
+        for (Curso curso : cursos) {
+            System.out.println(curso.getId() + ". " + curso.getNome());
+        }
+
+        int cursoId = vd.validarInt("Digite o ID do curso:");
+        Curso cursoSelecionado = cursoController.buscarCursoPorId(cursoId);
+        if (cursoSelecionado == null) {
+            System.out.println("Curso nao encontrado.");
+        }
+        return cursoSelecionado;
+    }
+
+    private void editarDisciplina(){
+        System.out.println("\n--- Editar Disciplina ---");
+        int id= vd.validarInt("Digite o ID da disciplina a editar:");
+        Disciplina disc = disciplinaController.buscarPorId(id);
+        
+        if(disc==null){
+            System.out.println("Discilina nao encontrada");
+            return;
+        }
+        System.out.println("Docente atual da disciplina: "+disc.getDocente().getNomeCompleto());
+        int idDocente=disc.getDocente().getId();
+        String nome=vd.validarString("Digite o nome do novo docente:");
+        String apelido=vd.validarString("Digite o apelido:");
+        disc.getDocente().setNome(nome);
+        disc.getDocente().setApelido(apelido); 
+        System.out.println("Docente atual: "+disc.getDocente().getNomeCompleto());
+
     }
 
     private void editarDocente() {

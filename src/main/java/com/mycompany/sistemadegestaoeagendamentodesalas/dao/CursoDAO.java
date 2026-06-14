@@ -36,12 +36,11 @@ public class CursoDAO {
 
     public String buscarPorCurso(int id){
         List<Curso> lista=listaCurso();
-        String nome;
+       
 
         for(Curso dp:lista){
             if(id==dp.getId()){
-                nome=dp.getNome();
-                return nome;
+                return dp.getNome();
             }
         }
         return "Curso nao encontrado";

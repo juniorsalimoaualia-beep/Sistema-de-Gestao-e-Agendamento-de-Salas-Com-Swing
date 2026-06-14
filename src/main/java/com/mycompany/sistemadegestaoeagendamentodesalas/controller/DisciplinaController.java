@@ -29,7 +29,17 @@ public class DisciplinaController {
         }
         return java.util.Collections.emptyList();
     }
-
+    public void editarDisciplina(int id, String nome, String apelido){
+        List<Disciplina> lista =dao.listaDisciplina();
+        for(Disciplina ds:lista){
+            if(id==ds.getDocente().getId()){
+                Docente dc=new Docente(id,nome,apelido,"",0,"","");
+                ds.setDocente(dc);
+                
+                return;
+            }
+        }
+    }
     public List<Disciplina> listarPorCurso(String curso) {
         return dao.listarPorCurso(curso);
     }

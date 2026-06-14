@@ -19,6 +19,14 @@ public class HorarioController {
         return dao.buscarPorHorario(curso);
     }
 
+    public List<Horario> listarPorCurso(String curso) {
+        return dao.listarPorCurso(curso);
+    }
+
+    public List<Horario> listarPorDisciplina(int disciplinaId) {
+        return dao.listarPorDisciplina(disciplinaId);
+    }
+
     public int gerarProximoId() {
         return dao.gerarProximoId();
     }

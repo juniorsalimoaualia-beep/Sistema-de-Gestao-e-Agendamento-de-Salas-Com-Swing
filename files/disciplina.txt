@@ -4,3 +4,4 @@
 4; Base de Dados 2; 2
 5; Programacao Web e Sistema de Gestao de Conteudo; 3
 6; Electronica Digital; 5
+7; Electronica Alicada; 5; Engenharia Informatica
