@@ -15,7 +15,11 @@ public class DepartamentoController {
         return dao.listaDepartamento();
     }
 
-    public String buscarPorId(int id) {
+    public Departamento buscarPorId(int id) {
+        return dao.buscarPorId(id);
+    }
+
+    public String buscarNomePorId(int id) {
         return dao.buscarPorDepartamento(id);
     }
 

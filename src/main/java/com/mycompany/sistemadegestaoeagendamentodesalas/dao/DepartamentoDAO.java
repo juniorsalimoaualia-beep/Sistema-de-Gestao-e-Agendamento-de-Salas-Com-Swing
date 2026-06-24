@@ -1,5 +1,7 @@
 package main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dao;
 import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Departamento;
+import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Curso;
+import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Sala;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
@@ -31,25 +33,34 @@ public class DepartamentoDAO {
         try(BufferedReader br= new BufferedReader(new FileReader(arquivo))){
             while((linha=br.readLine())!=null){
                 String []dados=linha.split("; ");
-                if(dados.length==2){
-                    lista.add(new Departamento(Integer.parseInt(dados[0]), dados[1]));
+                if(dados.length >= 2){
+                    Departamento departamento = new Departamento(Integer.parseInt(dados[0]), dados[1]);
+                    if (dados.length >= 4) {
+                        int cursoId = Integer.parseInt(dados[2]);
+                        int salaId = Integer.parseInt(dados[3]);
+                        departamento.setCurso(new Curso(cursoId, ""));
+                        departamento.setSala(new Sala(salaId, ""));
+                    }
+                    lista.add(departamento);
                 }
             }
         }catch(IOException e){System.out.println("Erro ao ler o ficheiro "+e.getMessage());}
         return lista;
     }
 
-    public String buscarPorDepartamento(int id){
-        List<Departamento> lista=listaDepartamento();
-        String nome;
-
-        for(Departamento dp:lista){
-            if(id==dp.getId()){
-                nome=dp.getNome();
-                return nome;
+    public Departamento buscarPorId(int id){
+        List<Departamento> lista = listaDepartamento();
+        for (Departamento dp : lista) {
+            if (id == dp.getId()) {
+                return dp;
             }
         }
-        return "Departamento nao encontrado";
+        return null;
+    }
+
+    public String buscarPorDepartamento(int id){
+        Departamento departamento = buscarPorId(id);
+        return departamento != null ? departamento.getNome() : "Departamento nao encontrado";
     }
 
     public int gerarProximoId(){

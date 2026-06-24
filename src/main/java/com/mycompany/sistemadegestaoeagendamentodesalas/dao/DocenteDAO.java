@@ -10,8 +10,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Docente;
+import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dao.UsuarioDAO;
 
-public class DocenteDAO {
+public class DocenteDAO implements UsuarioDAO<Docente> {
     private static final String file ="files/Docente.txt";
 
     public void salvar(Docente dc){
@@ -20,6 +21,11 @@ public class DocenteDAO {
             bw.write(dc.toString());
             bw.newLine();
         }catch(IOException e){System.out.println("Erro ao salvar Docente "+e.getMessage());}
+    }
+
+    @Override
+    public List<Docente> listar(){
+        return listaDocente();
     }
 
     public List<Docente> listaDocente(){
@@ -72,6 +78,11 @@ public class DocenteDAO {
         return false;
     }
 
+    @Override
+    public Docente buscarPorId(int id){
+        return buscarPorDocente(id);
+    }
+
     public Docente buscarPorDocente(int id){
         List<Docente> lista = listaDocente();
 
@@ -83,6 +94,7 @@ public class DocenteDAO {
         return null;
     }
 
+    @Override
     public int gerarProximoId(){
         int max = 0;
         for(Docente dc : listaDocente()){
@@ -91,6 +103,7 @@ public class DocenteDAO {
         return max + 1;
     }
 
+    @Override
     public boolean alterarSenha(int id, String senhaAtual, String senhaNova) {
         List<Docente> lista = listaDocente();
         Docente docenteEncontrado = null;

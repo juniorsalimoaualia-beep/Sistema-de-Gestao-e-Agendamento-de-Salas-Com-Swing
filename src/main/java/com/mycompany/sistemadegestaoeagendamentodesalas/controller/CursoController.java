@@ -14,6 +14,7 @@ public class CursoController {
     public List<Curso> listar() {
         return dao.listaCurso();
     }
+    
 
     public String buscarPorId(int id) {
         return dao.buscarPorCurso(id);

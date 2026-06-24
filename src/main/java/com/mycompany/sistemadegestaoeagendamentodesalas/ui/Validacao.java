@@ -69,6 +69,32 @@ public class Validacao{
         return texto;
     }
 
+    public String validarSala(String msg) {
+        String texto = null;
+        do {
+            try {
+                System.out.println(msg);
+                texto = br.readLine();
+                if (texto != null) {
+                    texto = texto.trim();
+                }
+                if (texto == null || texto.isEmpty()) {
+                    System.out.println("Erro: Campo nao deve ser vazio!");
+                    continue;
+                }
+                // Validar: apenas letras e numeros, sem espacos ou simbolos
+                if (!texto.matches("^[a-zA-Z0-9]+$")) {
+                    System.out.println("Erro: Nome de sala deve conter apenas letras e numeros, sem espacos ou simbolos.");
+                    texto = null;
+                    continue;
+                }
+            } catch (IOException e) {
+                System.out.println("Erro de leitura. Tente novamente.");
+            }
+        } while (texto == null || texto.isEmpty());
+        return texto;
+    }
+
     public String validarEmail(String msg){
         String email = null;
         do{

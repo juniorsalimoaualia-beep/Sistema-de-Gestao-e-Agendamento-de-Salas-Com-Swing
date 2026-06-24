@@ -8,7 +8,16 @@ public class TurmaController {
     private TurmaDAO dao = new TurmaDAO();
 
     public void salvar(Turma turma) {
-        dao.salvar(turma);
+        if (turma == null) {
+            return;
+        }
+        if (!dao.turmaExiste(turma.getChave())) {
+            dao.salvar(turma);
+        }
+    }
+
+    public boolean existePorChave(String chave) {
+        return dao.turmaExiste(chave);
     }
 
     public List<Turma> listar() {

@@ -1,10 +1,11 @@
 package main.java.com.mycompany.sistemadegestaoeagendamentodesalas.controller;
 
 import java.util.List;
+import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.controller.UsuarioController;
 import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dao.DocenteDAO;
 import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Docente;
 
-public class DocenteController {
+public class DocenteController implements UsuarioController<Docente> {
     private DocenteDAO dao = new DocenteDAO();
 
     public void salvar(Docente docente) {

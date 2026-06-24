@@ -1,5 +1,8 @@
 package main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1;
 
+import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Curso;
+import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Sala;
+
 public class Departamento {
     private int id;
     private String nome;
@@ -7,8 +10,14 @@ public class Departamento {
     private Sala sala;
     
     public Departamento(int id, String nome){
-        this.id=id;
-        this.nome=nome;
+        this(id, nome, null, null);
+    }
+
+    public Departamento(int id, String nome, Curso curso, Sala sala){
+        this.id = id;
+        this.nome = nome;
+        this.curso = curso;
+        this.sala = sala;
     }
 
     public int getId(){return id;}
@@ -16,10 +25,26 @@ public class Departamento {
     public String getNome(){return nome;}
     public void setNome(String nome){this.nome=nome;}
 
-    public String getCurso(){ return curso != null ? curso.getNome() : ""; }
-    public String getSala(){ return sala != null ? sala.getNome() : ""; }
+    public Curso getCurso(){
+        return curso;
+    }
 
+    public void setCurso(Curso curso){
+        this.curso = curso;
+    }
+
+    public Sala getSala(){
+        return sala;
+    }
+
+    public void setSala(Sala sala){
+        this.sala = sala;
+    }
+
+    @Override
     public String toString(){
-        return id + "; " + nome;
+        int cursoId = curso != null ? curso.getId() : -1;
+        int salaId = sala != null ? sala.getId() : -1;
+        return id + "; " + nome + "; " + cursoId + "; " + salaId;
     }
 }

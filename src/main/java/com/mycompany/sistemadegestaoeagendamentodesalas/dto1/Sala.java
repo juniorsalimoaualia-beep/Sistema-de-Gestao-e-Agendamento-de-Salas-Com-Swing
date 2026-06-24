@@ -5,12 +5,18 @@ public class Sala{
     private String nome;
     private EstadoSala estado;
     private int reservaId;
+    private Departamento departamento;
 
     public Sala(int id, String nome){
+        this(id, nome, null);
+    }
+
+    public Sala(int id, String nome, Departamento departamento){
         this.id=id;
         this.nome=nome;
         this.estado = EstadoSala.LIVRE;
         this.reservaId = -1;
+        this.departamento = departamento;
     }
 
     public int getId(){return this.id;}
@@ -24,6 +30,14 @@ public class Sala{
     public int getReservaId(){return this.reservaId;}
     public void setReservaId(int reservaId){this.reservaId=reservaId;}
 
+    public Departamento getDepartamento(){
+        return this.departamento;
+    }
+
+    public void setDepartamento(Departamento departamento){
+        this.departamento = departamento;
+    }
+
     public void vincularReserva(int reservaId) {
         this.reservaId = reservaId;
         this.estado = EstadoSala.RESERVADA;
@@ -36,6 +50,7 @@ public class Sala{
 
     @Override
     public String toString(){
-        return id+"; "+nome+"; "+estado+"; "+reservaId;
+        int departamentoId = departamento != null ? departamento.getId() : -1;
+        return id+"; "+nome+"; "+estado+"; "+reservaId+"; "+departamentoId;
     }
 }

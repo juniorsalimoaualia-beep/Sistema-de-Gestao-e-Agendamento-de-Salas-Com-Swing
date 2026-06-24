@@ -26,9 +26,11 @@ public class GestorReservaDAO {
             return false;
         }
         for(Reserva r: rs){
-            boolean mesmaSala = r.getSalaId() == sala.getId();
-            boolean mesmaData=r.getData().equals(data);
-            boolean reservaAtiva= r.getEstadoReserva()==EstadoReserva.CONFIRMADA||r.getEstadoReserva()==EstadoReserva.PENDENTE;
+            int idSalaReserva = 0;
+            try { main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Sala salaReservaObj = r.getSalaId(); idSalaReserva = salaReservaObj != null ? salaReservaObj.getId() : 0; } catch (Exception e) { idSalaReserva = 0; }
+            boolean mesmaSala = idSalaReserva == sala.getId();
+            boolean mesmaData = r.getData() != null && r.getData().equals(data);
+            boolean reservaAtiva = r.getEstadoReserva()==EstadoReserva.CONFIRMADA||r.getEstadoReserva()==EstadoReserva.PENDENTE;
             if(mesmaSala && mesmaData && reservaAtiva){
                 boolean conflita = !(fim.isBefore(r.getHoraInicio()) || inicio.isAfter(r.getHoraFim()) || fim.equals(r.getHoraInicio()) || inicio.equals(r.getHoraInicio()));
                 if(conflita){

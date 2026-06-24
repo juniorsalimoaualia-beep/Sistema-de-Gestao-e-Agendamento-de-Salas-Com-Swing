@@ -23,6 +23,7 @@ public class InscricaoService {
         List<Inscricao> inscricoes = inscricaoDAO.buscarPorEstudante(estudanteId);
         for (Inscricao inscricao : inscricoes) {
             if (inscricao.getDisciplina().getId() == disciplinaId) {
+                System.out.println("Erro: Estudante já inscrito nesta disciplina.");
                 return false; // Já inscrito
             }
         }

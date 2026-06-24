@@ -1,5 +1,6 @@
 package main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dao;
 import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Curso;
+import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Departamento;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.FileReader;
@@ -26,8 +27,15 @@ public class CursoDAO {
         try(BufferedReader br= new BufferedReader(new FileReader(file))){
             while((linha=br.readLine())!=null){
                 String []dados=linha.split("; ");
-                if(dados.length==2){
-                    lista.add(new Curso(Integer.parseInt(dados[0]), dados[1]));
+                if(dados.length >= 2){
+                    Curso curso;
+                    if (dados.length >= 3) {
+                        int departamentoId = Integer.parseInt(dados[2]);
+                        curso = new Curso(Integer.parseInt(dados[0]), dados[1], new Departamento(departamentoId, ""));
+                    } else {
+                        curso = new Curso(Integer.parseInt(dados[0]), dados[1]);
+                    }
+                    lista.add(curso);
                 }
             }
         }catch(IOException e){System.out.println("Erro ao ler o ficheiro "+e.getMessage());}
@@ -44,6 +52,19 @@ public class CursoDAO {
             }
         }
         return "Curso nao encontrado";
+    }
+
+    public Curso buscarCursoPorNome(String nome){
+        if (nome == null) {
+            return null;
+        }
+        List<Curso> lista = listaCurso();
+        for (Curso curso : lista) {
+            if (curso.getNome() != null && curso.getNome().equalsIgnoreCase(nome.trim())) {
+                return curso;
+            }
+        }
+        return null;
     }
 
     public int gerarProximoId(){

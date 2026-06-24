@@ -12,7 +12,6 @@ public class MenuUI {
             System.out.println("2. Docente");
             System.out.println("3. Estudante");
             System.out.println("4. Secretario");
-            System.out.println("5. Departamento");
             System.out.println("0. Sair");
             int opcao = vd.validarInt("Digite a opcao:");
             if(opcao == 0){

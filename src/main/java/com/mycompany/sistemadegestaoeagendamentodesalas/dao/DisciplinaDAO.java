@@ -1,6 +1,8 @@
 package main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dao;
+import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Curso;
 import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Disciplina;
 import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Docente;
+import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dao.CursoDAO;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.FileReader;
@@ -14,6 +16,7 @@ import java.util.List;
 public class DisciplinaDAO {
     private static final String file= "files/disciplina.txt";
     private DocenteDAO docenteDAO = new DocenteDAO();
+    private CursoDAO cursoDAO = new CursoDAO();
 
     public void salvar(Disciplina ds){
         try(BufferedWriter bw= new BufferedWriter(new FileWriter(file,true))){
@@ -36,7 +39,11 @@ public class DisciplinaDAO {
                     if(docente == null){
                         docente = new Docente(docenteId, "", "", "", 0, "", "");
                     }
-                    String curso = (dados.length >= 4) ? dados[3] : "";
+                    String cursoNome = (dados.length >= 4) ? dados[3] : "";
+                    Curso curso = cursoDAO.buscarCursoPorNome(cursoNome);
+                    if (curso == null) {
+                        curso = new Curso(0, cursoNome);
+                    }
                     lista.add(new Disciplina(id, nome, docente, curso));
                 }
             }
@@ -64,7 +71,7 @@ public class DisciplinaDAO {
         List<Disciplina> resultado = new ArrayList<>();
         if(curso != null && !curso.isEmpty()) {
             for (Disciplina ds : lista) {
-                if (ds.getCurso() != null && ds.getCurso().equalsIgnoreCase(curso)) {
+                if (ds.getCursoNome() != null && ds.getCursoNome().equalsIgnoreCase(curso)) {
                     resultado.add(ds);
                 }
             }

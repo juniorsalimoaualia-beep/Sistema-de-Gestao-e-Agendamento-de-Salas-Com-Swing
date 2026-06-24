@@ -25,8 +25,11 @@ import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Turma;
 import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dao.EstudanteDAO;
 import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dao.SecretarioDAO;
 import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.controller.CursoController;
+import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.controller.TurmaController;
 import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Curso;
 import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.EstadoReserva;
+import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.DiaSemana;
+import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.TipoReserva;
 
 public class UsuarioUI {
     private Validacao vd = new Validacao();
@@ -44,6 +47,7 @@ public class UsuarioUI {
     private AdminUI adminUI = new AdminUI();
     private InscricaoService inscricaoService = new InscricaoService();
     private CursoController cursoController = new CursoController();
+    private TurmaController turmaController = new TurmaController();
     private int usuarioLogadoId;
     
     public void login(int escolha){
@@ -152,7 +156,7 @@ public class UsuarioUI {
                         System.out.println("Estudante nao encontrado.");
                     } else {
                         System.out.println("Perfil:\nId: " + estudante.getId()+"\nNome: "+estudante.getNomeCompleto()+"\nEmail: "
-                                            +estudante.getEmail()+"\nCurso: "+estudante.getCurso()+"\nContacto: "+estudante.getNumCel());
+                                            +estudante.getEmail()+"\nCurso: "+estudante.getCursoNome()+"\nContacto: "+estudante.getNumCel());
                     }
                     break;
                 case 2:
@@ -223,7 +227,7 @@ public class UsuarioUI {
 
             for(Horario horario : horarios){
                 System.out.println("Disciplina: " + disciplina.getNome()
-                        + " | Curso: " + disciplina.getCurso()
+                        + " | Curso: " + disciplina.getCursoNome()
                         + " | Dia: " + horario.getDiaSemana()
                         + " | Horario: " + horario.getHoraInicio() + "-" + horario.getHoraFim());
                 encontrouHorario = true;
@@ -263,13 +267,13 @@ public class UsuarioUI {
                     && reserva.getDisciplina().getId() == disciplinaSelecionada.getId()
                     && reserva.getEstadoReserva() != EstadoReserva.CANCELADA
                     && reserva.getEstadoReserva() != EstadoReserva.RECUSADA){
-                Sala sala = salaController.buscarPorId(reserva.getSalaId());
-                String nomeSala = sala != null ? sala.getNome() : "Sala ID " + reserva.getSalaId();
+                main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Sala sala = reserva.getSalaId();
+                String nomeSala = sala != null ? sala.getNome() : "Sala ID 0";
                 System.out.println("Disciplina: " + disciplinaSelecionada.getNome()
-                        + " | Sala: " + nomeSala
-                        + " | Data: " + reserva.getData()
-                        + " | Horario: " + reserva.getHoraInicio() + "-" + reserva.getHoraFim()
-                        + " | Estado: " + reserva.getEstadoReserva());
+                        + "\nSala: " + nomeSala
+                        + "\nData: " + reserva.getData()
+                        + "\nHorario: " + reserva.getHoraInicio() + "-" + reserva.getHoraFim()
+                        + "\nEstado: " + reserva.getEstadoReserva());
                 encontrou = true;
             }
         }
@@ -306,7 +310,7 @@ public class UsuarioUI {
                             if(!inscricoes.isEmpty()){
                                 System.out.println("Disciplina: " + disciplina.getNome());
                                 for(Inscricao inscricao : inscricoes){
-                                    System.out.println(inscricao.getEstudante().getId() + " | " + inscricao.getEstudante().getNomeCompleto()+" | "+inscricao.getEstudante().getCurso()+" | "+inscricao.getEstudante().getEmail());
+                                    System.out.println(inscricao.getEstudante().getId() + " | " + inscricao.getEstudante().getNomeCompleto()+" | "+inscricao.getEstudante().getCursoNome()+" | "+inscricao.getEstudante().getEmail());
                                 }
                             }
                         }
@@ -338,15 +342,56 @@ public class UsuarioUI {
                     }
 
                     int idReserva = reservaController.gerarProximoId();
-                    String salaNome = vd.validarString("Nome da sala:");
-                    Sala sala = salaController.buscarPorNome(salaNome);
                     int idDocenteReserva = usuarioLogadoId;
                     Docente docenteReserva = docenteController.buscarPorId(idDocenteReserva);
+                    
+                    // Listar salas disponiveis
+                    List<Sala> salasDisponiveis = salaController.listar();
+                    if(salasDisponiveis.isEmpty()){
+                        System.out.println("Nenhuma sala disponivel para reserva.");
+                        break;
+                    }
+                    System.out.println("\n--- Selecione uma Sala ---");
+                    for(Sala s : salasDisponiveis){
+                        System.out.println(s.getId() + ". " + s.getNome());
+                    }
+                    int salaId = vd.validarInt("Digite o ID da sala:");
+                    Sala sala = salaController.buscarPorId(salaId);
+                    if(sala == null){
+                        System.out.println("Sala nao encontrada.");
+                        break;
+                    }
+
+                    // Selecionar Dia da Semana
+                    System.out.println("\n--- Selecione o Dia da Semana ---");
+                    DiaSemana[] dias = DiaSemana.values();
+                    for(int i = 0; i < dias.length; i++){
+                        System.out.println((i+1) + ". " + dias[i]);
+                    }
+                    int escolhaDia = vd.validarInt("Digite o numero do dia:") - 1;
+                    if(escolhaDia < 0 || escolhaDia >= dias.length){
+                        System.out.println("Dia invalido.");
+                        break;
+                    }
+                    DiaSemana diaSelecionado = dias[escolhaDia];
+
+                    // Selecionar Tipo de Reserva
+                    System.out.println("\n--- Selecione o Tipo de Reserva ---");
+                    TipoReserva[] tipos = TipoReserva.values();
+                    for(int i = 0; i < tipos.length; i++){
+                        System.out.println((i+1) + ". " + tipos[i]);
+                    }
+                    int escolhaTipo = vd.validarInt("Digite o numero do tipo:") - 1;
+                    if(escolhaTipo < 0 || escolhaTipo >= tipos.length){
+                        System.out.println("Tipo invalido.");
+                        break;
+                    }
+                    TipoReserva tipoSelecionado = tipos[escolhaTipo];
 
                     // Escolha do curso para a turma
-                    String cursoPadrao = disciplinaEscolhida.getCurso();
+                    String cursoPadrao = disciplinaEscolhida.getCursoNome();
                     List<Curso> cursos = cursoController.listar();
-                    System.out.println("Cursos disponiveis:");
+                    System.out.println("\nCursos disponiveis:");
                     for (int i = 0; i < cursos.size(); i++) {
                         System.out.println((i+1) + ". " + cursos.get(i).getNome());
                     }
@@ -361,36 +406,67 @@ public class UsuarioUI {
                     }
 
                     int anoTurma = vd.validarInt("Digite o ano da turma (ex: 1):");
-                    Turma turma = new Turma(anoTurma, cursoEscolhido);
+                    List<Inscricao> inscricoesDisciplina = inscricaoService.listarInscricoesPorDisciplina(disciplinaEscolhida.getId());
+                    List<Estudante> estudantesTurma = new java.util.ArrayList<>();
+                    for(Inscricao insc : inscricoesDisciplina){
+                        if(insc.getEstudante() != null){
+                            estudantesTurma.add(insc.getEstudante());
+                        }
+                    }
+                    Turma turma = new Turma(anoTurma, cursoEscolhido, estudantesTurma);
+                    
                     LocalDate data = vd.validarDate("Data (dd/MM/yyyy):");
                     LocalTime horaInicio = vd.validarTime("Hora inicio (HH:mm):");
                     LocalTime horaFim = vd.validarTime("Hora fim (HH:mm):");
                     
-                    if(sala == null){
-                        System.out.println("Sala nao encontrada.");
-                    } else if(docenteReserva == null){
+                    if(docenteReserva == null){
                         System.out.println("Docente nao encontrado.");
                     } else if(!horaFim.isAfter(horaInicio)){
                         System.out.println("Hora fim deve ser depois da hora inicio.");
-                    } else if(!reservaController.verificarDisponibilidade(salaNome, data, horaInicio, horaFim)){
+                    } else if(!reservaController.verificarDisponibilidade(sala.getNome(), data, horaInicio, horaFim)){
                         System.out.println("Sala indisponivel para este periodo.");
                     } else {
-                        Reserva reserva = new Reserva(idReserva, sala.getId(), idDocenteReserva, disciplinaEscolhida, turma, data, horaInicio, horaFim);
-                        reservaController.salvar(reserva);
-                        reservaController.vincularSalaAReserva(sala.getId(), idReserva);
-                        System.out.println("Reserva cadastrada com sucesso. ID: " + idReserva);
+                        Reserva reserva = new Reserva(idReserva, sala, docenteReserva, disciplinaEscolhida, turma, data, horaInicio, horaFim, tipoSelecionado, diaSelecionado);
+                        if (reservaController.salvar(reserva)) {
+                            if (!turmaController.existePorChave(turma.getChave())) {
+                                turmaController.salvar(turma);
+                            }
+                            reservaController.vincularSalaAReserva(sala.getId(), idReserva);
+                            System.out.println("Reserva cadastrada com sucesso. ID: " + idReserva);
+                            System.out.println("Tipo: " + tipoSelecionado + " | Dia: " + diaSelecionado + " | Turma: " + turma + " | Total de estudantes: " + turma.getEstudantes().size());
+                        } else {
+                            System.out.println("Nao foi possivel cadastrar a reserva. Ja existe uma reserva igual.");
+                        }
                     }
                     break;
                 case 4:
                     List<Reserva> rs= reservaController.listar();
                     for(Reserva lista:rs){
-                        if(lista.getDocenteId()==usuarioLogadoId){
-                            System.out.println("Estado da reserva: "+lista.getEstadoReserva()+"\nTurma: "+lista.getTurma()+"\nData: "+lista.getData()+"\nHorario: "+lista.getHoraInicio()+"-"+lista.getHoraFim());
+                        main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Docente d = lista.getDocenteId();
+                        if(d != null && d.getId() == usuarioLogadoId){
+                            int inscritos = 0;
+                            if (lista.getDisciplina() != null) {
+                                inscritos = inscricaoService.listarInscricoesPorDisciplina(lista.getDisciplina().getId()).size();
+                            }
+                            System.out.println("Estado da reserva: "+lista.getEstadoReserva()+"\nTurma: "+lista.getTurma()+"\nData: "+lista.getData()+"\nHorario: "+lista.getHoraInicio()+"-"+lista.getHoraFim()+"\nTotal de estudantes inscritos na disciplina: "+inscritos);
                         }
                     }
                     
                     break;
                 case 5:
+                    List<Reserva> reservasDocente = reservaController.listar();
+                    boolean temReservaDocente = false;
+                    for (Reserva reservaItem : reservasDocente) {
+                        main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Docente dItem = reservaItem.getDocenteId();
+                        if (dItem != null && dItem.getId() == usuarioLogadoId) {
+                            System.out.println(reservaItem.getId() + " - " + reservaItem.getDisciplina().getNome() + " - " + reservaItem.getData() + " " + reservaItem.getHoraInicio() + "-" + reservaItem.getHoraFim() + " [" + reservaItem.getEstadoReserva() + "]");
+                            temReservaDocente = true;
+                        }
+                    }
+                    if (!temReservaDocente) {
+                        System.out.println("Voce nao possui reservas para cancelar.");
+                        break;
+                    }
                     int reservaCancelar = vd.validarInt("Digite o ID da sua reserva para cancelar:");
                     if(reservaController.cancelarDoDocente(reservaCancelar, usuarioLogadoId)){
                         System.out.println("Reserva cancelada com sucesso.");
@@ -432,11 +508,39 @@ public class UsuarioUI {
                     } else {
                         System.out.println("Reservas cadastradas:");
                         for(Reserva reserva : reservas){
-                            System.out.println(reserva.toString());
+                            int inscritos = 0;
+                            if (reserva.getDisciplina() != null) {
+                                inscritos = inscricaoService.listarInscricoesPorDisciplina(reserva.getDisciplina().getId()).size();
+                            }
+                            main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Docente docImpressao = reserva.getDocenteId();
+                            int docenteIdPrint = docImpressao != null ? docImpressao.getId() : 0;
+                            String nomeDocenteImp = docImpressao != null ? docImpressao.getNomeCompleto() : ("Docente ID " + docenteIdPrint);
+                            main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Sala salaImp = reserva.getSalaId();
+                            String nomeSalaImp = salaImp != null ? salaImp.getNome() : ("Sala ID " + (salaImp!=null?String.valueOf(salaImp.getId()):"0"));
+                            System.out.println("ID: "+reserva.getId()
+                            +" | Docente: "+nomeDocenteImp
+                            +" | Disciplina: "+(reserva.getDisciplina()!=null?reserva.getDisciplina().getNome():"")
+                            +" | Turma: "+reserva.getTurma()
+                            +" | Sala: "+nomeSalaImp
+                            +" | Data: "+reserva.getData()
+                            +" | Dia: "+reserva.getDiaSemana()
+                            +" | Horario: "+reserva.getHoraInicio()+" - "+reserva.getHoraFim()
+                            +" | Tipo: "+reserva.getTipoReserva()
+                            +" | Estado: "+reserva.getEstadoReserva()
+                            +" | Total de estudantes inscritos na disciplina: " + inscritos);
                         }
                     }
                     break;
                 case 3:
+                    List<Reserva> reservasParaConfirmar = reservaController.listar();
+                    if(reservasParaConfirmar.isEmpty()){
+                        System.out.println("Nenhuma reserva encontrada.");
+                        break;
+                    }
+                    System.out.println("Reservas disponiveis para confirmacao:");
+                    for(Reserva reservaItem : reservasParaConfirmar){
+                        System.out.println(reservaItem.getId() + " - " + reservaItem.getDisciplina().getNome() + " - " + reservaItem.getData() + " " + reservaItem.getHoraInicio() + "-" + reservaItem.getHoraFim() + " [" + reservaItem.getEstadoReserva() + "]");
+                    }
                     int reserva= vd.validarInt("Digite o ID da reserva: ");
                     if(reservaController.confirmar(reserva)){
                         System.out.println("Reserva confirmada com sucesso!");
@@ -446,6 +550,15 @@ public class UsuarioUI {
                     }
                     break;
                 case 4:
+                    List<Reserva> reservasParaCancelar = reservaController.listar();
+                    if(reservasParaCancelar.isEmpty()){
+                        System.out.println("Nenhuma reserva encontrada.");
+                        break;
+                    }
+                    System.out.println("Reservas disponiveis para cancelamento:");
+                    for(Reserva reservaItem : reservasParaCancelar){
+                        System.out.println(reservaItem.getId() + " - " + reservaItem.getDisciplina().getNome() + " - " + reservaItem.getData() + " " + reservaItem.getHoraInicio() + "-" + reservaItem.getHoraFim() + " [" + reservaItem.getEstadoReserva() + "]");
+                    }
                     int idReserva = vd.validarInt("Digite o ID da reserva para cancelar:");
                     if(reservaController.cancelar(idReserva)){
                         System.out.println("Reserva cancelada com sucesso.");
@@ -454,6 +567,15 @@ public class UsuarioUI {
                     }
                     break;
                 case 5:
+                    List<Reserva> reservasParaEstado = reservaController.listar();
+                    if(reservasParaEstado.isEmpty()){
+                        System.out.println("Nenhuma reserva encontrada.");
+                        break;
+                    }
+                    System.out.println("Reservas disponiveis para consulta de estado:");
+                    for(Reserva reservaItem : reservasParaEstado){
+                        System.out.println(reservaItem.getId() + " - " + reservaItem.getDisciplina().getNome() + " - " + reservaItem.getData() + " " + reservaItem.getHoraInicio() + "-" + reservaItem.getHoraFim() + " [" + reservaItem.getEstadoReserva() + "]");
+                    }
                     int idEstado = vd.validarInt("Digite o ID da reserva para ver o estado:");
                     System.out.println(reservaController.estadoReserva(idEstado));
                     break;
@@ -521,12 +643,22 @@ public class UsuarioUI {
     }
 
     private void relatorioPorDocente() {
+        List<Docente> docentes = docenteController.listar();
+        if (docentes.isEmpty()) {
+            System.out.println("Nenhum docente cadastrado.");
+            return;
+        }
+        System.out.println("Docentes disponiveis:");
+        for (Docente docente : docentes) {
+            System.out.println(docente.getId() + " - " + docente.getNomeCompleto());
+        }
         int docenteId = vd.validarInt("Digite o ID do docente:");
         List<Reserva> reservas = reservaController.listar();
         List<Reserva> resultado = new java.util.ArrayList<>();
 
         for(Reserva reserva : reservas){
-            if(reserva.getDocenteId() == docenteId){
+            main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Docente dRes = reserva.getDocenteId();
+            if(dRes != null && dRes.getId() == docenteId){
                 resultado.add(reserva);
             }
         }
@@ -535,12 +667,22 @@ public class UsuarioUI {
     }
 
     private void relatorioPorSala() {
+        List<Sala> salas = salaController.listar();
+        if (salas.isEmpty()) {
+            System.out.println("Nenhuma sala cadastrada.");
+            return;
+        }
+        System.out.println("Salas disponiveis:");
+        for (Sala sala : salas) {
+            System.out.println(sala.getId() + " - " + sala.getNome());
+        }
         int salaId = vd.validarInt("Digite o ID da sala:");
         List<Reserva> reservas = reservaController.listar();
         List<Reserva> resultado = new java.util.ArrayList<>();
 
         for(Reserva reserva : reservas){
-            if(reserva.getSalaId() == salaId){
+            main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Sala sRes = reserva.getSalaId();
+            if(sRes != null && sRes.getId() == salaId){
                 resultado.add(reserva);
             }
         }
@@ -569,10 +711,10 @@ public class UsuarioUI {
         }
 
         for(Reserva reserva : reservas){
-            Sala sala = salaController.buscarPorId(reserva.getSalaId());
-            Docente docente = docenteController.buscarPorId(reserva.getDocenteId());
-            String nomeSala = sala != null ? sala.getNome() : "Sala ID " + reserva.getSalaId();
-            String nomeDocente = docente != null ? docente.getNomeCompleto() : "Docente ID " + reserva.getDocenteId();
+            main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Sala sala = reserva.getSalaId();
+            main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Docente docente = reserva.getDocenteId();
+            String nomeSala = sala != null ? sala.getNome() : ("Sala ID " + (sala!=null?String.valueOf(sala.getId()):"0"));
+            String nomeDocente = docente != null ? docente.getNomeCompleto() : ("Docente ID " + (docente!=null?String.valueOf(docente.getId()):"0"));
             String nomeDisciplina = reserva.getDisciplina() != null ? reserva.getDisciplina().getNome() : "";
 
             System.out.println("Reserva ID: " + reserva.getId()
@@ -580,9 +722,15 @@ public class UsuarioUI {
                     + " | Sala: " + nomeSala
                     + " | Docente: " + nomeDocente
                     + " | Disciplina: " + nomeDisciplina
-                    + " | Turma: " + reserva.getTurma()
+                    + " | Turma: " + reserva.getTurma().getChave()
                     + " | Data: " + reserva.getData()
                     + " | Horario: " + reserva.getHoraInicio() + "-" + reserva.getHoraFim());
+
+            if (reserva.getDisciplina() != null) {
+                List<Inscricao> inscritos = inscricaoService.listarInscricoesPorDisciplina(reserva.getDisciplina().getId());
+                int quantidade = inscritos != null ? inscritos.size() : 0;
+                System.out.println("Estudantes inscritos na disciplina " + nomeDisciplina + ": " + quantidade+"\n\n");
+            }
         }
         System.out.println("Total encontrado: " + reservas.size());
     }

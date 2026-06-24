@@ -9,8 +9,8 @@ public class ReservaController {
     private ReservaDAO reservaDAO = new ReservaDAO();
     private GestorReservaDAO gestorDAO = new GestorReservaDAO();
 
-    public void salvar(Reserva reserva) {
-        reservaDAO.salvar(reserva);
+    public boolean salvar(Reserva reserva) {
+        return reservaDAO.salvar(reserva);
     }
 
     public void vincularSalaAReserva(int salaId, int reservaId) {
@@ -39,7 +39,13 @@ public class ReservaController {
 
     public boolean cancelarDoDocente(int reservaId, int docenteId) {
         Reserva reserva = buscarPorId(reservaId);
-        if (reserva == null || reserva.getDocenteId() != docenteId) {
+        if (reserva == null) {
+            return false;
+        }
+        try {
+            main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Docente d = reserva.getDocenteId();
+            if (d == null || d.getId() != docenteId) return false;
+        } catch (Exception e) {
             return false;
         }
         return gestorDAO.cancelarReserva(reservaId);
@@ -50,9 +56,13 @@ public class ReservaController {
         if (reserva == null) {
             return "Reserva nao encontrada";
         }
+        String salaInfo = "";
+        try {
+            salaInfo = reserva.getSalaId() != null ? String.valueOf(reserva.getSalaId().getId()) : "";
+        } catch (Exception e) { salaInfo = ""; }
         return "Reserva ID: " + reserva.getId()
                 + " | Estado: " + reserva.getEstadoReserva()
-                + " | Sala ID: " + reserva.getSalaId()
+                + " | Sala ID: " + salaInfo
                 + " | Disciplina: " + (reserva.getDisciplina() != null ? reserva.getDisciplina().getNome() : "")
                 + " | Turma: " + reserva.getTurma()
                 + " | Data: " + reserva.getData()

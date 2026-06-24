@@ -3,6 +3,7 @@ package main.java.com.mycompany.sistemadegestaoeagendamentodesalas.controller;
 import java.util.List;
 import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dao.DisciplinaDAO;
 import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dao.DocenteDAO;
+import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Curso;
 import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Disciplina;
 import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Docente;
 
@@ -43,6 +44,10 @@ public class DisciplinaController {
     }
     public List<Disciplina> listarPorCurso(String curso) {
         return dao.listarPorCurso(curso);
+    }
+
+    public List<Disciplina> listarPorCurso(Curso curso) {
+        return dao.listarPorCurso(curso != null ? curso.getNome() : null);
     }
 
     public int gerarProximoId() {

@@ -21,6 +21,14 @@ public class HorarioDAO {
     private DisciplinaDAO disciplinaDAO = new DisciplinaDAO();
 
     public void salvar(Horario horario) {
+        if (horario == null) {
+            System.out.println("Erro: Horario invalido.");
+            return;
+        }
+        if (isHorarioDuplicado(horario)) {
+            System.out.println("Erro: Horario duplicado.");
+            return;
+        }
         File arquivo = ArquivoUtils.prepararArquivo(file);
         try (BufferedWriter bw = new BufferedWriter(new FileWriter(arquivo, true))) {
             bw.write(horario.toString());
@@ -75,7 +83,7 @@ public class HorarioDAO {
                 if (disciplinaId > 0) {
                     disciplina = disciplinaDAO.buscarPorId(disciplinaId);
                     if (disciplina == null) {
-                        disciplina = new Disciplina(disciplinaId, "", null, curso.getNome());
+                        disciplina = new Disciplina(disciplinaId, "", null, curso);
                     }
                 }
                 indiceDia = 3;
@@ -141,6 +149,15 @@ public class HorarioDAO {
         return resultado;
     }
 
+    public Horario buscarPorId(int id) {
+        for (Horario hr : listaHorario()) {
+            if (hr.getId() == id) {
+                return hr;
+            }
+        }
+        return null;
+    }
+
     private String formatarHorario(Horario hr) {
         String nomeCurso = hr.getCurso() != null ? hr.getCurso().getNome() : "";
         String nomeDisciplina = hr.getDisciplina() != null ? hr.getDisciplina().getNome() : "";
@@ -157,5 +174,26 @@ public class HorarioDAO {
             max = Math.max(max, hr.getId());
         }
         return max + 1;
+    }
+
+    private boolean isHorarioDuplicado(Horario novo) {
+        if (novo == null) {
+            return false;
+        }
+        for (Horario existente : listaHorario()) {
+            boolean mesmoCurso = existente.getCurso() != null && novo.getCurso() != null
+                    ? existente.getCurso().getNome().equalsIgnoreCase(novo.getCurso().getNome())
+                    : existente.getCurso() == null && novo.getCurso() == null;
+            boolean mesmaDisciplina = existente.getDisciplina() != null && novo.getDisciplina() != null
+                    ? existente.getDisciplina().getId() == novo.getDisciplina().getId()
+                    : existente.getDisciplina() == null && novo.getDisciplina() == null;
+            boolean mesmoDia = existente.getDiaSemana() == novo.getDiaSemana();
+            boolean mesmoInicio = existente.getHoraInicio() != null && existente.getHoraInicio().equals(novo.getHoraInicio());
+            boolean mesmoFim = existente.getHoraFim() != null && existente.getHoraFim().equals(novo.getHoraFim());
+            if (mesmoCurso && mesmaDisciplina && mesmoDia && mesmoInicio && mesmoFim) {
+                return true;
+            }
+        }
+        return false;
     }
 }

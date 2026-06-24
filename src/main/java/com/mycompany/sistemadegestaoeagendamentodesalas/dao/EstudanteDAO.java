@@ -9,17 +9,30 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Curso;
 import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Estudante;
+import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dao.CursoDAO;
 
 public class EstudanteDAO {
     private static final String file ="files/estudante.txt";
+    private CursoDAO cursoDAO = new CursoDAO();
 
-    public void salvar(Estudante dp){
+    public boolean salvar(Estudante dp){
+        if (dp == null) {
+            System.out.println("Erro: Estudante invalido.");
+            return false;
+        }
+        if (isEstudanteDuplicado(dp)) {
+            System.out.println("Erro: Estudante ja cadastrado.");
+            return false;
+        }
         File arquivo = ArquivoUtils.prepararArquivo(file);
         try(BufferedWriter bw= new BufferedWriter(new FileWriter(arquivo, true))){
             bw.write(dp.toString());
             bw.newLine();
+            return true;
         }catch(IOException e){System.out.println("Erro ao salvar Estudante "+e.getMessage());}
+        return false;
     }
 
     public List<Estudante> listaEstudante(){
@@ -30,11 +43,16 @@ public class EstudanteDAO {
             while((linha=br.readLine())!=null){
                 String []dados=linha.split("; ");
                 if(dados.length==7){
+                    String cursoNome = dados[6];
+                    Curso curso = cursoDAO.buscarCursoPorNome(cursoNome);
+                    if (curso == null) {
+                        curso = new Curso(0, cursoNome);
+                    }
                     lista.add(new Estudante(
                         Integer.parseInt(dados[0]),
                         dados[1],
                         dados[2],
-                        dados[6],
+                        curso,
                         Integer.parseInt(dados[3]),
                         dados[4],
                         dados[5]));
@@ -73,6 +91,20 @@ public class EstudanteDAO {
             max = Math.max(max, dp.getId());
         }
         return max + 1;
+    }
+
+    public boolean isEstudanteDuplicado(Estudante novo){
+        for(Estudante existente : listaEstudante()){
+            if (existente.getEmail() != null && existente.getEmail().equalsIgnoreCase(novo.getEmail())){
+                return true;
+            }
+            if (existente.getNomeCompleto() != null && existente.getCursoNome() != null
+                && existente.getNomeCompleto().equalsIgnoreCase(novo.getNomeCompleto())
+                && existente.getCursoNome().equalsIgnoreCase(novo.getCursoNome())){
+                return true;
+            }
+        }
+        return false;
     }
 
     public boolean alterarSenha(int id, String senhaAtual, String senhaNova) {

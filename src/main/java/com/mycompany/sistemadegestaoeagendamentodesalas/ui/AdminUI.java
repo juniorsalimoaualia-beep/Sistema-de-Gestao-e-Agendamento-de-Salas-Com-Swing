@@ -36,7 +36,7 @@ public class AdminUI {
     public void menu() {
         while (true) {
             System.out.println("\n--- Menu Admin ---");
-            int opcao = vd.validarInt("1. Registrar Secretario\n2. Registrar Docente\n3. Registrar Estudante\n4. Registrar Departamento\n5. Registrar Curso\n6. Registrar Disciplina\n7. Registrar Sala\n8. Editar Docente\n9. Deletar Docente\n10. Editar Curso\n11. Editar Disciplina\n12. Registrar Horario\n0. Voltar");
+            int opcao = vd.validarInt("1. Registrar Secretario\n2. Registrar Docente\n3. Registrar Estudante\n4. Registrar Departamento\n5. Registrar Curso\n6. Registrar Disciplina\n7. Registrar Sala\n8. Deletar Docente\n9. Editar Disciplina\n10. Registrar Horario\n0. Voltar");
             switch (opcao) {
                 case 1:
                     cadastrarSecretario();
@@ -60,25 +60,18 @@ public class AdminUI {
                     cadastrarSala();
                     break;
                 case 8:
-                    editarDocente();
-                    break;
-                    
-                case 9:
                     deletarDocente();
                     break;
-                case 10:
-                    editarCurso();
-                    break;
-                case 11:
+                case 9:
                     editarDisciplina();
                     break;
-                case 12:
+                case 10:
                     cadastrarHorario();
                     break;
                 case 0:
                     return;
                 default:
-                    System.out.println("Opcao invalida. Digite 0 a 12.");
+                    System.out.println("Opcao invalida. Digite 0 a 10.");
             }
         }
     }
@@ -117,14 +110,20 @@ public class AdminUI {
         int id = estudanteController.gerarProximoId();
         String nome = vd.validarString("Nome:");
         String apelido = vd.validarString("Apelido:");
-        String curso = vd.validarString("Curso:");
+        Curso cursoSelecionado = selecionarCurso();
+        if (cursoSelecionado == null) {
+            return;
+        }
         int numCel = vd.validarCell("Numero de celular:");
         String email= emailGen.gerarEmail(nome,apelido);
         String senha = vd.validarSenha("Senha:");
         System.out.println("O seu email gerado e:"+email);
-        Estudante estudante = new Estudante(id, nome, apelido, curso, numCel, email, senha);
-        estudanteController.salvar(estudante);
-        System.out.println("Estudante registrado com sucesso. ID: " + id);
+        Estudante estudante = new Estudante(id, nome, apelido, cursoSelecionado, numCel, email, senha);
+        if (estudanteController.cadastrarEstudante(estudante)) {
+            System.out.println("Estudante registrado com sucesso. ID: " + id);
+        } else {
+            System.out.println("Nao foi possivel registrar o estudante. Verifique se ja existe um cadastro com os mesmos dados.");
+        }
     }
 
     private void cadastrarDepartamento() {
@@ -139,10 +138,18 @@ public class AdminUI {
     private void cadastrarCurso() {
         System.out.println("\n--- Registrar Curso ---");
         int id = cursoController.gerarProximoId();
+        if (departamentoController.listar().isEmpty()) {
+            System.out.println("Nenhum departamento disponivel. Por favor, registre um departamento primeiro.");
+            return;
+        }
         String nome = vd.validarString("Nome do curso:");
-        Curso curso = new Curso(id, nome);
+        Departamento departamentoSelecionado = selecionarDepartamento();
+        if (departamentoSelecionado == null) {
+            return;
+        }
+        Curso curso = new Curso(id, nome, departamentoSelecionado);
         cursoController.salvar(curso);
-        System.out.println("Curso registrado com sucesso. ID: " + id);
+        System.out.println("Curso registrado com sucesso. ID: " + id + " | Departamento: " + departamentoSelecionado.getNome());
     }
 
     private void cadastrarDisciplina() {
@@ -175,7 +182,7 @@ public class AdminUI {
             return;
         }
         
-        Disciplina disciplina = new Disciplina(id, nome, docenteSelecionado, cursoSelecionado.getNome());
+        Disciplina disciplina = new Disciplina(id, nome, docenteSelecionado, cursoSelecionado);
         disciplinaController.salvar(disciplina);
         System.out.println("Disciplina registrada com sucesso. ID: " + id + " | Docente: " + docenteSelecionado.getNomeCompleto() + " | Curso: " + cursoSelecionado.getNome());
     }
@@ -187,7 +194,7 @@ public class AdminUI {
             return;
         }
 
-        List<Disciplina> disciplinas = disciplinaController.listarPorCurso(cursoSelecionado.getNome());
+        List<Disciplina> disciplinas = disciplinaController.listarPorCurso(cursoSelecionado);
         if (disciplinas.isEmpty()) {
             System.out.println("Nenhuma disciplina encontrada para este curso.");
             return;
@@ -200,7 +207,7 @@ public class AdminUI {
 
         int disciplinaId = vd.validarInt("Digite o ID da disciplina:");
         Disciplina disciplinaSelecionada = disciplinaController.buscarPorId(disciplinaId);
-        if (disciplinaSelecionada == null || !cursoSelecionado.getNome().equalsIgnoreCase(disciplinaSelecionada.getCurso())) {
+        if (disciplinaSelecionada == null || !cursoSelecionado.getNome().equalsIgnoreCase(disciplinaSelecionada.getCursoNome())) {
             System.out.println("Disciplina nao encontrada para o curso selecionado.");
             return;
         }
@@ -239,8 +246,37 @@ public class AdminUI {
         return cursoSelecionado;
     }
 
+    private Departamento selecionarDepartamento() {
+        List<Departamento> departamentos = departamentoController.listar();
+        if (departamentos.isEmpty()) {
+            System.out.println("Nenhum departamento disponivel. Por favor, registre um departamento primeiro.");
+            return null;
+        }
+
+        System.out.println("\n--- Selecione um Departamento ---");
+        for (Departamento departamento : departamentos) {
+            System.out.println(departamento.getId() + ". " + departamento.getNome());
+        }
+
+        int departamentoId = vd.validarInt("Digite o ID do departamento:");
+        Departamento departamentoSelecionado = departamentoController.buscarPorId(departamentoId);
+        if (departamentoSelecionado == null) {
+            System.out.println("Departamento nao encontrado.");
+        }
+        return departamentoSelecionado;
+    }
+
     private void editarDisciplina(){
         System.out.println("\n--- Editar Disciplina ---");
+        List<Disciplina> disciplinas = disciplinaController.listar();
+        if (disciplinas.isEmpty()) {
+            System.out.println("Nenhuma disciplina cadastrada.");
+            return;
+        }
+        System.out.println("Disciplinas disponiveis:");
+        for (Disciplina disciplina : disciplinas) {
+            System.out.println(disciplina.getId() + ". " + disciplina.getNome());
+        }
         int id= vd.validarInt("Digite o ID da disciplina a editar:");
         Disciplina disc = disciplinaController.buscarPorId(id);
         
@@ -258,36 +294,17 @@ public class AdminUI {
 
     }
 
-    private void editarDocente() {
-        System.out.println("\n--- Editar Docente ---");
-        int id = vd.validarInt("Digite o ID do docente a editar:");
-        Docente docente = docenteController.buscarPorId(id);
-        
-        if (docente == null) {
-            System.out.println("Docente nao encontrado.");
-            return;
-        }
-        
-        System.out.println("Docente atual: " + docente.getNomeCompleto());
-        String nome = vd.validarString("Novo nome (ou pressione Enter para manter):");
-        if (nome.isEmpty()) nome = docente.getNome();
-        
-        String apelido = vd.validarString("Novo apelido (ou pressione Enter para manter):");
-        if (apelido.isEmpty()) apelido = docente.getApelido();
-        
-        String nivel = vd.validarString("Novo nivel academico (ou pressione Enter para manter):");
-        if (nivel.isEmpty()) nivel = docente.getNivelAcademico();
-        
-        int numCel = vd.validarCell("Novo numero de celular (0 para manter):");
-        if (numCel == 0) numCel = docente.getNumCel();
-        
-        String email = docente.getEmail();
-        docenteController.editarDocente(id, nome, apelido, nivel, numCel, email);
-        System.out.println("Docente atualizado com sucesso.");
-    }
-
     private void deletarDocente() {
         System.out.println("\n--- Deletar Docente ---");
+        List<Docente> docentes = docenteController.listar();
+        if (docentes.isEmpty()) {
+            System.out.println("Nenhum docente cadastrado.");
+            return;
+        }
+        System.out.println("Docentes disponiveis:");
+        for (Docente docente : docentes) {
+            System.out.println(docente.getId() + ". " + docente.getNomeCompleto());
+        }
         int id = vd.validarCell("Digite o ID do docente a deletar:");
         Docente docente = docenteController.buscarPorId(id);
         
@@ -310,33 +327,20 @@ public class AdminUI {
         }
     }
 
-    private void editarCurso() {
-        System.out.println("\n--- Editar Curso ---");
-        int id = vd.validarCell("Digite o ID do curso a editar:");
-        Curso curso = cursoController.buscarCursoPorId(id);
-        
-        if (curso == null) {
-            System.out.println("Curso nao encontrado.");
-            return;
-        }
-        
-        System.out.println("Curso atual: " + curso.getNome());
-        String novoNome = vd.validarString("Novo nome do curso:");
-        
-        if (novoNome.isEmpty()) {
-            System.out.println("Nome nao pode estar vazio.");
-            return;
-        }
-        
-        cursoController.editarCurso(id, novoNome);
-        System.out.println("Curso atualizado com sucesso.");
-    }
-
     public void cadastrarSala(){
-        String nome=vd.validarString("Digite o nome da Sala:");
-        int id=salaController.gerarProximoId();
-        Sala sala= new Sala(id, nome);
+        if (departamentoController.listar().isEmpty()) {
+            System.out.println("Nenhum departamento disponivel. Por favor, registre um departamento primeiro.");
+            return;
+        }
+        String nome = vd.validarSala("Digite o nome da Sala:");
+        int id = salaController.gerarProximoId();
+        Departamento departamentoSelecionado = selecionarDepartamento();
+        if (departamentoSelecionado == null) {
+            return;
+        }
+        Sala sala = new Sala(id, nome, departamentoSelecionado);
         salaController.salvar(sala);
+        System.out.println("Sala registrada com sucesso. ID: " + id + " | Nome: " + nome + " | Departamento: " + departamentoSelecionado.getNome());
     }
 
 }

@@ -10,6 +10,7 @@ import java.util.List;
 
 import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Sala;
 import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.EstadoSala;
+import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Departamento;
 
 public class SalaDAO {
     private static final String file ="files/Sala.txt";
@@ -37,6 +38,10 @@ public class SalaDAO {
                 }
                 if (dados.length >= 4) {
                     sala.setReservaId(Integer.parseInt(dados[3]));
+                }
+                if (dados.length >= 5) {
+                    int departamentoId = Integer.parseInt(dados[4]);
+                    sala.setDepartamento(new Departamento(departamentoId, ""));
                 }
                 lista.add(sala);
             }
