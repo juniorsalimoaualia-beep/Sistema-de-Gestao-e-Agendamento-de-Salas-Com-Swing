@@ -1,14 +1,12 @@
-package main.java.com.mycompany.sistemadegestaoeagendamentodesalas.controller;
+package com.mycompany.sistemadegestaoeagendamentodesalas.controller;
 
 import java.util.List;
-import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.controller.UsuarioController;
-import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dao.EstudanteDAO;
-import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Curso;
-import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Estudante;
-import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.service.InscricaoService;
-import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Disciplina;
+import com.mycompany.sistemadegestaoeagendamentodesalas.dao.EstudanteDAO;
+import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Estudante;
+import com.mycompany.sistemadegestaoeagendamentodesalas.service.InscricaoService;
+import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Disciplina;
 
-public class EstudanteController implements UsuarioController<Estudante> {
+public class EstudanteController {
     private EstudanteDAO dao = new EstudanteDAO();
     private InscricaoService inscricaoService = new InscricaoService();
     private DisciplinaController disciplinaController = new DisciplinaController();

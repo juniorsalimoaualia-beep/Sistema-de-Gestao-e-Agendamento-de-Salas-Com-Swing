@@ -1,4 +1,4 @@
-package main.java.com.mycompany.sistemadegestaoeagendamentodesalas.service;
+package com.mycompany.sistemadegestaoeagendamentodesalas.service;
 
 import java.util.Random;
 

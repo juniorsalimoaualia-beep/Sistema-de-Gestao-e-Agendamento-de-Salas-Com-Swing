@@ -1,8 +1,8 @@
-package main.java.com.mycompany.sistemadegestaoeagendamentodesalas.controller;
-import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Curso;
+package com.mycompany.sistemadegestaoeagendamentodesalas.controller;
+import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Curso;
 import java.util.List;
-import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dao.HorarioDAO;
-import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Horario;
+import com.mycompany.sistemadegestaoeagendamentodesalas.dao.HorarioDAO;
+import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Horario;
 
 public class HorarioController {
     private HorarioDAO dao = new HorarioDAO();

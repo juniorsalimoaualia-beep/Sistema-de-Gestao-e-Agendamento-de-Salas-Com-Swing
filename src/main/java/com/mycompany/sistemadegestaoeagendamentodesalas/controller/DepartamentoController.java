@@ -1,8 +1,8 @@
-package main.java.com.mycompany.sistemadegestaoeagendamentodesalas.controller;
+package com.mycompany.sistemadegestaoeagendamentodesalas.controller;
 
 import java.util.List;
-import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dao.DepartamentoDAO;
-import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Departamento;
+import com.mycompany.sistemadegestaoeagendamentodesalas.dao.DepartamentoDAO;
+import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Departamento;
 
 public class DepartamentoController {
     private DepartamentoDAO dao = new DepartamentoDAO();

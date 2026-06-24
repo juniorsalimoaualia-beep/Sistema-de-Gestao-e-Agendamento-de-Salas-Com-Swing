@@ -1,8 +1,8 @@
-package main.java.com.mycompany.sistemadegestaoeagendamentodesalas.controller;
+package com.mycompany.sistemadegestaoeagendamentodesalas.controller;
 
 import java.util.List;
-import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dao.CursoDAO;
-import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Curso;
+import com.mycompany.sistemadegestaoeagendamentodesalas.dao.CursoDAO;
+import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Curso;
 
 public class CursoController {
     private CursoDAO dao = new CursoDAO();

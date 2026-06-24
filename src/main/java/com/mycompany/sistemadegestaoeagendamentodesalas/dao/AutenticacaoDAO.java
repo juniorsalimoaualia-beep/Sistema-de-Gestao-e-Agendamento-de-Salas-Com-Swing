@@ -1,13 +1,13 @@
-package main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dao;
+package com.mycompany.sistemadegestaoeagendamentodesalas.dao;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.List;
-import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Docente;
-import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Estudante;
-import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Secretario;
+import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Docente;
+import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Estudante;
+import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Secretario;
 
 public class AutenticacaoDAO {
     private static final String ADMIN_FILE = "files/admin.txt";

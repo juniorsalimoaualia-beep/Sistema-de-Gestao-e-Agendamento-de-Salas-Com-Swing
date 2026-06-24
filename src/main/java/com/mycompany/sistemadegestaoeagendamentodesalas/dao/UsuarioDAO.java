@@ -1,7 +1,7 @@
-package main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dao;
+package com.mycompany.sistemadegestaoeagendamentodesalas.dao;
 
 import java.util.List;
-import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Usuario;
+import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Usuario;
 
 public interface UsuarioDAO<T extends Usuario> {
     void salvar(T usuario);

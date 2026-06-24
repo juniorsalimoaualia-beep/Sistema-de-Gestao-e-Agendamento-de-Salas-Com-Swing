@@ -1,4 +1,4 @@
-package main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dao;
+package com.mycompany.sistemadegestaoeagendamentodesalas.dao;
 
 import java.io.File;
 import java.io.IOException;

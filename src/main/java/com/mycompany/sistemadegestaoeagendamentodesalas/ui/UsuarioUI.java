@@ -1,35 +1,35 @@
-package main.java.com.mycompany.sistemadegestaoeagendamentodesalas.ui;
+package com.mycompany.sistemadegestaoeagendamentodesalas.ui;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
-import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dao.AutenticacaoDAO;
-import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dao.DocenteDAO;
-import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.controller.DisciplinaController;
-import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.controller.DocenteController;
-import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.controller.EstudanteController;
-import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.controller.HorarioController;
-import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.controller.ReservaController;
-import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.controller.SalaController;
-import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.controller.SecretarioController;
-import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.service.InscricaoService;
-import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Inscricao;
-import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Docente;
-import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Estudante;
-import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Horario;
-import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Reserva;
-import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Sala;
-import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Secretario;
-import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Disciplina;
-import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Turma;
-import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dao.EstudanteDAO;
-import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dao.SecretarioDAO;
-import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.controller.CursoController;
-import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.controller.TurmaController;
-import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Curso;
-import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.EstadoReserva;
-import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.DiaSemana;
-import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.TipoReserva;
+import com.mycompany.sistemadegestaoeagendamentodesalas.dao.AutenticacaoDAO;
+import com.mycompany.sistemadegestaoeagendamentodesalas.dao.DocenteDAO;
+import com.mycompany.sistemadegestaoeagendamentodesalas.controller.DisciplinaController;
+import com.mycompany.sistemadegestaoeagendamentodesalas.controller.DocenteController;
+import com.mycompany.sistemadegestaoeagendamentodesalas.controller.EstudanteController;
+import com.mycompany.sistemadegestaoeagendamentodesalas.controller.HorarioController;
+import com.mycompany.sistemadegestaoeagendamentodesalas.controller.ReservaController;
+import com.mycompany.sistemadegestaoeagendamentodesalas.controller.SalaController;
+import com.mycompany.sistemadegestaoeagendamentodesalas.controller.SecretarioController;
+import com.mycompany.sistemadegestaoeagendamentodesalas.service.InscricaoService;
+import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Inscricao;
+import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Docente;
+import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Estudante;
+import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Horario;
+import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Reserva;
+import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Sala;
+import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Secretario;
+import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Disciplina;
+import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Turma;
+import com.mycompany.sistemadegestaoeagendamentodesalas.dao.EstudanteDAO;
+import com.mycompany.sistemadegestaoeagendamentodesalas.dao.SecretarioDAO;
+import com.mycompany.sistemadegestaoeagendamentodesalas.controller.CursoController;
+import com.mycompany.sistemadegestaoeagendamentodesalas.controller.TurmaController;
+import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Curso;
+import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.EstadoReserva;
+import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.DiaSemana;
+import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.TipoReserva;
 
 public class UsuarioUI {
     private Validacao vd = new Validacao();
@@ -267,7 +267,7 @@ public class UsuarioUI {
                     && reserva.getDisciplina().getId() == disciplinaSelecionada.getId()
                     && reserva.getEstadoReserva() != EstadoReserva.CANCELADA
                     && reserva.getEstadoReserva() != EstadoReserva.RECUSADA){
-                main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Sala sala = reserva.getSalaId();
+                com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Sala sala = reserva.getSalaId();
                 String nomeSala = sala != null ? sala.getNome() : "Sala ID 0";
                 System.out.println("Disciplina: " + disciplinaSelecionada.getNome()
                         + "\nSala: " + nomeSala
@@ -442,7 +442,7 @@ public class UsuarioUI {
                 case 4:
                     List<Reserva> rs= reservaController.listar();
                     for(Reserva lista:rs){
-                        main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Docente d = lista.getDocenteId();
+                        com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Docente d = lista.getDocenteId();
                         if(d != null && d.getId() == usuarioLogadoId){
                             int inscritos = 0;
                             if (lista.getDisciplina() != null) {
@@ -457,7 +457,7 @@ public class UsuarioUI {
                     List<Reserva> reservasDocente = reservaController.listar();
                     boolean temReservaDocente = false;
                     for (Reserva reservaItem : reservasDocente) {
-                        main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Docente dItem = reservaItem.getDocenteId();
+                        com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Docente dItem = reservaItem.getDocenteId();
                         if (dItem != null && dItem.getId() == usuarioLogadoId) {
                             System.out.println(reservaItem.getId() + " - " + reservaItem.getDisciplina().getNome() + " - " + reservaItem.getData() + " " + reservaItem.getHoraInicio() + "-" + reservaItem.getHoraFim() + " [" + reservaItem.getEstadoReserva() + "]");
                             temReservaDocente = true;
@@ -512,10 +512,10 @@ public class UsuarioUI {
                             if (reserva.getDisciplina() != null) {
                                 inscritos = inscricaoService.listarInscricoesPorDisciplina(reserva.getDisciplina().getId()).size();
                             }
-                            main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Docente docImpressao = reserva.getDocenteId();
+                            com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Docente docImpressao = reserva.getDocenteId();
                             int docenteIdPrint = docImpressao != null ? docImpressao.getId() : 0;
                             String nomeDocenteImp = docImpressao != null ? docImpressao.getNomeCompleto() : ("Docente ID " + docenteIdPrint);
-                            main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Sala salaImp = reserva.getSalaId();
+                            com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Sala salaImp = reserva.getSalaId();
                             String nomeSalaImp = salaImp != null ? salaImp.getNome() : ("Sala ID " + (salaImp!=null?String.valueOf(salaImp.getId()):"0"));
                             System.out.println("ID: "+reserva.getId()
                             +" | Docente: "+nomeDocenteImp
@@ -657,7 +657,7 @@ public class UsuarioUI {
         List<Reserva> resultado = new java.util.ArrayList<>();
 
         for(Reserva reserva : reservas){
-            main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Docente dRes = reserva.getDocenteId();
+            com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Docente dRes = reserva.getDocenteId();
             if(dRes != null && dRes.getId() == docenteId){
                 resultado.add(reserva);
             }
@@ -681,7 +681,7 @@ public class UsuarioUI {
         List<Reserva> resultado = new java.util.ArrayList<>();
 
         for(Reserva reserva : reservas){
-            main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Sala sRes = reserva.getSalaId();
+            com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Sala sRes = reserva.getSalaId();
             if(sRes != null && sRes.getId() == salaId){
                 resultado.add(reserva);
             }
@@ -711,8 +711,8 @@ public class UsuarioUI {
         }
 
         for(Reserva reserva : reservas){
-            main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Sala sala = reserva.getSalaId();
-            main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Docente docente = reserva.getDocenteId();
+            com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Sala sala = reserva.getSalaId();
+            com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Docente docente = reserva.getDocenteId();
             String nomeSala = sala != null ? sala.getNome() : ("Sala ID " + (sala!=null?String.valueOf(sala.getId()):"0"));
             String nomeDocente = docente != null ? docente.getNomeCompleto() : ("Docente ID " + (docente!=null?String.valueOf(docente.getId()):"0"));
             String nomeDisciplina = reserva.getDisciplina() != null ? reserva.getDisciplina().getNome() : "";

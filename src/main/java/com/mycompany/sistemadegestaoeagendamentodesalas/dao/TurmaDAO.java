@@ -1,4 +1,4 @@
-package main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dao;
+package com.mycompany.sistemadegestaoeagendamentodesalas.dao;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -9,8 +9,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Estudante;
-import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Turma;
+import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Estudante;
+import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Turma;
 
 public class TurmaDAO {
     private static final String file ="files/Turma.txt";

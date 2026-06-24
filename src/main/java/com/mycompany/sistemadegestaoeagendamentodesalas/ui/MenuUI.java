@@ -1,4 +1,4 @@
-package main.java.com.mycompany.sistemadegestaoeagendamentodesalas.ui;
+package com.mycompany.sistemadegestaoeagendamentodesalas.ui;
 
 public class MenuUI {
     private Validacao vd;

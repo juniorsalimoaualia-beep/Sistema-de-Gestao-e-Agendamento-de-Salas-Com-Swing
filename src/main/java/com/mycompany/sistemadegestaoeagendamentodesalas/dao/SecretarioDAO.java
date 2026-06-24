@@ -1,4 +1,4 @@
-package main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dao;
+package com.mycompany.sistemadegestaoeagendamentodesalas.dao;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -9,8 +9,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Secretario;
-import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dao.UsuarioDAO;
+import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Secretario;
 
 public class SecretarioDAO implements UsuarioDAO<Secretario> {
     private static final String file ="files/Secretario.txt";

@@ -1,3 +1,4 @@
-1; 1; 1; 0; 2026-Engenharia Informatica; 2026-06-04; 17:05; 19:50; CANCELADA
-2; 1; 2; 4; 2026-Engenharia Informatica; 2026-06-12; 18:50; 20:10; CANCELADA
-3; 1; 1; 2; 2026-Engenharia Informatica; 2026-06-12; 17:05; 19:20; CONFIRMADA
+1; 1; 1; 0; 2026-Engenharia Informatica; 2026-06-04; 17:05; 19:50; AULA; SEGUNDA; CANCELADA
+2; 1; 2; 4; 2026-Engenharia Informatica; 2026-06-12; 18:50; 20:10; AULA; SEGUNDA; CANCELADA
+3; 1; 1; 2; 2026-Engenharia Informatica; 2026-06-12; 17:05; 19:20; AULA; SEGUNDA; CONFIRMADA
+4; 3; 1; 1; 2026-Engenharia Mecanica; 2026-06-20; 17:05; 19:50; AULA; SEGUNDA; CONFIRMADA

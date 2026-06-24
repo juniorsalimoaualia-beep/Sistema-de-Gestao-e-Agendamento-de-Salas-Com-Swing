@@ -1,4 +1,4 @@
-package main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dao;
+package com.mycompany.sistemadegestaoeagendamentodesalas.dao;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -8,9 +8,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Sala;
-import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.EstadoSala;
-import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Departamento;
+import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Sala;
+import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.EstadoSala;
+import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Departamento;
 
 public class SalaDAO {
     private static final String file ="files/Sala.txt";

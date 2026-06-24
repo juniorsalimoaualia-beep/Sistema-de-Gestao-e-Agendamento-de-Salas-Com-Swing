@@ -1,7 +1,7 @@
-package main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1;
+package com.mycompany.sistemadegestaoeagendamentodesalas.dto1;
 
-import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Curso;
-import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Sala;
+import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Curso;
+import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Sala;
 
 public class Departamento {
     private int id;

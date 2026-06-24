@@ -1,4 +1,4 @@
-package main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dao;
+package com.mycompany.sistemadegestaoeagendamentodesalas.dao;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -10,10 +10,10 @@ import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Curso;
-import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.DiaSemana;
-import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Disciplina;
-import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Horario;
+import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Curso;
+import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.DiaSemana;
+import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Disciplina;
+import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Horario;
 
 public class HorarioDAO {
     private static final String file = "files/Horario.txt";

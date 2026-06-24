@@ -1,9 +1,8 @@
-package main.java.com.mycompany.sistemadegestaoeagendamentodesalas.controller;
+package com.mycompany.sistemadegestaoeagendamentodesalas.controller;
 
 import java.util.List;
-import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.controller.UsuarioController;
-import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dao.SecretarioDAO;
-import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Secretario;
+import com.mycompany.sistemadegestaoeagendamentodesalas.dao.SecretarioDAO;
+import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Secretario;
 
 public class SecretarioController implements UsuarioController<Secretario> {
     private SecretarioDAO dao = new SecretarioDAO();

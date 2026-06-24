@@ -1,8 +1,8 @@
-package main.java.com.mycompany.sistemadegestaoeagendamentodesalas.controller;
+package com.mycompany.sistemadegestaoeagendamentodesalas.controller;
 
 import java.util.List;
-import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dao.SalaDAO;
-import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Sala;
+import com.mycompany.sistemadegestaoeagendamentodesalas.dao.SalaDAO;
+import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Sala;
 
 public class SalaController {
     private SalaDAO dao = new SalaDAO();

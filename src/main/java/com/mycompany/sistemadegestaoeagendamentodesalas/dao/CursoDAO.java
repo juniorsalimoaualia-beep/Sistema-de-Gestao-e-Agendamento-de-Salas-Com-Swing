@@ -1,6 +1,6 @@
-package main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dao;
-import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Curso;
-import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Departamento;
+package com.mycompany.sistemadegestaoeagendamentodesalas.dao;
+import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Curso;
+import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Departamento;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.FileReader;

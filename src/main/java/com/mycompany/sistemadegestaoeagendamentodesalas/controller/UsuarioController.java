@@ -1,7 +1,7 @@
-package main.java.com.mycompany.sistemadegestaoeagendamentodesalas.controller;
+package com.mycompany.sistemadegestaoeagendamentodesalas.controller;
 
 import java.util.List;
-import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Usuario;
+import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Usuario;
 
 public interface UsuarioController<T extends Usuario> {
     void salvar(T usuario);

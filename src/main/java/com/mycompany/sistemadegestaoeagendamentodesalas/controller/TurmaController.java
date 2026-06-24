@@ -1,8 +1,8 @@
-package main.java.com.mycompany.sistemadegestaoeagendamentodesalas.controller;
+package com.mycompany.sistemadegestaoeagendamentodesalas.controller;
 
 import java.util.List;
-import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dao.TurmaDAO;
-import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Turma;
+import com.mycompany.sistemadegestaoeagendamentodesalas.dao.TurmaDAO;
+import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Turma;
 
 public class TurmaController {
     private TurmaDAO dao = new TurmaDAO();

@@ -1,12 +1,12 @@
-package main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dao;
-import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Sala;
-import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Reserva;
-import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.EstadoReserva;
-import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Disciplina;
-import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Turma;
-import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.TipoReserva;
-import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.DiaSemana;
-import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Docente;
+package com.mycompany.sistemadegestaoeagendamentodesalas.dao;
+import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Sala;
+import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Reserva;
+import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.EstadoReserva;
+import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Disciplina;
+import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Turma;
+import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.TipoReserva;
+import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.DiaSemana;
+import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Docente;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -110,7 +110,7 @@ public class ReservaDAO {
                     SalaDAO salaDAO = new SalaDAO();
                     DocenteDAO docenteDAO = new DocenteDAO();
                     Sala salaObj = salaDAO.buscarPorId(salaId);
-                    main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Docente docenteObj = docenteDAO.buscarPorId(docenteId);
+                    com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Docente docenteObj = docenteDAO.buscarPorId(docenteId);
 
                     Reserva reserva = new Reserva(id, salaObj, docenteObj, disciplina, turma, data, horaInicio, horaFim, TipoReserva.AULA, DiaSemana.SEGUNDA);
 

@@ -1,11 +1,11 @@
-package main.java.com.mycompany.sistemadegestaoeagendamentodesalas.service;
+package com.mycompany.sistemadegestaoeagendamentodesalas.service;
 
-import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dao.InscricaoDAO;
-import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dao.EstudanteDAO;
-import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dao.DisciplinaDAO;
-import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Inscricao;
-import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Estudante;
-import main.java.com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Disciplina;
+import com.mycompany.sistemadegestaoeagendamentodesalas.dao.InscricaoDAO;
+import com.mycompany.sistemadegestaoeagendamentodesalas.dao.EstudanteDAO;
+import com.mycompany.sistemadegestaoeagendamentodesalas.dao.DisciplinaDAO;
+import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Inscricao;
+import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Estudante;
+import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Disciplina;
 import java.util.List;
 
 public class InscricaoService {
