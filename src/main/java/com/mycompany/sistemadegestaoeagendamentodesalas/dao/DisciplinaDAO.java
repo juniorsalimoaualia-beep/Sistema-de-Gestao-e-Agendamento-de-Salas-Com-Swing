@@ -2,7 +2,6 @@ package com.mycompany.sistemadegestaoeagendamentodesalas.dao;
 import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Curso;
 import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Disciplina;
 import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Docente;
-import com.mycompany.sistemadegestaoeagendamentodesalas.dao.CursoDAO;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.FileReader;

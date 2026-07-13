@@ -285,7 +285,7 @@ public class AdminUI {
             return;
         }
         System.out.println("Docente atual da disciplina: "+disc.getDocente().getNomeCompleto());
-        int idDocente=disc.getDocente().getId();
+       
         String nome=vd.validarString("Digite o nome do novo docente:");
         String apelido=vd.validarString("Digite o apelido:");
         disc.getDocente().setNome(nome);

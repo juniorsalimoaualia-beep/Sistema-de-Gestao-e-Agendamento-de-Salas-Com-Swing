@@ -8,10 +8,9 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-
 import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Curso;
 import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Estudante;
-import com.mycompany.sistemadegestaoeagendamentodesalas.dao.CursoDAO;
+
 
 public class EstudanteDAO {
     private static final String file ="files/estudante.txt";
