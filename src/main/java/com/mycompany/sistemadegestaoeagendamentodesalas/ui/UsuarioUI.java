@@ -1,3 +1,5 @@
+// Dados: classe UsuarioUI
+
 package com.mycompany.sistemadegestaoeagendamentodesalas.ui;
 
 import java.time.LocalDate;

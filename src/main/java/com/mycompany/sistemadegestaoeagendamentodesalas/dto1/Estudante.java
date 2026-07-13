@@ -1,3 +1,5 @@
+// Dados: classe Estudante
+
 package com.mycompany.sistemadegestaoeagendamentodesalas.dto1;
 public class Estudante extends Usuario{
     private Curso curso;

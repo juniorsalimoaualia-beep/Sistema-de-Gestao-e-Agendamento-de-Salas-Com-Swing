@@ -1,3 +1,5 @@
+// Dados: classe SalaDAO
+
 package com.mycompany.sistemadegestaoeagendamentodesalas.dao;
 
 import java.io.BufferedReader;

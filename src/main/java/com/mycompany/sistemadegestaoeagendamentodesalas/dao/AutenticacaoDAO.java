@@ -1,3 +1,5 @@
+// Dados: classe AutenticacaoDAO
+
 package com.mycompany.sistemadegestaoeagendamentodesalas.dao;
 
 import java.io.BufferedReader;

@@ -1,3 +1,5 @@
+// Dados: classe Validacao
+
 package com.mycompany.sistemadegestaoeagendamentodesalas.ui;
 import java.io.BufferedReader;
 import java.io.IOException;

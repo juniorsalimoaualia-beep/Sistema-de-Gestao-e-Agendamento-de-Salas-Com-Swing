@@ -1,3 +1,5 @@
+// Dados: classe Usuario
+
 package com.mycompany.sistemadegestaoeagendamentodesalas.dto1;
 
 public class Usuario {

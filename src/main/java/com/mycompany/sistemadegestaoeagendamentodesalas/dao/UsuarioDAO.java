@@ -1,3 +1,5 @@
+// Dados: classe UsuarioDAO
+
 package com.mycompany.sistemadegestaoeagendamentodesalas.dao;
 
 import java.util.List;

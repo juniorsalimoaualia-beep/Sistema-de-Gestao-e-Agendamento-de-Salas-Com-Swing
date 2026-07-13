@@ -1,3 +1,5 @@
+// Dados: classe InscricaoService
+
 package com.mycompany.sistemadegestaoeagendamentodesalas.service;
 
 import com.mycompany.sistemadegestaoeagendamentodesalas.dao.InscricaoDAO;

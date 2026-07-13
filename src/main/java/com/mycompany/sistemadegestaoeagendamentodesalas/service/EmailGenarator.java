@@ -1,3 +1,5 @@
+// Dados: classe EmailGenarator
+
 package com.mycompany.sistemadegestaoeagendamentodesalas.service;
 
 import java.util.Random;

@@ -1,3 +1,5 @@
+// Dados: classe DisciplinaDAO
+
 package com.mycompany.sistemadegestaoeagendamentodesalas.dao;
 import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Curso;
 import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Disciplina;

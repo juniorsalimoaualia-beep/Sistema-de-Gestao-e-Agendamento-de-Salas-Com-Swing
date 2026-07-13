@@ -1,3 +1,5 @@
+// Dados: classe Departamento
+
 package com.mycompany.sistemadegestaoeagendamentodesalas.dto1;
 
 public class Departamento {

@@ -1,3 +1,5 @@
+// Dados: classe Sgsas
+
 package com.mycompany.sistemadegestaoeagendamentodesalas;
 import com.mycompany.sistemadegestaoeagendamentodesalas.ui.MenuUI;
 public class Sgsas {

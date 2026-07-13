@@ -1,3 +1,5 @@
+// Dados: classe Secretario
+
 package com.mycompany.sistemadegestaoeagendamentodesalas.dto1;
 public class Secretario extends Usuario {
     private String cargo;

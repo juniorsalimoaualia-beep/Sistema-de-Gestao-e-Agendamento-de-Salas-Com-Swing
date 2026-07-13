@@ -1,3 +1,5 @@
+// Dados: classe Reserva
+
 package com.mycompany.sistemadegestaoeagendamentodesalas.dto1;
 import java.time.LocalDate;
 import java.time.LocalTime;

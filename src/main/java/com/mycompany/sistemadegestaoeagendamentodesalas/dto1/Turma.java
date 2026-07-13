@@ -1,3 +1,5 @@
+// Dados: classe Turma
+
 package com.mycompany.sistemadegestaoeagendamentodesalas.dto1;
 
 import java.util.ArrayList;

@@ -1,3 +1,5 @@
+// Dados: classe GestorReservaDAO
+
 package com.mycompany.sistemadegestaoeagendamentodesalas.dao;
 import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.EstadoReserva;
 import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.EstadoSala;

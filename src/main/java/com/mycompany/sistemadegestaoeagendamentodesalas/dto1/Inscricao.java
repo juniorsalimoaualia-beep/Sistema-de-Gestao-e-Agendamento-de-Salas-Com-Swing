@@ -1,3 +1,5 @@
+// Dados: classe Inscricao
+
 package com.mycompany.sistemadegestaoeagendamentodesalas.dto1;
 
 public class Inscricao {

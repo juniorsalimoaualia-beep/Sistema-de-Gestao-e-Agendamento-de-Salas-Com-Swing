@@ -1,3 +1,5 @@
+// Dados: classe MenuUI
+
 package com.mycompany.sistemadegestaoeagendamentodesalas.ui;
 
 public class MenuUI {

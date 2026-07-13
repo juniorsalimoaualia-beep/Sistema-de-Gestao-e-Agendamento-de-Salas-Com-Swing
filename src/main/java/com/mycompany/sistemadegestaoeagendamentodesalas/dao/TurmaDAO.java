@@ -1,3 +1,5 @@
+// Dados: classe TurmaDAO
+
 package com.mycompany.sistemadegestaoeagendamentodesalas.dao;
 
 import java.io.BufferedReader;

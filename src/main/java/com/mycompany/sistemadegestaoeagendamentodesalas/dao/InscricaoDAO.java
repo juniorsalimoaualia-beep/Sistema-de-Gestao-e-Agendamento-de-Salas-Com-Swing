@@ -1,3 +1,5 @@
+// Dados: classe InscricaoDAO
+
 package com.mycompany.sistemadegestaoeagendamentodesalas.dao;
 
 import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Inscricao;

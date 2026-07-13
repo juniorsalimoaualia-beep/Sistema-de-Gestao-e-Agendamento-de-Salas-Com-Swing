@@ -1,3 +1,5 @@
+// Dados: classe DepartamentoDAO
+
 package com.mycompany.sistemadegestaoeagendamentodesalas.dao;
 import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Departamento;
 import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Curso;

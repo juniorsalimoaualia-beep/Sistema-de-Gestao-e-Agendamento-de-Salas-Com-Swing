@@ -1,3 +1,5 @@
+// Dados: classe Disciplina
+
 package com.mycompany.sistemadegestaoeagendamentodesalas.dto1;
 public class Disciplina {
     private int id;

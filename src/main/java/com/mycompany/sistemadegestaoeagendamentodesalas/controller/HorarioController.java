@@ -1,3 +1,5 @@
+// Dados: classe HorarioController
+
 package com.mycompany.sistemadegestaoeagendamentodesalas.controller;
 import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Curso;
 import java.util.List;

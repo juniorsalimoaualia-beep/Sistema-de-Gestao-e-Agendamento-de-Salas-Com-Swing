@@ -1,3 +1,5 @@
+// Dados: classe AdminUI
+
 package com.mycompany.sistemadegestaoeagendamentodesalas.ui;
 
 import com.mycompany.sistemadegestaoeagendamentodesalas.controller.CursoController;

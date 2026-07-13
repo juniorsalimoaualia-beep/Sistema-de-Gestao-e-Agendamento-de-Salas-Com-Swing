@@ -1,3 +1,5 @@
+// Dados: classe EstadoReserva
+
 package com.mycompany.sistemadegestaoeagendamentodesalas.dto1;
 
 public enum EstadoReserva {

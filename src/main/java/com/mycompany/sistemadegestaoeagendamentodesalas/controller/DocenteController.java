@@ -1,3 +1,5 @@
+// Dados: classe DocenteController
+
 package com.mycompany.sistemadegestaoeagendamentodesalas.controller;
 
 import java.util.List;
