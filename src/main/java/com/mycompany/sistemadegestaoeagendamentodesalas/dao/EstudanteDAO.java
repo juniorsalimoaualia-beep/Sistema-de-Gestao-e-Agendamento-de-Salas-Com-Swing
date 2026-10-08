@@ -10,8 +10,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Curso;
-import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Estudante;
+import com.mycompany.sistemadegestaoeagendamentodesalas.model.Curso;
+import com.mycompany.sistemadegestaoeagendamentodesalas.model.Estudante;
 
 
 public class EstudanteDAO {

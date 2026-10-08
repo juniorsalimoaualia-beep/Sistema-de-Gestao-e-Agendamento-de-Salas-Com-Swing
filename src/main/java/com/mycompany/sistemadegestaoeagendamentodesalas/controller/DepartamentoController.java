@@ -4,7 +4,7 @@ package com.mycompany.sistemadegestaoeagendamentodesalas.controller;
 
 import java.util.List;
 import com.mycompany.sistemadegestaoeagendamentodesalas.dao.DepartamentoDAO;
-import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Departamento;
+import com.mycompany.sistemadegestaoeagendamentodesalas.model.Departamento;
 
 public class DepartamentoController {
     private DepartamentoDAO dao = new DepartamentoDAO();

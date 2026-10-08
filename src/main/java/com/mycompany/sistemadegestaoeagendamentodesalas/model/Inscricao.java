@@ -1,6 +1,6 @@
 // Dados: classe Inscricao
 
-package com.mycompany.sistemadegestaoeagendamentodesalas.dto1;
+package com.mycompany.sistemadegestaoeagendamentodesalas.model;
 
 public class Inscricao {
     private int id;

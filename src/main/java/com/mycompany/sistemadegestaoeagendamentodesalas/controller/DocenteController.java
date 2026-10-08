@@ -4,7 +4,7 @@ package com.mycompany.sistemadegestaoeagendamentodesalas.controller;
 
 import java.util.List;
 import com.mycompany.sistemadegestaoeagendamentodesalas.dao.DocenteDAO;
-import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Docente;
+import com.mycompany.sistemadegestaoeagendamentodesalas.model.Docente;
 
 public class DocenteController {
     private DocenteDAO dao = new DocenteDAO();
@@ -19,10 +19,6 @@ public class DocenteController {
 
     public Docente buscarPorId(int id) {
         return dao.buscarPorDocente(id);
-    }
-
-    public int gerarProximoId() {
-        return dao.gerarProximoId();
     }
 
     public boolean alterarSenha(int id, String senhaAtual, String senhaNova) {

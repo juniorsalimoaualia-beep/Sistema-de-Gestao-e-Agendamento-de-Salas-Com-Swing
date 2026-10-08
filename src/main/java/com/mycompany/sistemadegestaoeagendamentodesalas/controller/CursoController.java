@@ -1,10 +1,8 @@
-// Dados: classe CursoController
-
 package com.mycompany.sistemadegestaoeagendamentodesalas.controller;
 
 import java.util.List;
 import com.mycompany.sistemadegestaoeagendamentodesalas.dao.CursoDAO;
-import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Curso;
+import com.mycompany.sistemadegestaoeagendamentodesalas.model.Curso;
 
 public class CursoController {
     private CursoDAO dao = new CursoDAO();
@@ -16,11 +14,7 @@ public class CursoController {
     public List<Curso> listar() {
         return dao.listaCurso();
     }
-    
 
-    public String buscarPorId(int id) {
-        return dao.buscarPorCurso(id);
-    }
 
     public Curso buscarCursoPorId(int id) {
         return dao.buscarCursoPorId(id);

@@ -4,7 +4,7 @@ package com.mycompany.sistemadegestaoeagendamentodesalas.controller;
 
 import java.util.List;
 import com.mycompany.sistemadegestaoeagendamentodesalas.dao.SalaDAO;
-import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Sala;
+import com.mycompany.sistemadegestaoeagendamentodesalas.model.Sala;
 
 public class SalaController {
     private SalaDAO dao = new SalaDAO();

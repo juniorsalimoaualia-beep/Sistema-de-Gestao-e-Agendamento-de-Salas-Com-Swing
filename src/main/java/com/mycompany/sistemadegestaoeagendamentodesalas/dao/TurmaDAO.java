@@ -11,8 +11,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Estudante;
-import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Turma;
+import com.mycompany.sistemadegestaoeagendamentodesalas.model.Estudante;
+import com.mycompany.sistemadegestaoeagendamentodesalas.model.Turma;
 
 public class TurmaDAO {
     private static final String file ="files/Turma.txt";

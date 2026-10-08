@@ -1,6 +1,6 @@
 // Dados: classe Reserva
 
-package com.mycompany.sistemadegestaoeagendamentodesalas.dto1;
+package com.mycompany.sistemadegestaoeagendamentodesalas.model;
 import java.time.LocalDate;
 import java.time.LocalTime;
 

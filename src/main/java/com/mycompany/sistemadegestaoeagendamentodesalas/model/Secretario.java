@@ -1,6 +1,6 @@
 // Dados: classe Secretario
 
-package com.mycompany.sistemadegestaoeagendamentodesalas.dto1;
+package com.mycompany.sistemadegestaoeagendamentodesalas.model;
 public class Secretario extends Usuario {
     private String cargo;
     public Secretario(int id, String nome, String apelido, String cargo, int numCel, String email, String senha){

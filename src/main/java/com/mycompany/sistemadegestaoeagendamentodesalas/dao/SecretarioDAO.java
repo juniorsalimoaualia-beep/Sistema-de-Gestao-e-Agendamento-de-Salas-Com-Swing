@@ -11,9 +11,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Secretario;
+import com.mycompany.sistemadegestaoeagendamentodesalas.model.Secretario;
 
-public class SecretarioDAO implements UsuarioDAO<Secretario> {
+public class SecretarioDAO {
     private static final String file ="files/Secretario.txt";
 
     public void salvar(Secretario dp){
@@ -22,11 +22,6 @@ public class SecretarioDAO implements UsuarioDAO<Secretario> {
             bw.write(dp.toString());
             bw.newLine();
         }catch(IOException e){System.out.println("Erro ao salvar Secretario "+e.getMessage());}
-    }
-
-    @Override
-    public List<Secretario> listar(){
-        return listaSecretario();
     }
 
     public List<Secretario> listaSecretario(){
@@ -71,11 +66,6 @@ public class SecretarioDAO implements UsuarioDAO<Secretario> {
         return lista;
     }
 
-    @Override
-    public Secretario buscarPorId(int id){
-        return buscarPorSecretario(id);
-    }
-
     public Secretario buscarPorSecretario(int id){
         List<Secretario> lista=listaSecretario();
 
@@ -87,16 +77,6 @@ public class SecretarioDAO implements UsuarioDAO<Secretario> {
         return null;
     }
 
-    @Override
-    public int gerarProximoId(){
-        int max = 0;
-        for(Secretario dp : listaSecretario()){
-            max = Math.max(max, dp.getId());
-        }
-        return max + 1;
-    }
-
-    @Override
     public boolean alterarSenha(int id, String senhaAtual, String senhaNova) {
         List<Secretario> lista = listaSecretario();
         Secretario secretarioEncontrado = null;

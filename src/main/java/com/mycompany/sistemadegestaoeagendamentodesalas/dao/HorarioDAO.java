@@ -12,10 +12,10 @@ import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Curso;
-import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.DiaSemana;
-import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Disciplina;
-import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Horario;
+import com.mycompany.sistemadegestaoeagendamentodesalas.model.Curso;
+import com.mycompany.sistemadegestaoeagendamentodesalas.model.DiaSemana;
+import com.mycompany.sistemadegestaoeagendamentodesalas.model.Disciplina;
+import com.mycompany.sistemadegestaoeagendamentodesalas.model.Horario;
 
 public class HorarioDAO {
     private static final String file = "files/Horario.txt";

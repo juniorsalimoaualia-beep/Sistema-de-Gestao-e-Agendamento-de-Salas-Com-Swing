@@ -7,9 +7,9 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.List;
-import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Docente;
-import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Estudante;
-import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Secretario;
+import com.mycompany.sistemadegestaoeagendamentodesalas.model.Docente;
+import com.mycompany.sistemadegestaoeagendamentodesalas.model.Estudante;
+import com.mycompany.sistemadegestaoeagendamentodesalas.model.Secretario;
 
 public class AutenticacaoDAO {
     private static final String ADMIN_FILE = "files/admin.txt";

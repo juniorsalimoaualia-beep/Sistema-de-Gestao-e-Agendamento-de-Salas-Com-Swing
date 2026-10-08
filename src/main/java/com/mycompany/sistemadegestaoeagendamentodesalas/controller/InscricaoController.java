@@ -4,7 +4,7 @@ package com.mycompany.sistemadegestaoeagendamentodesalas.controller;
 
 import java.util.List;
 import com.mycompany.sistemadegestaoeagendamentodesalas.dao.InscricaoDAO;
-import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Inscricao;
+import com.mycompany.sistemadegestaoeagendamentodesalas.model.Inscricao;
 
 public class InscricaoController {
     private InscricaoDAO dao = new InscricaoDAO();

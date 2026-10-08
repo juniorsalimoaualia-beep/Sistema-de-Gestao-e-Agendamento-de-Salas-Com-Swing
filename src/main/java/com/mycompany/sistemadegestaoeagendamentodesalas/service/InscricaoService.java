@@ -5,9 +5,9 @@ package com.mycompany.sistemadegestaoeagendamentodesalas.service;
 import com.mycompany.sistemadegestaoeagendamentodesalas.dao.InscricaoDAO;
 import com.mycompany.sistemadegestaoeagendamentodesalas.dao.EstudanteDAO;
 import com.mycompany.sistemadegestaoeagendamentodesalas.dao.DisciplinaDAO;
-import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Inscricao;
-import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Estudante;
-import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Disciplina;
+import com.mycompany.sistemadegestaoeagendamentodesalas.model.Inscricao;
+import com.mycompany.sistemadegestaoeagendamentodesalas.model.Estudante;
+import com.mycompany.sistemadegestaoeagendamentodesalas.model.Disciplina;
 import java.util.List;
 
 public class InscricaoService {

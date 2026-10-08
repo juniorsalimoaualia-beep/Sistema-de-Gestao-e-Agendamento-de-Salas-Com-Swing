@@ -1,6 +1,6 @@
 // Dados: classe Disciplina
 
-package com.mycompany.sistemadegestaoeagendamentodesalas.dto1;
+package com.mycompany.sistemadegestaoeagendamentodesalas.model;
 public class Disciplina {
     private int id;
     private String nome;
