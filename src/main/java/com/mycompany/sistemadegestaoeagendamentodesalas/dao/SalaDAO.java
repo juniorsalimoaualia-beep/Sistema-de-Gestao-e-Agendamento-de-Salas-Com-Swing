@@ -10,9 +10,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Sala;
-import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.EstadoSala;
-import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Departamento;
+import com.mycompany.sistemadegestaoeagendamentodesalas.model.Sala;
+import com.mycompany.sistemadegestaoeagendamentodesalas.model.EstadoSala;
+import com.mycompany.sistemadegestaoeagendamentodesalas.model.Departamento;
 
 public class SalaDAO {
     private static final String file ="files/Sala.txt";

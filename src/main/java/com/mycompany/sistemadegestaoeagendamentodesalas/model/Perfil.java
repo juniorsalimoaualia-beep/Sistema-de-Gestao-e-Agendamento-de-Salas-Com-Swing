@@ -1,6 +1,6 @@
 // Dados: classe Perfil
 
-package com.mycompany.sistemadegestaoeagendamentodesalas.dto1;
+package com.mycompany.sistemadegestaoeagendamentodesalas.model;
 public enum Perfil {
     ADMIN, SECRETARIO,DOCENTE, ESTUDANTE;
 }

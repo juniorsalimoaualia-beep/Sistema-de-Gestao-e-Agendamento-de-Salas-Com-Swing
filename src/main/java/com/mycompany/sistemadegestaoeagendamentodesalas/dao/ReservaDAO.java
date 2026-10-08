@@ -1,14 +1,14 @@
 // Dados: classe ReservaDAO
 
 package com.mycompany.sistemadegestaoeagendamentodesalas.dao;
-import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Sala;
-import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Reserva;
-import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.EstadoReserva;
-import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Disciplina;
-import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Turma;
-import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.TipoReserva;
-import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.DiaSemana;
-import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Docente;
+import com.mycompany.sistemadegestaoeagendamentodesalas.model.Sala;
+import com.mycompany.sistemadegestaoeagendamentodesalas.model.Reserva;
+import com.mycompany.sistemadegestaoeagendamentodesalas.model.EstadoReserva;
+import com.mycompany.sistemadegestaoeagendamentodesalas.model.Disciplina;
+import com.mycompany.sistemadegestaoeagendamentodesalas.model.Turma;
+import com.mycompany.sistemadegestaoeagendamentodesalas.model.TipoReserva;
+import com.mycompany.sistemadegestaoeagendamentodesalas.model.DiaSemana;
+import com.mycompany.sistemadegestaoeagendamentodesalas.model.Docente;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -112,7 +112,7 @@ public class ReservaDAO {
                     SalaDAO salaDAO = new SalaDAO();
                     DocenteDAO docenteDAO = new DocenteDAO();
                     Sala salaObj = salaDAO.buscarPorId(salaId);
-                    com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Docente docenteObj = docenteDAO.buscarPorId(docenteId);
+                    com.mycompany.sistemadegestaoeagendamentodesalas.model.Docente docenteObj = docenteDAO.buscarPorDocente(docenteId);
 
                     Reserva reserva = new Reserva(id, salaObj, docenteObj, disciplina, turma, data, horaInicio, horaFim, TipoReserva.AULA, DiaSemana.SEGUNDA);
 

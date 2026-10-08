@@ -2,9 +2,9 @@
 
 package com.mycompany.sistemadegestaoeagendamentodesalas.dao;
 
-import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Inscricao;
-import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Estudante;
-import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Disciplina;
+import com.mycompany.sistemadegestaoeagendamentodesalas.model.Inscricao;
+import com.mycompany.sistemadegestaoeagendamentodesalas.model.Estudante;
+import com.mycompany.sistemadegestaoeagendamentodesalas.model.Disciplina;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;

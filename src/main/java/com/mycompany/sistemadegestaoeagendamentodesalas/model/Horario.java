@@ -1,6 +1,6 @@
 // Dados: classe Horario
 
-package com.mycompany.sistemadegestaoeagendamentodesalas.dto1;
+package com.mycompany.sistemadegestaoeagendamentodesalas.model;
 import java.time.LocalTime;
 public class Horario {
     private int id;

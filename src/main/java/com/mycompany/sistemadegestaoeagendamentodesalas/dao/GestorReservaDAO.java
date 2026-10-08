@@ -1,10 +1,10 @@
 // Dados: classe GestorReservaDAO
 
 package com.mycompany.sistemadegestaoeagendamentodesalas.dao;
-import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.EstadoReserva;
-import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.EstadoSala;
-import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Sala;
-import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Reserva;
+import com.mycompany.sistemadegestaoeagendamentodesalas.model.EstadoReserva;
+import com.mycompany.sistemadegestaoeagendamentodesalas.model.EstadoSala;
+import com.mycompany.sistemadegestaoeagendamentodesalas.model.Sala;
+import com.mycompany.sistemadegestaoeagendamentodesalas.model.Reserva;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
@@ -29,7 +29,7 @@ public class GestorReservaDAO {
         }
         for(Reserva r: rs){
             int idSalaReserva = 0;
-            try { com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Sala salaReservaObj = r.getSalaId(); idSalaReserva = salaReservaObj != null ? salaReservaObj.getId() : 0; } catch (Exception e) { idSalaReserva = 0; }
+            try { com.mycompany.sistemadegestaoeagendamentodesalas.model.Sala salaReservaObj = r.getSalaId(); idSalaReserva = salaReservaObj != null ? salaReservaObj.getId() : 0; } catch (Exception e) { idSalaReserva = 0; }
             boolean mesmaSala = idSalaReserva == sala.getId();
             boolean mesmaData = r.getData() != null && r.getData().equals(data);
             boolean reservaAtiva = r.getEstadoReserva()==EstadoReserva.CONFIRMADA||r.getEstadoReserva()==EstadoReserva.PENDENTE;

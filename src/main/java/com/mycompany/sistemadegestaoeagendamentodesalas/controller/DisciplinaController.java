@@ -5,9 +5,9 @@ package com.mycompany.sistemadegestaoeagendamentodesalas.controller;
 import java.util.List;
 import com.mycompany.sistemadegestaoeagendamentodesalas.dao.DisciplinaDAO;
 import com.mycompany.sistemadegestaoeagendamentodesalas.dao.DocenteDAO;
-import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Curso;
-import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Disciplina;
-import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Docente;
+import com.mycompany.sistemadegestaoeagendamentodesalas.model.Curso;
+import com.mycompany.sistemadegestaoeagendamentodesalas.model.Disciplina;
+import com.mycompany.sistemadegestaoeagendamentodesalas.model.Docente;
 
 public class DisciplinaController {
     private DisciplinaDAO dao = new DisciplinaDAO();

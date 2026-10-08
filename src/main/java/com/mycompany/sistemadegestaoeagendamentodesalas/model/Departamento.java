@@ -1,6 +1,6 @@
 // Dados: classe Departamento
 
-package com.mycompany.sistemadegestaoeagendamentodesalas.dto1;
+package com.mycompany.sistemadegestaoeagendamentodesalas.model;
 
 public class Departamento {
     private int id;

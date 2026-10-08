@@ -3,7 +3,7 @@
 package com.mycompany.sistemadegestaoeagendamentodesalas.controller;
 
 import java.util.List;
-import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Usuario;
+import com.mycompany.sistemadegestaoeagendamentodesalas.model.Usuario;
 
 public interface UsuarioController<T extends Usuario> {
     void salvar(T usuario);

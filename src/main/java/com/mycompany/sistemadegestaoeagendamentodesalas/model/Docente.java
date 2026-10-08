@@ -1,6 +1,6 @@
 // Dados: classe Docente
 
-package com.mycompany.sistemadegestaoeagendamentodesalas.dto1;
+package com.mycompany.sistemadegestaoeagendamentodesalas.model;
 
 public class Docente extends Usuario{
     private String nivelAcademico;

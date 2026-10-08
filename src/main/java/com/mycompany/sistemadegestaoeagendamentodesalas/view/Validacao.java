@@ -1,6 +1,4 @@
-// Dados: classe Validacao
-
-package com.mycompany.sistemadegestaoeagendamentodesalas.ui;
+package com.mycompany.sistemadegestaoeagendamentodesalas.view;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;

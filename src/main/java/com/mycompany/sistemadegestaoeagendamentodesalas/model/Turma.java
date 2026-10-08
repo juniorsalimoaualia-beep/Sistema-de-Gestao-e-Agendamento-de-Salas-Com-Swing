@@ -1,6 +1,6 @@
 // Dados: classe Turma
 
-package com.mycompany.sistemadegestaoeagendamentodesalas.dto1;
+package com.mycompany.sistemadegestaoeagendamentodesalas.model;
 
 import java.util.ArrayList;
 import java.util.List;

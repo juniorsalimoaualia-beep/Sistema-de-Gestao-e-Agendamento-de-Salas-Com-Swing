@@ -1,12 +1,10 @@
-// Dados: classe SecretarioController
-
 package com.mycompany.sistemadegestaoeagendamentodesalas.controller;
 
 import java.util.List;
 import com.mycompany.sistemadegestaoeagendamentodesalas.dao.SecretarioDAO;
-import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Secretario;
+import com.mycompany.sistemadegestaoeagendamentodesalas.model.Secretario;
 
-public class SecretarioController implements UsuarioController<Secretario> {
+public class SecretarioController {
     private SecretarioDAO dao = new SecretarioDAO();
 
     public void salvar(Secretario secretario) {
@@ -19,10 +17,6 @@ public class SecretarioController implements UsuarioController<Secretario> {
 
     public Secretario buscarPorId(int id) {
         return dao.buscarPorSecretario(id);
-    }
-
-    public int gerarProximoId() {
-        return dao.gerarProximoId();
     }
 
     public boolean alterarSenha(int id, String senhaAtual, String senhaNova) {

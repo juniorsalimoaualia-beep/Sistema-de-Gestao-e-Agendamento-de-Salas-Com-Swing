@@ -5,7 +5,7 @@ package com.mycompany.sistemadegestaoeagendamentodesalas.controller;
 import java.util.List;
 import com.mycompany.sistemadegestaoeagendamentodesalas.dao.GestorReservaDAO;
 import com.mycompany.sistemadegestaoeagendamentodesalas.dao.ReservaDAO;
-import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Reserva;
+import com.mycompany.sistemadegestaoeagendamentodesalas.model.Reserva;
 
 public class ReservaController {
     private ReservaDAO reservaDAO = new ReservaDAO();
@@ -45,7 +45,7 @@ public class ReservaController {
             return false;
         }
         try {
-            com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Docente d = reserva.getDocenteId();
+            com.mycompany.sistemadegestaoeagendamentodesalas.model.Docente d = reserva.getDocenteId();
             if (d == null || d.getId() != docenteId) return false;
         } catch (Exception e) {
             return false;

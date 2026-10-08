@@ -1,6 +1,6 @@
 // Dados: classe Usuario
 
-package com.mycompany.sistemadegestaoeagendamentodesalas.dto1;
+package com.mycompany.sistemadegestaoeagendamentodesalas.model;
 
 public class Usuario {
     protected int id;

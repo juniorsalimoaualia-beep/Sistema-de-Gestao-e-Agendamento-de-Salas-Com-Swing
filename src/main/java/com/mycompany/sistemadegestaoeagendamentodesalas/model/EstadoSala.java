@@ -1,6 +1,6 @@
 // Dados: classe EstadoSala
 
-package com.mycompany.sistemadegestaoeagendamentodesalas.dto1;
+package com.mycompany.sistemadegestaoeagendamentodesalas.model;
 public enum EstadoSala {
     LIVRE, OCUPADA, MANUTENCAO, RESERVADA
 }

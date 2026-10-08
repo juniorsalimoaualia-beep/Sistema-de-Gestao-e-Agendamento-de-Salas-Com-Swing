@@ -1,9 +1,9 @@
 // Dados: classe DepartamentoDAO
 
 package com.mycompany.sistemadegestaoeagendamentodesalas.dao;
-import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Departamento;
-import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Curso;
-import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Sala;
+import com.mycompany.sistemadegestaoeagendamentodesalas.model.Departamento;
+import com.mycompany.sistemadegestaoeagendamentodesalas.model.Curso;
+import com.mycompany.sistemadegestaoeagendamentodesalas.model.Sala;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;

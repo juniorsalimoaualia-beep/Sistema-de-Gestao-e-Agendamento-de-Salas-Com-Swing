@@ -1,8 +1,8 @@
 // Dados: classe CursoDAO
 
 package com.mycompany.sistemadegestaoeagendamentodesalas.dao;
-import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Curso;
-import com.mycompany.sistemadegestaoeagendamentodesalas.dto1.Departamento;
+import com.mycompany.sistemadegestaoeagendamentodesalas.model.Curso;
+import com.mycompany.sistemadegestaoeagendamentodesalas.model.Departamento;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.FileReader;
@@ -16,9 +16,9 @@ import java.util.List;
 public class CursoDAO {
     private static final String file ="files/Curso.txt";
 
-    public void salvar(Curso dp){
+    public void salvar(Curso cr){
         try(BufferedWriter bw= new BufferedWriter(new FileWriter(file, true))){
-            bw.write(dp.toString());
+            bw.write(cr.toString());
             bw.newLine();
         }catch(IOException e){System.out.println("Erro ao salvar Curso "+e.getMessage());}
     }
@@ -42,18 +42,6 @@ public class CursoDAO {
             }
         }catch(IOException e){System.out.println("Erro ao ler o ficheiro "+e.getMessage());}
         return lista;
-    }
-
-    public String buscarPorCurso(int id){
-        List<Curso> lista=listaCurso();
-       
-
-        for(Curso dp:lista){
-            if(id==dp.getId()){
-                return dp.getNome();
-            }
-        }
-        return "Curso nao encontrado";
     }
 
     public Curso buscarCursoPorNome(String nome){
