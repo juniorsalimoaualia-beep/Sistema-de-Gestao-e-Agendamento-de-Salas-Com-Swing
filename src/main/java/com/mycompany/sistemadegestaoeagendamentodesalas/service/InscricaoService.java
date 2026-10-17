@@ -1,5 +1,3 @@
-// Dados: classe InscricaoService
-
 package com.mycompany.sistemadegestaoeagendamentodesalas.service;
 
 import com.mycompany.sistemadegestaoeagendamentodesalas.dao.InscricaoDAO;
@@ -21,12 +19,12 @@ public class InscricaoService {
         if (estudante == null || disciplina == null) {
             return false;
         }
-        // Verificar se já está inscrito
+
         List<Inscricao> inscricoes = inscricaoDAO.buscarPorEstudante(estudanteId);
         for (Inscricao inscricao : inscricoes) {
             if (inscricao.getDisciplina().getId() == disciplinaId) {
                 System.out.println("Erro: Estudante já inscrito nesta disciplina.");
-                return false; // Já inscrito
+                return false;
             }
         }
         int id = inscricaoDAO.gerarProximoId();
@@ -41,7 +39,7 @@ public class InscricaoService {
         if (estudante == null || disciplina == null) {
             return false;
         }
-        // Verificar se já está inscrito
+
         List<Inscricao> inscricoes = inscricaoDAO.buscarPorEstudante(estudanteId);
         for (Inscricao inscricao : inscricoes) {
             if (inscricao.getDisciplina().getId() == disciplinaId) {

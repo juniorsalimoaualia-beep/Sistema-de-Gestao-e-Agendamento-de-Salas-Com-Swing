@@ -1,12 +1,10 @@
-// Dados: classe TurmaController
-
 package com.mycompany.sistemadegestaoeagendamentodesalas.controller;
 
 import java.util.List;
 import com.mycompany.sistemadegestaoeagendamentodesalas.dao.TurmaDAO;
 import com.mycompany.sistemadegestaoeagendamentodesalas.model.Turma;
 
-public class TurmaController {
+public class TurmaController implements Controller<Turma> {
     private TurmaDAO dao = new TurmaDAO();
 
     public void salvar(Turma turma) {

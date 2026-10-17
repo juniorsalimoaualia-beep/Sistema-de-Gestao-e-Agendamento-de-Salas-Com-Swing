@@ -1,5 +1,3 @@
-// Dados: classe EstudanteController
-
 package com.mycompany.sistemadegestaoeagendamentodesalas.controller;
 
 import java.util.List;
@@ -8,7 +6,7 @@ import com.mycompany.sistemadegestaoeagendamentodesalas.model.Estudante;
 import com.mycompany.sistemadegestaoeagendamentodesalas.service.InscricaoService;
 import com.mycompany.sistemadegestaoeagendamentodesalas.model.Disciplina;
 
-public class EstudanteController {
+public class EstudanteController implements UsuarioController<Estudante> {
     private EstudanteDAO dao = new EstudanteDAO();
     private InscricaoService inscricaoService = new InscricaoService();
     private DisciplinaController disciplinaController = new DisciplinaController();
@@ -71,7 +69,7 @@ public class EstudanteController {
                 estudante.setCurso(curso);
                 estudante.setNumCel(numCel);
                 estudante.setEmail(email);
-                dao.reescreverArquivo(lista);
+                dao.atualizarTodos(lista);
                 return;
             }
         }
@@ -82,7 +80,7 @@ public class EstudanteController {
         for (int i = 0; i < lista.size(); i++) {
             if (lista.get(i).getId() == id) {
                 lista.remove(i);
-                dao.reescreverArquivo(lista);
+                dao.atualizarTodos(lista);
                 return true;
             }
         }

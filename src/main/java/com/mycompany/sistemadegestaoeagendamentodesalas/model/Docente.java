@@ -1,5 +1,3 @@
-// Dados: classe Docente
-
 package com.mycompany.sistemadegestaoeagendamentodesalas.model;
 
 public class Docente extends Usuario{

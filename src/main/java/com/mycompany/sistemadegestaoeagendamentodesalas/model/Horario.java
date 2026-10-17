@@ -1,5 +1,3 @@
-// Dados: classe Horario
-
 package com.mycompany.sistemadegestaoeagendamentodesalas.model;
 import java.time.LocalTime;
 public class Horario {

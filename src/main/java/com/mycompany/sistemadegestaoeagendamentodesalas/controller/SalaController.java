@@ -1,12 +1,10 @@
-// Dados: classe SalaController
-
 package com.mycompany.sistemadegestaoeagendamentodesalas.controller;
 
 import java.util.List;
 import com.mycompany.sistemadegestaoeagendamentodesalas.dao.SalaDAO;
 import com.mycompany.sistemadegestaoeagendamentodesalas.model.Sala;
 
-public class SalaController {
+public class SalaController implements Controller<Sala> {
     private SalaDAO dao = new SalaDAO();
 
     public void salvar(Sala sala) {

@@ -1,12 +1,10 @@
-// Dados: classe InscricaoController
-
 package com.mycompany.sistemadegestaoeagendamentodesalas.controller;
 
 import java.util.List;
 import com.mycompany.sistemadegestaoeagendamentodesalas.dao.InscricaoDAO;
 import com.mycompany.sistemadegestaoeagendamentodesalas.model.Inscricao;
 
-public class InscricaoController {
+public class InscricaoController implements Controller<Inscricao> {
     private InscricaoDAO dao = new InscricaoDAO();
 
     public void salvar(Inscricao inscricao) {

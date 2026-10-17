@@ -1,101 +1,87 @@
-// Dados: classe InscricaoDAO
-
 package com.mycompany.sistemadegestaoeagendamentodesalas.dao;
 
 import com.mycompany.sistemadegestaoeagendamentodesalas.model.Inscricao;
 import com.mycompany.sistemadegestaoeagendamentodesalas.model.Estudante;
 import com.mycompany.sistemadegestaoeagendamentodesalas.model.Disciplina;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 public class InscricaoDAO {
-    private static final String file = "files/inscricao.txt";
     private EstudanteDAO estudanteDAO = new EstudanteDAO();
     private DisciplinaDAO disciplinaDAO = new DisciplinaDAO();
 
     public void salvar(Inscricao inscricao) {
-        File arquivo = ArquivoUtils.prepararArquivo(file);
-        try (BufferedWriter bw = new BufferedWriter(new FileWriter(arquivo, true))) {
-            bw.write(inscricao.toString());
-            bw.newLine();
-        } catch (IOException e) {
-            System.out.println("Erro ao salvar inscricao " + e.getMessage());
-        }
+        String sql = "INSERT IGNORE INTO inscricoes(id, estudante_id, disciplina_id) VALUES(?, ?, ?)";
+        try (Connection connection = ConexaoSql.conectar();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, inscricao.getId());
+            statement.setInt(2, inscricao.getEstudante().getId());
+            statement.setInt(3, inscricao.getDisciplina().getId());
+            statement.executeUpdate();
+        } catch (SQLException e) { System.out.println("Erro ao salvar inscricao: " + e.getMessage()); }
     }
 
     public List<Inscricao> listaInscricao() {
         List<Inscricao> lista = new ArrayList<>();
-        String linha;
-        File arquivo = ArquivoUtils.prepararArquivo(file);
-
-        try (BufferedReader br = new BufferedReader(new FileReader(arquivo))) {
-            while ((linha = br.readLine()) != null) {
-                String[] dados = linha.split("; ");
-                if (dados.length >= 3) {
-                    int id = Integer.parseInt(dados[0].trim());
-                    int estudanteId = Integer.parseInt(dados[1].trim());
-                    int disciplinaId = Integer.parseInt(dados[2].trim());
-                    Estudante estudante = estudanteDAO.buscarEstudantePorId(estudanteId);
-                    Disciplina disciplina = disciplinaDAO.buscarPorId(disciplinaId);
-                    if (estudante == null) {
-                        estudante = new Estudante(estudanteId, "", "", "", 0, "", "");
-                    }
-                    if (disciplina == null) {
-                        disciplina = new Disciplina(disciplinaId, "", null);
-                    }
-                    lista.add(new Inscricao(id, estudante, disciplina));
-                }
-            }
-        } catch (IOException e) {
-            System.out.println("Erro ao listar inscricoes " + e.getMessage());
+        String sql = "SELECT id, estudante_id, disciplina_id FROM inscricoes ORDER BY id";
+        try (Connection connection = ConexaoSql.conectar();
+             PreparedStatement statement = connection.prepareStatement(sql);
+             ResultSet result = statement.executeQuery()) {
+            while (result.next()) lista.add(criarInscricao(result));
+        } catch (SQLException e) {
+            System.out.println("Erro ao listar inscricoes: " + e.getMessage());
         }
         return lista;
     }
 
+    private Inscricao criarInscricao(ResultSet result) throws SQLException {
+        Estudante estudante = estudanteDAO.buscarEstudantePorId(result.getInt("estudante_id"));
+        Disciplina disciplina = disciplinaDAO.buscarPorId(result.getInt("disciplina_id"));
+        return new Inscricao(result.getInt("id"), estudante, disciplina);
+    }
+
     public Inscricao buscarPorInscricao(int id) {
-        List<Inscricao> lista = listaInscricao();
-        for (Inscricao inscricao : lista) {
-            if (inscricao.getId() == id) {
-                return inscricao;
-            }
-        }
+        String sql = "SELECT id, estudante_id, disciplina_id FROM inscricoes WHERE id = ?";
+        try (Connection connection = ConexaoSql.conectar();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, id);
+            try (ResultSet result = statement.executeQuery()) { if (result.next()) return criarInscricao(result); }
+        } catch (SQLException e) { System.out.println("Erro ao procurar inscricao: " + e.getMessage()); }
         return null;
     }
 
     public List<Inscricao> buscarPorEstudante(int estudanteId) {
-        List<Inscricao> lista = listaInscricao();
-        List<Inscricao> resultado = new ArrayList<>();
-        for (Inscricao inscricao : lista) {
-            if (inscricao.getEstudante() != null && inscricao.getEstudante().getId() == estudanteId) {
-                resultado.add(inscricao);
-            }
-        }
-        return resultado;
+        return listarPorCampo("estudante_id", estudanteId);
     }
 
     public List<Inscricao> buscarPorDisciplina(int disciplinaId) {
-        List<Inscricao> lista = listaInscricao();
-        List<Inscricao> resultado = new ArrayList<>();
-        for (Inscricao inscricao : lista) {
-            if (inscricao.getDisciplina() != null && inscricao.getDisciplina().getId() == disciplinaId) {
-                resultado.add(inscricao);
+        return listarPorCampo("disciplina_id", disciplinaId);
+    }
+
+    private List<Inscricao> listarPorCampo(String campo, int id) {
+        List<Inscricao> lista = new ArrayList<>();
+        String sql = "SELECT id, estudante_id, disciplina_id FROM inscricoes WHERE " + campo + " = ? ORDER BY id";
+        try (Connection connection = ConexaoSql.conectar();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, id);
+            try (ResultSet result = statement.executeQuery()) {
+                while (result.next()) lista.add(criarInscricao(result));
             }
-        }
-        return resultado;
+        } catch (SQLException e) { System.out.println("Erro ao filtrar inscricoes: " + e.getMessage()); }
+        return lista;
     }
 
     public int gerarProximoId(){
-        int max = 0;
-        for(Inscricao inscricao : listaInscricao()){
-            max = Math.max(max, inscricao.getId());
+        try (Connection connection = ConexaoSql.conectar();
+             PreparedStatement statement = connection.prepareStatement("SELECT COALESCE(MAX(id), 0) + 1 FROM inscricoes");
+             ResultSet result = statement.executeQuery()) { return result.next() ? result.getInt(1) : 1; }
+        catch (SQLException e) {
+            throw new IllegalStateException("Erro ao gerar ID da inscricao.", e);
         }
-        return max + 1;
     }
 }

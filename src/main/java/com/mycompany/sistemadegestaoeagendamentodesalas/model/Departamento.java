@@ -1,5 +1,3 @@
-// Dados: classe Departamento
-
 package com.mycompany.sistemadegestaoeagendamentodesalas.model;
 
 public class Departamento {

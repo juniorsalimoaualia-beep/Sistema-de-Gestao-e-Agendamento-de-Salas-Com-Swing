@@ -1,262 +1,402 @@
-// Dados: classe ReservaDAO
-
 package com.mycompany.sistemadegestaoeagendamentodesalas.dao;
-import com.mycompany.sistemadegestaoeagendamentodesalas.model.Sala;
-import com.mycompany.sistemadegestaoeagendamentodesalas.model.Reserva;
-import com.mycompany.sistemadegestaoeagendamentodesalas.model.EstadoReserva;
-import com.mycompany.sistemadegestaoeagendamentodesalas.model.Disciplina;
-import com.mycompany.sistemadegestaoeagendamentodesalas.model.Turma;
-import com.mycompany.sistemadegestaoeagendamentodesalas.model.TipoReserva;
+
 import com.mycompany.sistemadegestaoeagendamentodesalas.model.DiaSemana;
+import com.mycompany.sistemadegestaoeagendamentodesalas.model.Disciplina;
 import com.mycompany.sistemadegestaoeagendamentodesalas.model.Docente;
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.FileReader;
-import java.io.IOException;
-import java.util.List;
-import java.util.ArrayList;
+import com.mycompany.sistemadegestaoeagendamentodesalas.model.EstadoReserva;
+import com.mycompany.sistemadegestaoeagendamentodesalas.model.EstadoSala;
+import com.mycompany.sistemadegestaoeagendamentodesalas.model.Reserva;
+import com.mycompany.sistemadegestaoeagendamentodesalas.model.Sala;
+import com.mycompany.sistemadegestaoeagendamentodesalas.model.TipoReserva;
+import com.mycompany.sistemadegestaoeagendamentodesalas.model.Turma;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ReservaDAO {
-    private static final String file= "files/reserva.txt";
-    private DisciplinaDAO disciplinaDAO = new DisciplinaDAO();
-    
-    public boolean salvar(Reserva rs){
-        if (rs == null) {
-            System.out.println("Erro: Reserva invalida.");
+    private final SalaDAO salaDAO = new SalaDAO();
+    private final DocenteDAO docenteDAO = new DocenteDAO();
+    private final DisciplinaDAO disciplinaDAO = new DisciplinaDAO();
+    private final TurmaDAO turmaDAO = new TurmaDAO();
+
+    public boolean salvar(Reserva reserva) {
+        if (reserva == null || reserva.getSalaId() == null || reserva.getDocenteId() == null
+                || reserva.getData() == null || reserva.getHoraInicio() == null || reserva.getHoraFim() == null
+                || reserva.getTipoReserva() == null || reserva.getDiaSemana() == null
+                || reserva.getEstadoReserva() != EstadoReserva.PENDENTE
+                || reserva.getSalaId().getId() <= 0 || reserva.getDocenteId().getId() <= 0
+                || (reserva.getTurma() != null && reserva.getTurma().getId() <= 0)
+                || reserva.getData().isBefore(LocalDate.now())
+                || !reserva.getHoraFim().isAfter(reserva.getHoraInicio())
+                || diaDaSemana(reserva.getData()) != reserva.getDiaSemana()) {
             return false;
         }
-        if (isReservaDuplicada(rs)) {
-            System.out.println("Erro: Reserva duplicada.");
-            return false;
-        }
-        File arquivo = ArquivoUtils.prepararArquivo(file);
-        try(BufferedWriter bw =new BufferedWriter(new FileWriter(arquivo,true))){
-            bw.write(rs.toString());
-            bw.newLine();
-            return true;
-        }
-        catch(IOException e){System.out.println("Erro ao salvar reserva "+e.getMessage());}
-        return false;
-    }
-
-    public List<Reserva> listarReservas(){
-        List<Reserva> listar= new ArrayList<>();
-        
-        File arquivo = new File(file);
-        if (!arquivo.exists()) {
-            return listar;
-        }
-        try(BufferedReader br= new BufferedReader(new FileReader(arquivo))){
-            String linha;
-            
-            while((linha=br.readLine())!=null){
-                String dados []= linha.split("; ");
-                if(dados.length >= 8){
-                    int id = Integer.parseInt(dados[0].trim());
-                    int salaId = parseIntSafe(dados[1].trim());
-                    int docenteId = parseIntSafe(dados[2].trim());
-
-                    // Detectar formato: no formato novo o disciplinaId está no índice 3 (numérico),
-                    // no formato antigo o nome do docente está no índice 3 (não numérico) e o nome da disciplina no índice 4
-                    Disciplina disciplina = null;
-                    Turma turma = null;
-                    LocalDate data = null;
-                    LocalTime horaInicio = null;
-                    LocalTime horaFim = null;
-
-                    String fourth = dados.length > 3 ? dados[3].trim() : "";
-                    boolean fourthIsNumber = isInteger(fourth);
-
-                    if (fourthIsNumber) {
-                        // formato novo
-                        int disciplinaId = Integer.parseInt(fourth);
-                        String turmaChave = dados.length > 4 ? dados[4].trim() : "0-";
-                        data = dados.length > 5 ? LocalDate.parse(dados[5].trim()) : null;
-                        horaInicio = dados.length > 6 ? LocalTime.parse(dados[6].trim()) : null;
-                        horaFim = dados.length > 7 ? LocalTime.parse(dados[7].trim()) : null;
-
-                        disciplina = disciplinaDAO.buscarPorId(disciplinaId);
-                        if (disciplina == null) disciplina = new Disciplina(disciplinaId, "", null);
-
-                        String[] turmaParts = turmaChave.split("-");
-                        try {
-                            turma = new Turma(Integer.parseInt(turmaParts[0]), turmaParts[1], null);
-                        } catch (Exception e) {
-                            turma = new Turma(0, "", null);
-                        }
-                    } else {
-                        
-                        // índices: 3=docenteNome,4=disciplinaNome,5=turma,6=data,7=horaInicio,8=horaFim
-                        String disciplinaNome = dados.length > 4 ? dados[4].trim() : "";
-                        String turmaChave = dados.length > 5 ? dados[5].trim() : "0-";
-                        data = dados.length > 6 ? LocalDate.parse(dados[6].trim()) : null;
-                        horaInicio = dados.length > 7 ? LocalTime.parse(dados[7].trim()) : null;
-                        horaFim = dados.length > 8 ? LocalTime.parse(dados[8].trim()) : null;
-
-                        disciplina = disciplinaDAO.buscarPorNome(disciplinaNome);
-                        if (disciplina == null) disciplina = new Disciplina(0, disciplinaNome, null);
-
-                        String[] turmaParts = turmaChave.split("-");
-                        try {
-                            turma = new Turma(Integer.parseInt(turmaParts[0]), turmaParts[1], null);
-                        } catch (Exception e) {
-                            turma = new Turma(0, "", null);
-                        }
-                    }
-
-                    // resolve objetos Sala e Docente quando possivel
-                    SalaDAO salaDAO = new SalaDAO();
-                    DocenteDAO docenteDAO = new DocenteDAO();
-                    Sala salaObj = salaDAO.buscarPorId(salaId);
-                    com.mycompany.sistemadegestaoeagendamentodesalas.model.Docente docenteObj = docenteDAO.buscarPorDocente(docenteId);
-
-                    Reserva reserva = new Reserva(id, salaObj, docenteObj, disciplina, turma, data, horaInicio, horaFim, TipoReserva.AULA, DiaSemana.SEGUNDA);
-
-                    // estado pode estar em posição diferente dependendo do formato; try to read last token
-                    String estadoToken = dados[dados.length - 1].trim();
-                    try {
-                        reserva.setEstadoReserva(EstadoReserva.valueOf(estadoToken));
-                    } catch (Exception e) {
-                        // default to PENDENTE
-                        reserva.setEstadoReserva(EstadoReserva.PENDENTE);
-                    }
-
-                    listar.add(reserva);
+        String sql = "INSERT INTO reservas(id, sala_id, docente_id, disciplina_id, turma_id, data, hora_inicio, "
+                + "hora_fim, tipo, dia_semana, estado) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        try (Connection connection = ConexaoSql.conectar()) {
+            connection.setAutoCommit(false);
+            try {
+                if (!salaDisponivel(connection, reserva.getSalaId().getId())) {
+                    connection.rollback();
+                    return false;
                 }
-            }
-        }
-        catch(IOException e){System.out.println("Erro ao listar "+e.getMessage());}
-        return listar;
-    }
+                if (temConflito(connection, reserva.getSalaId().getId(), reserva.getDocenteId().getId(),
+                        turmaId(reserva), reserva.getData(), reserva.getHoraInicio(), reserva.getHoraFim(),
+                        reserva.getId())) {
+                    connection.rollback();
+                    return false;
+                }
 
-    public boolean isReservaDuplicada(Reserva nova) {
-        if (nova == null) {
+                try (PreparedStatement statement = connection.prepareStatement(sql)) {
+                    statement.setInt(1, reserva.getId());
+                    statement.setInt(2, reserva.getSalaId().getId());
+                    statement.setInt(3, reserva.getDocenteId().getId());
+                    if (reserva.getDisciplina() == null) statement.setNull(4, java.sql.Types.INTEGER);
+                    else statement.setInt(4, reserva.getDisciplina().getId());
+                    if (reserva.getTurma() == null) statement.setNull(5, java.sql.Types.INTEGER);
+                    else statement.setInt(5, reserva.getTurma().getId());
+                    statement.setString(6, reserva.getData().toString());
+                    statement.setString(7, reserva.getHoraInicio().toString());
+                    statement.setString(8, reserva.getHoraFim().toString());
+                    statement.setString(9, reserva.getTipoReserva().name());
+                    statement.setString(10, reserva.getDiaSemana().name());
+                    statement.setString(11, EstadoReserva.PENDENTE.name());
+                    if (statement.executeUpdate() != 1) {
+                        connection.rollback();
+                        return false;
+                    }
+                }
+
+                try (PreparedStatement statement = connection.prepareStatement(
+                        "UPDATE salas SET reserva_id = ?, estado = 'RESERVADA' WHERE id = ?")) {
+                    statement.setInt(1, reserva.getId());
+                    statement.setInt(2, reserva.getSalaId().getId());
+                    if (statement.executeUpdate() != 1) {
+                        connection.rollback();
+                        return false;
+                    }
+                }
+                connection.commit();
+                return true;
+            } catch (SQLException e) {
+                connection.rollback();
+                throw e;
+            }
+        } catch (SQLException e) {
+            System.out.println("Erro ao salvar reserva: " + e.getMessage());
             return false;
         }
-        for (Reserva existente : listarReservas()) {
-            if (existente.getId() == nova.getId()) {
-                return true;
-            }
-            boolean mesmaSala = obterSalaId(existente) == obterSalaId(nova);
-            boolean mesmaData = existente.getData() != null && existente.getData().equals(nova.getData());
-            boolean mesmoInicio = existente.getHoraInicio() != null && existente.getHoraInicio().equals(nova.getHoraInicio());
-            boolean mesmoFim = existente.getHoraFim() != null && existente.getHoraFim().equals(nova.getHoraFim());
-            boolean mesmoDocente = obterDocenteId(existente) == obterDocenteId(nova);
-            boolean mesmaDisciplina = existente.getDisciplina() != null && nova.getDisciplina() != null
-                    ? existente.getDisciplina().getId() == nova.getDisciplina().getId()
-                    : existente.getDisciplina() == null && nova.getDisciplina() == null;
-            boolean mesmaTurma = existente.getTurma() != null && nova.getTurma() != null
-                    ? existente.getTurma().getChave().equalsIgnoreCase(nova.getTurma().getChave())
-                    : existente.getTurma() == null && nova.getTurma() == null;
-            if (mesmaSala && mesmaData && mesmoInicio && mesmoFim && mesmaDisciplina && mesmaTurma && mesmoDocente) {
-                return true;
+    }
+
+    private int turmaId(Reserva reserva) {
+        return reserva.getTurma() == null ? 0 : reserva.getTurma().getId();
+    }
+
+    private boolean salaDisponivel(Connection connection, int salaId) throws SQLException {
+        String sql = "SELECT estado FROM salas WHERE id = ? FOR UPDATE";
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, salaId);
+            try (ResultSet result = statement.executeQuery()) {
+                return result.next() && !EstadoSala.MANUTENCAO.name().equals(result.getString("estado"));
             }
         }
-        return false;
     }
 
-    private boolean isInteger(String s) {
-        if (s == null || s.isEmpty()) return false;
-        try { Integer.parseInt(s); return true; } catch (NumberFormatException e) { return false; }
+    boolean temConflito(int salaId, Integer docenteId, Integer turmaId, LocalDate data,
+            LocalTime inicio, LocalTime fim, int reservaIgnorada) {
+        try (Connection connection = ConexaoSql.conectar()) {
+            return temConflito(connection, salaId, docenteId, turmaId, data, inicio, fim, reservaIgnorada);
+        } catch (SQLException e) {
+            throw new IllegalStateException("Erro ao verificar conflitos da reserva.", e);
+        }
     }
 
-    private int parseIntSafe(String s) {
-        try { return Integer.parseInt(s); } catch (Exception e) { return 0; }
-    }
+    private boolean temConflito(Connection connection, int salaId, Integer docenteId, Integer turmaId,
+            LocalDate data, LocalTime inicio, LocalTime fim, int reservaIgnorada) throws SQLException {
+        StringBuilder sql = new StringBuilder(
+                "SELECT 1 FROM reservas WHERE data = ? AND estado IN ('PENDENTE', 'CONFIRMADA') AND (sala_id = ?");
+        if (docenteId != null) {
+            sql.append(" OR docente_id = ?");
+        }
+        if (turmaId != null && turmaId > 0) {
+            sql.append(" OR turma_id = ?");
+        }
+        sql.append(") AND id <> ? AND hora_inicio < ? AND hora_fim > ? LIMIT 1");
 
-    private int obterSalaId(Reserva r) {
-        if (r == null) return 0;
-        try {
-            Sala s = r.getSalaId();
-            return s != null ? s.getId() : 0;
-        } catch (Exception e) { return 0; }
-    }
-
-    private int obterDocenteId(Reserva r) {
-        if (r == null) return 0;
-        try {
-            Docente d = r.getDocenteId();
-            return d != null ? d.getId() : 0;
-        } catch (Exception e) { return 0; }
-    }
-
-    public Reserva buscarPorReserva(int id){
-        List<Reserva> lista = listarReservas();
-        for(Reserva n : lista){
-            if(id == n.getId()){
-                return n;
+        try (PreparedStatement statement = connection.prepareStatement(sql.toString())) {
+            int parametro = 1;
+            statement.setString(parametro++, data.toString());
+            statement.setInt(parametro++, salaId);
+            if (docenteId != null) {
+                statement.setInt(parametro++, docenteId);
             }
+            if (turmaId != null && turmaId > 0) {
+                statement.setInt(parametro++, turmaId);
+            }
+            statement.setInt(parametro++, reservaIgnorada);
+            statement.setString(parametro++, fim.toString());
+            statement.setString(parametro, inicio.toString());
+            try (ResultSet result = statement.executeQuery()) {
+                return result.next();
+            }
+        }
+    }
+
+    private DiaSemana diaDaSemana(LocalDate data) {
+        switch (data.getDayOfWeek()) {
+            case MONDAY: return DiaSemana.SEGUNDA;
+            case TUESDAY: return DiaSemana.TERCA;
+            case WEDNESDAY: return DiaSemana.QUARTA;
+            case THURSDAY: return DiaSemana.QUINTA;
+            case FRIDAY: return DiaSemana.SEXTA;
+            case SATURDAY: return DiaSemana.SABADO;
+            default: return null;
+        }
+    }
+
+    public List<Reserva> listarReservas() {
+        List<Reserva> lista = new ArrayList<>();
+        String sql = "SELECT * FROM reservas ORDER BY data, hora_inicio";
+        try (Connection connection = ConexaoSql.conectar();
+             PreparedStatement statement = connection.prepareStatement(sql);
+             ResultSet result = statement.executeQuery()) {
+            while (result.next()) lista.add(lerReserva(result));
+        } catch (SQLException e) {
+            System.out.println("Erro ao listar reservas: " + e.getMessage());
+        }
+        return lista;
+    }
+
+    private Reserva lerReserva(ResultSet result) throws SQLException {
+        Sala sala = salaDAO.buscarPorId(result.getInt("sala_id"));
+        Docente docente = docenteDAO.buscarPorDocente(result.getInt("docente_id"));
+        Disciplina disciplina = disciplinaDAO.buscarPorId(result.getInt("disciplina_id"));
+        int turmaId = result.getInt("turma_id");
+        Turma turma = null;
+        if (!result.wasNull()) {
+            for (Turma item : turmaDAO.listaTurma()) {
+                if (item.getId() == turmaId) turma = item;
+            }
+        }
+        Reserva reserva = new Reserva(result.getInt("id"), sala, docente, disciplina, turma,
+                LocalDate.parse(result.getString("data")), LocalTime.parse(result.getString("hora_inicio")),
+                LocalTime.parse(result.getString("hora_fim")), TipoReserva.valueOf(result.getString("tipo")),
+                DiaSemana.valueOf(result.getString("dia_semana")));
+        reserva.setEstadoReserva(EstadoReserva.valueOf(result.getString("estado")));
+        return reserva;
+    }
+
+    public boolean isReservaDuplicada(Reserva reserva) {
+        if (reserva == null || reserva.getSalaId() == null || reserva.getData() == null
+                || reserva.getHoraInicio() == null || reserva.getHoraFim() == null) {
+            return false;
+        }
+        Integer docenteId = reserva.getDocenteId() == null ? null : reserva.getDocenteId().getId();
+        Integer turmaId = reserva.getTurma() == null ? null : reserva.getTurma().getId();
+        return temConflito(reserva.getSalaId().getId(), docenteId, turmaId, reserva.getData(),
+                reserva.getHoraInicio(), reserva.getHoraFim(), reserva.getId());
+    }
+
+    public Reserva buscarPorReserva(int id) {
+        String sql = "SELECT * FROM reservas WHERE id = ?";
+        try (Connection connection = ConexaoSql.conectar();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, id);
+            try (ResultSet result = statement.executeQuery()) { if (result.next()) return lerReserva(result); }
+        } catch (SQLException e) {
+            System.out.println("Erro ao procurar reserva: " + e.getMessage());
         }
         return null;
     }
 
-    public int gerarProximoId(){
-        int max = 0;
-        for (Reserva reserva : listarReservas()){
-            max = Math.max(max, reserva.getId());
+    public int gerarProximoId() {
+        try (Connection connection = ConexaoSql.conectar();
+             PreparedStatement statement = connection.prepareStatement("SELECT COALESCE(MAX(id), 0) + 1 FROM reservas");
+             ResultSet result = statement.executeQuery()) {
+            return result.next() ? result.getInt(1) : 1;
+        } catch (SQLException e) {
+            throw new IllegalStateException("Erro ao gerar ID da reserva.", e);
         }
-        return max + 1;
     }
 
-    public boolean excluirReserva(int id){
-        List<Reserva> lista = listarReservas();
-        boolean encontrado = false;
-        SalaDAO salaDAO = new SalaDAO();
-
-        try (BufferedWriter bw = new BufferedWriter(new FileWriter(file, false))) {
-            for (Reserva reserva : lista) {
-                if (reserva.getId() == id) {
-                    encontrado = true;
-                    // Desvincula a sala
-                    Sala sala = salaDAO.buscarPorId(obterSalaId(reserva));
-                    if (sala != null) {
-                        sala.desvinculaReserva();
-                        salaDAO.atualizar(sala);
+    public boolean excluirReserva(int id) {
+        String buscarSala = "SELECT sala_id FROM reservas WHERE id = ?";
+        String removerReserva = "DELETE FROM reservas WHERE id = ?";
+        try (Connection connection = ConexaoSql.conectar()) {
+            connection.setAutoCommit(false);
+            try {
+                int salaId = 0;
+                try (PreparedStatement statement = connection.prepareStatement(buscarSala)) {
+                    statement.setInt(1, id);
+                    try (ResultSet result = statement.executeQuery()) {
+                        if (result.next()) {
+                            salaId = result.getInt("sala_id");
+                        }
                     }
-                    continue;
                 }
-                bw.write(reserva.toString());
-                bw.newLine();
+                bloquearSala(connection, salaId);
+
+                try (PreparedStatement statement = connection.prepareStatement(removerReserva)) {
+                    statement.setInt(1, id);
+                    if (statement.executeUpdate() != 1) {
+                        connection.rollback();
+                        return false;
+                    }
+                }
+
+                if (salaId != 0) {
+                    atualizarEstadoDaSala(connection, salaId);
+                }
+                connection.commit();
+                return true;
+            } catch (SQLException e) {
+                connection.rollback();
+                throw e;
             }
-        } catch (IOException e) {
+        } catch (SQLException e) {
             System.out.println("Erro ao excluir reserva: " + e.getMessage());
             return false;
         }
+    }
 
-        return encontrado;
+    public boolean cancelarReserva(int id) {
+        String encontrarReserva = "SELECT sala_id FROM reservas WHERE id = ? "
+                + "AND estado IN ('PENDENTE', 'CONFIRMADA')";
+        String bloquearReserva = "SELECT sala_id FROM reservas WHERE id = ? "
+                + "AND estado IN ('PENDENTE', 'CONFIRMADA') FOR UPDATE";
+        String cancelarReserva = "UPDATE reservas SET estado = 'CANCELADA' WHERE id = ? "
+                + "AND estado IN ('PENDENTE', 'CONFIRMADA')";
+        try (Connection connection = ConexaoSql.conectar()) {
+            connection.setAutoCommit(false);
+            try {
+                int salaId;
+                try (PreparedStatement statement = connection.prepareStatement(encontrarReserva)) {
+                    statement.setInt(1, id);
+                    try (ResultSet result = statement.executeQuery()) {
+                        if (!result.next()) {
+                            connection.rollback();
+                            return false;
+                        }
+                        salaId = result.getInt("sala_id");
+                    }
+                }
+
+                bloquearSala(connection, salaId);
+                try (PreparedStatement statement = connection.prepareStatement(bloquearReserva)) {
+                    statement.setInt(1, id);
+                    try (ResultSet result = statement.executeQuery()) {
+                        if (!result.next()) {
+                            connection.rollback();
+                            return false;
+                        }
+                    }
+                }
+
+                try (PreparedStatement statement = connection.prepareStatement(cancelarReserva)) {
+                    statement.setInt(1, id);
+                    if (statement.executeUpdate() != 1) {
+                        connection.rollback();
+                        return false;
+                    }
+                }
+
+                atualizarEstadoDaSala(connection, salaId);
+                connection.commit();
+                return true;
+            } catch (SQLException e) {
+                connection.rollback();
+                throw e;
+            }
+        } catch (SQLException e) {
+            System.out.println("Erro ao cancelar reserva: " + e.getMessage());
+            return false;
+        }
+    }
+
+    private void bloquearSala(Connection connection, int salaId) throws SQLException {
+        if (salaId <= 0) {
+            return;
+        }
+        try (PreparedStatement statement = connection.prepareStatement(
+                "SELECT id FROM salas WHERE id = ? FOR UPDATE")) {
+            statement.setInt(1, salaId);
+            try (ResultSet result = statement.executeQuery()) {
+                result.next();
+            }
+        }
+    }
+
+    private void atualizarEstadoDaSala(Connection connection, int salaId) throws SQLException {
+        String buscarReservaAtiva = "SELECT id FROM reservas WHERE sala_id = ? "
+                + "AND estado IN ('PENDENTE', 'CONFIRMADA') ORDER BY data, hora_inicio, id LIMIT 1";
+        int reservaAtivaId = -1;
+        try (PreparedStatement statement = connection.prepareStatement(buscarReservaAtiva)) {
+            statement.setInt(1, salaId);
+            try (ResultSet result = statement.executeQuery()) {
+                if (result.next()) {
+                    reservaAtivaId = result.getInt("id");
+                }
+            }
+        }
+
+        String sql;
+        if (reservaAtivaId > 0) {
+            sql = "UPDATE salas SET reserva_id = ?, "
+                    + "estado = CASE WHEN estado = 'MANUTENCAO' THEN estado ELSE 'RESERVADA' END WHERE id = ?";
+        } else {
+            sql = "UPDATE salas SET reserva_id = -1, "
+                    + "estado = CASE WHEN estado = 'MANUTENCAO' THEN estado ELSE 'LIVRE' END WHERE id = ?";
+        }
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            if (reservaAtivaId > 0) {
+                statement.setInt(1, reservaAtivaId);
+                statement.setInt(2, salaId);
+            } else {
+                statement.setInt(1, salaId);
+            }
+            statement.executeUpdate();
+        }
     }
 
     public void vincularSalaAReserva(int salaId, int reservaId) {
-        SalaDAO salaDAO = new SalaDAO();
-        Sala sala = salaDAO.buscarPorId(salaId);
-        if (sala != null) {
-            sala.vincularReserva(reservaId);
-            salaDAO.atualizar(sala);
-        }
+        String sql = "UPDATE salas SET reserva_id = ?, estado = 'RESERVADA' WHERE id = ?";
+        try (Connection connection = ConexaoSql.conectar();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, reservaId); statement.setInt(2, salaId); statement.executeUpdate();
+        } catch (SQLException e) { System.out.println("Erro ao vincular sala: " + e.getMessage()); }
     }
 
     public void desvinculaSalaDeReserva(int salaId) {
-        SalaDAO salaDAO = new SalaDAO();
-        Sala sala = salaDAO.buscarPorId(salaId);
-        if (sala != null) {
-            sala.desvinculaReserva();
-            salaDAO.atualizar(sala);
-        }
+        if (salaId == 0) return;
+        String sql = "UPDATE salas SET reserva_id = -1, estado = 'LIVRE' WHERE id = ?";
+        try (Connection connection = ConexaoSql.conectar();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, salaId); statement.executeUpdate();
+        } catch (SQLException e) { System.out.println("Erro ao libertar sala: " + e.getMessage()); }
     }
 
-    public void reescreverArquivo(List<Reserva> lista) {
-        File arquivo = ArquivoUtils.prepararArquivo(file);
-        try (BufferedWriter bw = new BufferedWriter(new FileWriter(arquivo, false))) {
-            for (Reserva r : lista) {
-                bw.write(r.toString());
-                bw.newLine();
+    public void atualizarTodos(List<Reserva> reservas) {
+        String sql = "UPDATE reservas SET estado = ? WHERE id = ?";
+        try (Connection connection = ConexaoSql.conectar();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            connection.setAutoCommit(false);
+            try {
+                for (Reserva reserva : reservas) {
+                    statement.setString(1, reserva.getEstadoReserva().name());
+                    statement.setInt(2, reserva.getId());
+                    statement.addBatch();
+                }
+                statement.executeBatch();
+                connection.commit();
+            } catch (SQLException e) {
+                connection.rollback();
+                throw e;
             }
-        } catch (IOException e) {
-            System.out.println("Erro ao reescrever arquivo de Reservas: " + e.getMessage());
-        }
+        } catch (SQLException e) { System.out.println("Erro ao atualizar estados de reservas: " + e.getMessage()); }
     }
 }

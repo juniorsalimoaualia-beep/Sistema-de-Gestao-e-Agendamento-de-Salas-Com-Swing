@@ -1,5 +1,3 @@
-// Dados: classe UsuarioDAO
-
 package com.mycompany.sistemadegestaoeagendamentodesalas.dao;
 
 import java.util.List;
@@ -11,5 +9,5 @@ public interface UsuarioDAO<T extends Usuario> {
     T buscarPorId(int id);
     int gerarProximoId();
     boolean alterarSenha(int id, String senhaAtual, String senhaNova);
-    void reescreverArquivo(List<T> lista);
+    void atualizarTodos(List<T> lista);
 }

@@ -1,88 +1,139 @@
-// Dados: classe AutenticacaoDAO
-
 package com.mycompany.sistemadegestaoeagendamentodesalas.dao;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.util.List;
-import com.mycompany.sistemadegestaoeagendamentodesalas.model.Docente;
-import com.mycompany.sistemadegestaoeagendamentodesalas.model.Estudante;
-import com.mycompany.sistemadegestaoeagendamentodesalas.model.Secretario;
+import java.security.MessageDigest;
+import java.util.Base64;
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.PBEKeySpec;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import org.mindrot.jbcrypt.BCrypt;
 
 public class AutenticacaoDAO {
-    private static final String ADMIN_FILE = "files/admin.txt";
-    private DocenteDAO dcDao = new DocenteDAO();
-    private EstudanteDAO esDao = new EstudanteDAO();
-    private SecretarioDAO secretDao = new SecretarioDAO();
-    
-   
     public boolean autenticarLogin(String perfil, String email, String senha){
-        if("Admin".equalsIgnoreCase(perfil)){
-            return autenticarAdmin(email, senha);
-        }
-
-        if("Docente".equalsIgnoreCase(perfil)){
-            return autenticarDocente(email, senha);
-        }
-
-        if("Estudante".equalsIgnoreCase(perfil)){
-            return autenticarEstudante(email, senha);
-        }
-
-        if("Secretario".equalsIgnoreCase(perfil)){
-            return autenticarSecretario(email, senha);
-        }
-
-        System.out.println("Perfil invalido ou nao suportado.");
-        return false;
+        return autenticarUtilizador(perfil, email, senha);
     }
 
-    public boolean autenticarAdmin(String email, String senha){
-        File arquivo = ArquivoUtils.prepararArquivo(ADMIN_FILE);
-        try (BufferedReader br = new BufferedReader(new FileReader(arquivo))) {
-            String linha;
-            while ((linha = br.readLine()) != null) {
-                String[] dados = linha.split(";\\s*");
-                if (dados.length >= 2 && email.equals(dados[0]) && senha.equals(dados[1])) {
-                    return true;
+    public boolean existeAdministrador() {
+        String query = "SELECT 1 FROM usuarios WHERE perfil = 'ADMIN' LIMIT 1";
+        try (Connection connection = ConexaoSql.conectar();
+             PreparedStatement statement = connection.prepareStatement(query);
+             ResultSet result = statement.executeQuery()) {
+            return result.next();
+        } catch (SQLException e) {
+            throw new IllegalStateException("Nao foi possivel consultar os administradores.", e);
+        }
+    }
+
+    public void criarAdministrador(String email, String senha) {
+        if (email == null || email.isBlank() || senha == null || senha.isEmpty()) {
+            throw new IllegalArgumentException("O email e a senha sao obrigatorios.");
+        }
+        String query = "INSERT INTO usuarios(perfil, nome, apelido, celular, email, senha_hash) "
+                + "VALUES('ADMIN', 'Administrador', '', 0, ?, ?)";
+        try (Connection connection = ConexaoSql.conectar();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+            statement.setString(1, email.trim().toLowerCase());
+            statement.setString(2, criarHash(senha));
+            statement.executeUpdate();
+        } catch (SQLException e) {
+            throw new IllegalStateException("Nao foi possivel criar o administrador.", e);
+        }
+    }
+
+    private boolean autenticarUtilizador(String perfil, String email, String senha) {
+        if (perfil == null || email == null || senha == null) {
+            return false;
+        }
+        String query = "SELECT id, senha_hash FROM usuarios WHERE perfil = ? AND lower(email) = lower(?)";
+        try (Connection connection = ConexaoSql.conectar();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+            statement.setString(1, perfil.toUpperCase());
+            statement.setString(2, email.trim());
+            int id;
+            String senhaGuardada;
+            try (ResultSet result = statement.executeQuery()) {
+                if (!result.next()) {
+                    return false;
                 }
+                id = result.getInt("id");
+                senhaGuardada = result.getString("senha_hash");
             }
-        } catch (IOException e) {
-            System.out.println("Erro ao ler o ficheiro de admin: " + e.getMessage());
+            if (!validarHash(senha, senhaGuardada)) {
+                return false;
+            }
+            if (senhaGuardada.startsWith("120000:")) {
+                atualizarHash(connection, id, senhaGuardada, criarHash(senha));
+            }
+            return true;
+        } catch (SQLException e) {
+            throw new IllegalStateException("Nao foi possivel validar as credenciais.", e);
         }
-        return false;
     }
 
-    public boolean autenticarDocente(String email, String senha){
-        List<Docente> lista = dcDao.listaDocente();
-        for (Docente dc : lista){
-            if(email.equals(dc.getEmail()) && senha.equals(dc.getSenha())){
-                return true;
-            }
+    private void atualizarHash(Connection connection, int id, String hashAntigo, String hashNovo)
+            throws SQLException {
+        String query = "UPDATE usuarios SET senha_hash = ? WHERE id = ? AND senha_hash = ?";
+        try (PreparedStatement statement = connection.prepareStatement(query)) {
+            statement.setString(1, hashNovo);
+            statement.setInt(2, id);
+            statement.setString(3, hashAntigo);
+            statement.executeUpdate();
         }
-        return false;
     }
 
-    public boolean autenticarEstudante(String email, String senha){
-        List<Estudante> lista = esDao.listaEstudante();
-        for (Estudante es : lista){
-            if(email.equals(es.getEmail()) && senha.equals(es.getSenha())){
-                return true;
-            }
-        }
-        return false;
+    static String criarHash(String senha) {
+        return BCrypt.hashpw(senha == null ? "" : senha, BCrypt.gensalt(12));
     }
 
-    public boolean autenticarSecretario(String email, String senha){
-        List<Secretario> lista = secretDao.listaSecretario();
-        for (Secretario sec : lista){
-            if(email.equals(sec.getEmail()) && senha.equals(sec.getSenha())){
-                return true;
+    static String prepararSenha(String senha) {
+        if (senha != null && (senha.startsWith("$2a$") || senha.startsWith("$2b$")
+                || senha.startsWith("120000:"))) {
+            return senha;
+        }
+        return criarHash(senha);
+    }
+
+    static boolean validarHash(String senha, String valorGuardado) {
+        if (senha == null || valorGuardado == null) {
+            return false;
+        }
+        if (valorGuardado.startsWith("$2a$") || valorGuardado.startsWith("$2b$")) {
+            try {
+                return BCrypt.checkpw(senha, valorGuardado);
+            } catch (IllegalArgumentException e) {
+                return false;
             }
         }
-        return false;
+        return validarHashPbkdf2(senha, valorGuardado);
     }
+
+    private static boolean validarHashPbkdf2(String senha, String valorGuardado) {
+        String[] partes = valorGuardado.split(":", 3);
+        try {
+            if (partes.length != 3) {
+                return false;
+            }
+            int iteracoes = Integer.parseInt(partes[0]);
+            byte[] salt = Base64.getDecoder().decode(partes[1]);
+            byte[] hashGuardado = Base64.getDecoder().decode(partes[2]);
+            return MessageDigest.isEqual(hashGuardado, hash(salt, senha.toCharArray(), iteracoes));
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            return false;
+        }
+    }
+
+    private static byte[] hash(byte[] salt, char[] senha, int iteracoes) {
+        PBEKeySpec spec = new PBEKeySpec(senha, salt, iteracoes, 256);
+        try {
+            return SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256").generateSecret(spec).getEncoded();
+        } catch (Exception e) {
+            throw new IllegalStateException("PBKDF2 nao esta disponivel.", e);
+        } finally {
+            spec.clearPassword();
+            java.util.Arrays.fill(senha, '\0');
+        }
+    }
+
 }
-

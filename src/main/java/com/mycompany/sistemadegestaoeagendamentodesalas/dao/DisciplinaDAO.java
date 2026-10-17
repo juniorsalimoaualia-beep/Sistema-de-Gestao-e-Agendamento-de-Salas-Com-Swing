@@ -1,122 +1,139 @@
-// Dados: classe DisciplinaDAO
-
 package com.mycompany.sistemadegestaoeagendamentodesalas.dao;
 import com.mycompany.sistemadegestaoeagendamentodesalas.model.Curso;
 import com.mycompany.sistemadegestaoeagendamentodesalas.model.Disciplina;
 import com.mycompany.sistemadegestaoeagendamentodesalas.model.Docente;
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
 
 
 public class DisciplinaDAO {
-    private static final String file= "files/disciplina.txt";
     private DocenteDAO docenteDAO = new DocenteDAO();
     private CursoDAO cursoDAO = new CursoDAO();
 
     public void salvar(Disciplina ds){
-        try(BufferedWriter bw= new BufferedWriter(new FileWriter(file,true))){
-            bw.write(ds.toString());
-            bw.newLine();
-        }catch(IOException e){System.out.println("Erro ao salvar a disciplina "+e.getMessage());}
+        String sql = "INSERT INTO disciplinas(id, nome, docente_id, curso_id) VALUES(?, ?, ?, ?) "
+                + "ON DUPLICATE KEY UPDATE nome = VALUES(nome), docente_id = VALUES(docente_id), "
+                + "curso_id = VALUES(curso_id)";
+        try (Connection connection = ConexaoSql.conectar();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, ds.getId());
+            statement.setString(2, ds.getNome());
+            if (ds.getDocente() == null) statement.setNull(3, java.sql.Types.INTEGER);
+            else statement.setInt(3, ds.getDocente().getId());
+            if (ds.getCurso() == null || ds.getCurso().getId() == 0) statement.setNull(4, java.sql.Types.INTEGER);
+            else statement.setInt(4, ds.getCurso().getId());
+            statement.executeUpdate();
+        } catch (SQLException e) { System.out.println("Erro ao salvar disciplina: " + e.getMessage()); }
     }
 
     public List<Disciplina> listaDisciplina(){
         List<Disciplina> lista= new ArrayList<>();
-        String linha;
-        try(BufferedReader br= new BufferedReader(new FileReader(file))){
-            while((linha=br.readLine())!=null){
-                String[]dados=linha.split("; ");
-                if(dados.length>=3){
-                    int id = Integer.parseInt(dados[0]);
-                    String nome = dados[1];
-                    int docenteId = Integer.parseInt(dados[2]);
-                    Docente docente = docenteDAO.buscarPorDocente(docenteId);
-                    if(docente == null){
-                        docente = new Docente(docenteId, "", "", "", 0, "", "");
-                    }
-                    String cursoNome = (dados.length >= 4) ? dados[3] : "";
-                    Curso curso = cursoDAO.buscarCursoPorNome(cursoNome);
-                    if (curso == null) {
-                        curso = new Curso(0, cursoNome);
-                    }
-                    lista.add(new Disciplina(id, nome, docente, curso));
-                }
-            }
-        } catch (IOException e) {
-            System.out.println("Erro ao listar disciplinas "+e.getMessage());
+        String sql = "SELECT id, nome, docente_id, curso_id FROM disciplinas ORDER BY id";
+        try (Connection connection = ConexaoSql.conectar();
+             PreparedStatement statement = connection.prepareStatement(sql);
+             ResultSet result = statement.executeQuery()) {
+            while (result.next()) lista.add(lerDisciplina(result));
+        } catch (SQLException e) {
+            System.out.println("Erro ao listar disciplinas: " + e.getMessage());
         }
         return lista;
     }
 
+    private Disciplina lerDisciplina(ResultSet result) throws SQLException {
+        Docente docente = docenteDAO.buscarPorDocente(result.getInt("docente_id"));
+        Curso curso = cursoDAO.buscarCursoPorId(result.getInt("curso_id"));
+        return new Disciplina(result.getInt("id"), result.getString("nome"), docente,
+                curso == null ? new Curso(0, "") : curso);
+    }
+
     public List<Disciplina> listarPorDocente(Docente docente) {
-        List<Disciplina> lista = listaDisciplina();
-        List<Disciplina> resultado = new ArrayList<>();
-        if(docente != null) {
-            for (Disciplina ds : lista) {
-                if (ds.getDocente() != null && ds.getDocente().getId() == docente.getId()) {
-                    resultado.add(ds);
-                }
-            }
-        }
-        return resultado;
+        return docente == null ? new ArrayList<>() : listarComFiltro("docente_id", docente.getId());
     }
 
     public List<Disciplina> listarPorCurso(String curso) {
-        List<Disciplina> lista = listaDisciplina();
-        List<Disciplina> resultado = new ArrayList<>();
-        if(curso != null && !curso.isEmpty()) {
-            for (Disciplina ds : lista) {
-                if (ds.getCursoNome() != null && ds.getCursoNome().equalsIgnoreCase(curso)) {
-                    resultado.add(ds);
-                }
+        Curso encontrado = cursoDAO.buscarCursoPorNome(curso);
+        return encontrado == null ? new ArrayList<>() : listarComFiltro("curso_id", encontrado.getId());
+    }
+
+    private List<Disciplina> listarComFiltro(String coluna, int valor) {
+        List<Disciplina> lista = new ArrayList<>();
+        String sql = "SELECT id, nome, docente_id, curso_id FROM disciplinas WHERE " + coluna + " = ? ORDER BY id";
+        try (Connection connection = ConexaoSql.conectar();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, valor);
+            try (ResultSet result = statement.executeQuery()) {
+                while (result.next()) lista.add(lerDisciplina(result));
             }
-        }
-        return resultado;
+        } catch (SQLException e) { System.out.println("Erro ao filtrar disciplinas: " + e.getMessage()); }
+        return lista;
     }
 
     public Disciplina buscarPorId(int id){
-        List<Disciplina> lista=listaDisciplina();
-        for(Disciplina dsc: lista){
-            if(id==dsc.getId()){
-                return dsc;
+        String sql = "SELECT id, nome, docente_id, curso_id FROM disciplinas WHERE id = ?";
+        try (Connection connection = ConexaoSql.conectar();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, id);
+            try (ResultSet result = statement.executeQuery()) {
+                if (result.next()) return lerDisciplina(result);
             }
-        }
+        } catch (SQLException e) { System.out.println("Erro ao procurar disciplina: " + e.getMessage()); }
         return null;
     }
 
     public int gerarProximoId(){
-        int max = 0;
-        for(Disciplina ds : listaDisciplina()){
-            max = Math.max(max, ds.getId());
+        try (Connection connection = ConexaoSql.conectar();
+             PreparedStatement statement = connection.prepareStatement("SELECT COALESCE(MAX(id), 0) + 1 FROM disciplinas");
+             ResultSet result = statement.executeQuery()) {
+            return result.next() ? result.getInt(1) : 1;
+        } catch (SQLException e) {
+            throw new IllegalStateException("Erro ao gerar ID da disciplina.", e);
         }
-        return max + 1;
     }
 
     public Disciplina buscarPorNome(String nome) {
         if (nome == null) return null;
-        List<Disciplina> lista = listaDisciplina();
-        for (Disciplina d : lista) {
-            if (d.getNome() != null && d.getNome().equalsIgnoreCase(nome.trim())) {
-                return d;
+        String sql = "SELECT id, nome, docente_id, curso_id FROM disciplinas WHERE lower(nome) = lower(?) LIMIT 1";
+        try (Connection connection = ConexaoSql.conectar();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, nome.trim());
+            try (ResultSet result = statement.executeQuery()) {
+                if (result.next()) return lerDisciplina(result);
             }
-        }
+        } catch (SQLException e) { System.out.println("Erro ao procurar disciplina: " + e.getMessage()); }
         return null;
     }
 
-    public void reescreverArquivo(List<Disciplina> lista) {
-        try(BufferedWriter bw = new BufferedWriter(new FileWriter(file, false))){
-            for(Disciplina disciplina : lista){
-                bw.write(disciplina.toString());
-                bw.newLine();
+    public void atualizarTodos(List<Disciplina> lista) {
+        String sql = "INSERT INTO disciplinas(id, nome, docente_id, curso_id) VALUES(?, ?, ?, ?) "
+                + "ON DUPLICATE KEY UPDATE nome = VALUES(nome), docente_id = VALUES(docente_id), "
+                + "curso_id = VALUES(curso_id)";
+        try (Connection connection = ConexaoSql.conectar();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            connection.setAutoCommit(false);
+            try {
+                for (Disciplina disciplina : lista) {
+                    statement.setInt(1, disciplina.getId());
+                    statement.setString(2, disciplina.getNome());
+                    if (disciplina.getDocente() == null) statement.setNull(3, java.sql.Types.INTEGER);
+                    else statement.setInt(3, disciplina.getDocente().getId());
+                    if (disciplina.getCurso() == null || disciplina.getCurso().getId() == 0) {
+                        statement.setNull(4, java.sql.Types.INTEGER);
+                    } else {
+                        statement.setInt(4, disciplina.getCurso().getId());
+                    }
+                    statement.addBatch();
+                }
+                statement.executeBatch();
+                connection.commit();
+            } catch (SQLException e) {
+                connection.rollback();
+                throw e;
             }
-        }catch(IOException e){
-            System.out.println("Erro ao reescrever arquivo de disciplinas "+e.getMessage());
-        }
+        } catch (SQLException e) { System.out.println("Erro ao guardar disciplinas: " + e.getMessage()); }
     }
 }

@@ -1,6 +1,4 @@
-// Dados: classe Perfil
-
 package com.mycompany.sistemadegestaoeagendamentodesalas.model;
 public enum Perfil {
-    ADMIN, SECRETARIO,DOCENTE, ESTUDANTE;
+    ADMIN, SECRETARIO, DOCENTE, ESTUDANTE;
 }

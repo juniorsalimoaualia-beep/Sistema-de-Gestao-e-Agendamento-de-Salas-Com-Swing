@@ -1,12 +1,10 @@
-// Dados: classe DepartamentoController
-
 package com.mycompany.sistemadegestaoeagendamentodesalas.controller;
 
 import java.util.List;
 import com.mycompany.sistemadegestaoeagendamentodesalas.dao.DepartamentoDAO;
 import com.mycompany.sistemadegestaoeagendamentodesalas.model.Departamento;
 
-public class DepartamentoController {
+public class DepartamentoController implements Controller<Departamento> {
     private DepartamentoDAO dao = new DepartamentoDAO();
 
     public void salvar(Departamento departamento) {

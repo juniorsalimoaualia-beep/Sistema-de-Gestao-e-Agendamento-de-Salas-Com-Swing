@@ -1,12 +1,10 @@
-// Dados: classe DocenteController
-
 package com.mycompany.sistemadegestaoeagendamentodesalas.controller;
 
 import java.util.List;
 import com.mycompany.sistemadegestaoeagendamentodesalas.dao.DocenteDAO;
 import com.mycompany.sistemadegestaoeagendamentodesalas.model.Docente;
 
-public class DocenteController {
+public class DocenteController implements UsuarioController<Docente> {
     private DocenteDAO dao = new DocenteDAO();
 
     public void salvar(Docente docente) {
@@ -15,6 +13,11 @@ public class DocenteController {
 
     public List<Docente> listar() {
         return dao.listaDocente();
+    }
+
+    @Override
+    public int gerarProximoId() {
+        return dao.gerarProximoId();
     }
 
     public Docente buscarPorId(int id) {
@@ -35,7 +38,7 @@ public class DocenteController {
                 docente.setNivelAcademico(nivelAcademico);
                 docente.setNumCel(numCel);
                 docente.setEmail(email);
-                dao.reescreverArquivo(lista);
+                dao.atualizarTodos(lista);
                 return;
             }
         }
@@ -46,7 +49,7 @@ public class DocenteController {
         for (int i = 0; i < lista.size(); i++) {
             if (lista.get(i).getId() == id) {
                 lista.remove(i);
-                dao.reescreverArquivo(lista);
+                dao.atualizarTodos(lista);
                 return true;
             }
         }

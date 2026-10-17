@@ -4,7 +4,7 @@ import java.util.List;
 import com.mycompany.sistemadegestaoeagendamentodesalas.dao.CursoDAO;
 import com.mycompany.sistemadegestaoeagendamentodesalas.model.Curso;
 
-public class CursoController {
+public class CursoController implements Controller<Curso> {
     private CursoDAO dao = new CursoDAO();
 
     public void salvar(Curso curso) {

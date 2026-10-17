@@ -1,11 +1,9 @@
-// Dados: classe UsuarioController
-
 package com.mycompany.sistemadegestaoeagendamentodesalas.controller;
 
 import java.util.List;
 import com.mycompany.sistemadegestaoeagendamentodesalas.model.Usuario;
 
-public interface UsuarioController<T extends Usuario> {
+public interface UsuarioController<T extends Usuario> extends Controller<T> {
     void salvar(T usuario);
     List<T> listar();
     T buscarPorId(int id);

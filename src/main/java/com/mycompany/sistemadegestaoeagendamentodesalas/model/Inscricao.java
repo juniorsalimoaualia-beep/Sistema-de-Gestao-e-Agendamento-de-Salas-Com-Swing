@@ -1,5 +1,3 @@
-// Dados: classe Inscricao
-
 package com.mycompany.sistemadegestaoeagendamentodesalas.model;
 
 public class Inscricao {
