@@ -1,5 +1,3 @@
-// Dados: classe Secretario
-
 package com.mycompany.sistemadegestaoeagendamentodesalas.model;
 public class Secretario extends Usuario {
     private String cargo;

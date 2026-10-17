@@ -1,5 +1,3 @@
-// Dados: classe Disciplina
-
 package com.mycompany.sistemadegestaoeagendamentodesalas.model;
 public class Disciplina {
     private int id;

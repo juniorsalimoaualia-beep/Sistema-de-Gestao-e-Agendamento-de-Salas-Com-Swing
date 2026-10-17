@@ -1,5 +1,3 @@
-// Dados: classe Curso
-
 package com.mycompany.sistemadegestaoeagendamentodesalas.model;
 
 public class Curso {

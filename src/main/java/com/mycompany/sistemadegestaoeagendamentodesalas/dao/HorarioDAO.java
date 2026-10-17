@@ -1,16 +1,12 @@
-// Dados: classe HorarioDAO
-
 package com.mycompany.sistemadegestaoeagendamentodesalas.dao;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 import com.mycompany.sistemadegestaoeagendamentodesalas.model.Curso;
 import com.mycompany.sistemadegestaoeagendamentodesalas.model.DiaSemana;
@@ -18,145 +14,90 @@ import com.mycompany.sistemadegestaoeagendamentodesalas.model.Disciplina;
 import com.mycompany.sistemadegestaoeagendamentodesalas.model.Horario;
 
 public class HorarioDAO {
-    private static final String file = "files/Horario.txt";
     private CursoDAO cursoDAO = new CursoDAO();
     private DisciplinaDAO disciplinaDAO = new DisciplinaDAO();
 
     public void salvar(Horario horario) {
-        if (horario == null) {
-            System.out.println("Erro: Horario invalido.");
+        if (horario == null || horario.getCurso() == null || horario.getCurso().getId() <= 0
+                || horario.getDiaSemana() == null || horario.getHoraInicio() == null
+                || horario.getHoraFim() == null || !horario.getHoraFim().isAfter(horario.getHoraInicio())) {
+            System.out.println("Erro: Curso, dia e intervalo de horas validos sao obrigatorios.");
             return;
         }
-        if (isHorarioDuplicado(horario)) {
-            System.out.println("Erro: Horario duplicado.");
-            return;
-        }
-        File arquivo = ArquivoUtils.prepararArquivo(file);
-        try (BufferedWriter bw = new BufferedWriter(new FileWriter(arquivo, true))) {
-            bw.write(horario.toString());
-            bw.newLine();
-        } catch (IOException e) {
-            System.out.println("Erro ao salvar Horario " + e.getMessage());
-        }
+        String sql = "INSERT INTO horarios(id, curso_id, disciplina_id, dia_semana, hora_inicio, hora_fim) "
+                + "VALUES(?, ?, ?, ?, ?, ?)";
+        try (Connection connection = ConexaoSql.conectar();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            if (temHorarioSobreposto(connection, horario)) {
+                System.out.println("Erro: O curso ja tem um horario sobreposto nesse dia.");
+                return;
+            }
+            statement.setInt(1, horario.getId());
+            if (horario.getCurso() == null || horario.getCurso().getId() == 0) statement.setNull(2, java.sql.Types.INTEGER);
+            else statement.setInt(2, horario.getCurso().getId());
+            if (horario.getDisciplina() == null || horario.getDisciplina().getId() == 0) statement.setNull(3, java.sql.Types.INTEGER);
+            else statement.setInt(3, horario.getDisciplina().getId());
+            statement.setString(4, horario.getDiaSemana().name());
+            statement.setString(5, horario.getHoraInicio().toString());
+            statement.setString(6, horario.getHoraFim().toString());
+            statement.executeUpdate();
+        } catch (SQLException e) { System.out.println("Erro ao salvar horario: " + e.getMessage()); }
     }
 
     public List<Horario> listaHorario() {
         List<Horario> lista = new ArrayList<>();
-        File arquivo = new File(file);
-        if (!arquivo.exists()) {
-            return lista;
-        }
-
-        try (BufferedReader br = new BufferedReader(new FileReader(arquivo))) {
-            String linha;
-            while ((linha = br.readLine()) != null) {
-                Horario horario = converterLinha(linha);
-                if (horario != null) {
-                    lista.add(horario);
-                }
-            }
-        } catch (IOException e) {
-            System.out.println("Erro ao ler o ficheiro " + e.getMessage());
-        }
+        String sql = "SELECT id, curso_id, disciplina_id, dia_semana, hora_inicio, hora_fim FROM horarios ORDER BY id";
+        try (Connection connection = ConexaoSql.conectar();
+             PreparedStatement statement = connection.prepareStatement(sql);
+             ResultSet result = statement.executeQuery()) {
+            while (result.next()) lista.add(lerHorario(result));
+        } catch (SQLException e) { System.out.println("Erro ao listar horarios: " + e.getMessage()); }
         return lista;
     }
 
-    private Horario converterLinha(String linha) {
-        try {
-            String[] dados = linha.split("; ");
-            if (dados.length < 5) {
-                return null;
-            }
-
-            int id = Integer.parseInt(dados[0].trim());
-            Curso curso;
-            Disciplina disciplina = null;
-            int indiceDia;
-
-            if (dados.length >= 6 && isInteger(dados[1]) && isInteger(dados[2])) {
-                int cursoId = Integer.parseInt(dados[1].trim());
-                int disciplinaId = Integer.parseInt(dados[2].trim());
-
-                curso = cursoDAO.buscarCursoPorId(cursoId);
-                if (curso == null) {
-                    curso = new Curso(cursoId, "");
-                }
-
-                if (disciplinaId > 0) {
-                    disciplina = disciplinaDAO.buscarPorId(disciplinaId);
-                    if (disciplina == null) {
-                        disciplina = new Disciplina(disciplinaId, "", null, curso);
-                    }
-                }
-                indiceDia = 3;
-            } else {
-                curso = new Curso(0, dados[1].trim());
-                indiceDia = 2;
-            }
-
-            DiaSemana dia = DiaSemana.valueOf(dados[indiceDia].trim());
-            return new Horario(
-                id,
-                curso,
-                disciplina,
-                dia,
-                LocalTime.parse(dados[indiceDia + 1].trim()),
-                LocalTime.parse(dados[indiceDia + 2].trim())
-            );
-        } catch (Exception e) {
-            System.out.println("Linha de horario ignorada por estar invalida: " + linha);
-            return null;
-        }
-    }
-
-    private boolean isInteger(String valor) {
-        try {
-            Integer.parseInt(valor.trim());
-            return true;
-        } catch (Exception e) {
-            return false;
-        }
+    private Horario lerHorario(ResultSet result) throws SQLException {
+        Curso curso = cursoDAO.buscarCursoPorId(result.getInt("curso_id"));
+        Disciplina disciplina = disciplinaDAO.buscarPorId(result.getInt("disciplina_id"));
+        return new Horario(result.getInt("id"), curso, disciplina,
+                DiaSemana.valueOf(result.getString("dia_semana")),
+                LocalTime.parse(result.getString("hora_inicio")), LocalTime.parse(result.getString("hora_fim")));
     }
 
     public String buscarPorHorario(String curso) {
-        for (Horario hr : listaHorario()) {
-            if (hr.getCurso() != null && curso.equalsIgnoreCase(hr.getCurso().getNome())) {
-                return formatarHorario(hr);
-            }
-        }
-        return "Horario nao encontrado";
+        List<Horario> lista = listarPorCurso(curso);
+        return lista.isEmpty() ? "Horario nao encontrado" : formatarHorario(lista.get(0));
     }
 
     public List<Horario> listarPorCurso(String curso) {
-        List<Horario> resultado = new ArrayList<>();
-        if (curso == null) {
-            return resultado;
-        }
-
-        for (Horario hr : listaHorario()) {
-            if (hr.getCurso() != null && curso.equalsIgnoreCase(hr.getCurso().getNome())) {
-                resultado.add(hr);
-            }
-        }
-        return resultado;
+        Curso encontrado = cursoDAO.buscarCursoPorNome(curso);
+        return encontrado == null ? new ArrayList<>() : listarFiltrado("curso_id", encontrado.getId());
     }
 
     public List<Horario> listarPorDisciplina(int disciplinaId) {
-        List<Horario> resultado = new ArrayList<>();
-        for (Horario hr : listaHorario()) {
-            if (hr.getDisciplina() != null && hr.getDisciplina().getId() == disciplinaId) {
-                resultado.add(hr);
+        return listarFiltrado("disciplina_id", disciplinaId);
+    }
+
+    private List<Horario> listarFiltrado(String coluna, int id) {
+        List<Horario> lista = new ArrayList<>();
+        String sql = "SELECT id, curso_id, disciplina_id, dia_semana, hora_inicio, hora_fim FROM horarios WHERE "
+                + coluna + " = ? ORDER BY dia_semana, hora_inicio";
+        try (Connection connection = ConexaoSql.conectar();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, id);
+            try (ResultSet result = statement.executeQuery()) {
+                while (result.next()) lista.add(lerHorario(result));
             }
-        }
-        return resultado;
+        } catch (SQLException e) { System.out.println("Erro ao filtrar horarios: " + e.getMessage()); }
+        return lista;
     }
 
     public Horario buscarPorId(int id) {
-        for (Horario hr : listaHorario()) {
-            if (hr.getId() == id) {
-                return hr;
-            }
-        }
+        String sql = "SELECT id, curso_id, disciplina_id, dia_semana, hora_inicio, hora_fim FROM horarios WHERE id = ?";
+        try (Connection connection = ConexaoSql.conectar();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, id);
+            try (ResultSet result = statement.executeQuery()) { if (result.next()) return lerHorario(result); }
+        } catch (SQLException e) { System.out.println("Erro ao procurar horario: " + e.getMessage()); }
         return null;
     }
 
@@ -171,31 +112,25 @@ public class HorarioDAO {
     }
 
     public int gerarProximoId() {
-        int max = 0;
-        for (Horario hr : listaHorario()) {
-            max = Math.max(max, hr.getId());
+        try (Connection connection = ConexaoSql.conectar();
+             PreparedStatement statement = connection.prepareStatement("SELECT COALESCE(MAX(id), 0) + 1 FROM horarios");
+             ResultSet result = statement.executeQuery()) { return result.next() ? result.getInt(1) : 1; }
+        catch (SQLException e) {
+            throw new IllegalStateException("Erro ao gerar ID do horario.", e);
         }
-        return max + 1;
     }
 
-    private boolean isHorarioDuplicado(Horario novo) {
-        if (novo == null) {
-            return false;
-        }
-        for (Horario existente : listaHorario()) {
-            boolean mesmoCurso = existente.getCurso() != null && novo.getCurso() != null
-                    ? existente.getCurso().getNome().equalsIgnoreCase(novo.getCurso().getNome())
-                    : existente.getCurso() == null && novo.getCurso() == null;
-            boolean mesmaDisciplina = existente.getDisciplina() != null && novo.getDisciplina() != null
-                    ? existente.getDisciplina().getId() == novo.getDisciplina().getId()
-                    : existente.getDisciplina() == null && novo.getDisciplina() == null;
-            boolean mesmoDia = existente.getDiaSemana() == novo.getDiaSemana();
-            boolean mesmoInicio = existente.getHoraInicio() != null && existente.getHoraInicio().equals(novo.getHoraInicio());
-            boolean mesmoFim = existente.getHoraFim() != null && existente.getHoraFim().equals(novo.getHoraFim());
-            if (mesmoCurso && mesmaDisciplina && mesmoDia && mesmoInicio && mesmoFim) {
-                return true;
+    private boolean temHorarioSobreposto(Connection connection, Horario novo) throws SQLException {
+        String sql = "SELECT 1 FROM horarios WHERE curso_id = ? AND dia_semana = ? "
+                + "AND hora_inicio < ? AND hora_fim > ? LIMIT 1";
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, novo.getCurso().getId());
+            statement.setString(2, novo.getDiaSemana().name());
+            statement.setString(3, novo.getHoraFim().toString());
+            statement.setString(4, novo.getHoraInicio().toString());
+            try (ResultSet result = statement.executeQuery()) {
+                return result.next();
             }
         }
-        return false;
     }
 }

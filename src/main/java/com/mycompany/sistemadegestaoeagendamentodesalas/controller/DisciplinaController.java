@@ -1,5 +1,3 @@
-// Dados: classe DisciplinaController
-
 package com.mycompany.sistemadegestaoeagendamentodesalas.controller;
 
 import java.util.List;
@@ -9,7 +7,7 @@ import com.mycompany.sistemadegestaoeagendamentodesalas.model.Curso;
 import com.mycompany.sistemadegestaoeagendamentodesalas.model.Disciplina;
 import com.mycompany.sistemadegestaoeagendamentodesalas.model.Docente;
 
-public class DisciplinaController {
+public class DisciplinaController implements Controller<Disciplina> {
     private DisciplinaDAO dao = new DisciplinaDAO();
     private DocenteDAO docenteDAO = new DocenteDAO();
 
@@ -39,7 +37,7 @@ public class DisciplinaController {
                 int docenteId = ds.getDocente()!=null ? ds.getDocente().getId() : 0;
                 Docente dc=new Docente(docenteId,nome,apelido,"",0,"","");
                 ds.setDocente(dc);
-                dao.reescreverArquivo(lista);
+                dao.atualizarTodos(lista);
                 return;
             }
         }

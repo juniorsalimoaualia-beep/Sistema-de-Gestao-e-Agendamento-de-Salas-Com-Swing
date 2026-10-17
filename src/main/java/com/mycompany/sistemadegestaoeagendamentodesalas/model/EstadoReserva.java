@@ -1,5 +1,3 @@
-// Dados: classe EstadoReserva
-
 package com.mycompany.sistemadegestaoeagendamentodesalas.model;
 
 public enum EstadoReserva {

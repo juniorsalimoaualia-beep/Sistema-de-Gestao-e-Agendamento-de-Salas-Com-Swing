@@ -1,61 +1,126 @@
-// Dados: classe TurmaDAO
-
 package com.mycompany.sistemadegestaoeagendamentodesalas.dao;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
+import com.mycompany.sistemadegestaoeagendamentodesalas.dao.CursoDAO;
+import com.mycompany.sistemadegestaoeagendamentodesalas.model.Curso;
 import com.mycompany.sistemadegestaoeagendamentodesalas.model.Estudante;
 import com.mycompany.sistemadegestaoeagendamentodesalas.model.Turma;
 
 public class TurmaDAO {
-    private static final String file ="files/Turma.txt";
-    private EstudanteDAO estudanteDAO = new EstudanteDAO();
+    private final EstudanteDAO estudanteDAO = new EstudanteDAO();
+    private final CursoDAO cursoDAO = new CursoDAO();
 
     public void salvar(Turma dp){
-        File arquivo = ArquivoUtils.prepararArquivo(file);
-        try(BufferedWriter bw= new BufferedWriter(new FileWriter(arquivo, true))){
-            bw.write(dp.toFileString());
-            bw.newLine();
-        }catch(IOException e){
-            System.out.println("Erro ao salvar Turma "+e.getMessage());
+        if (dp == null) {
+            System.out.println("Erro: Turma invalida.");
+            return;
+        }
+        Curso curso = cursoDAO.buscarCursoPorNome(dp.getCursoNome());
+        if (curso == null || dp.getAno() <= 0) {
+            System.out.println("Erro: Curso e ano validos sao obrigatorios para a turma.");
+            return;
+        }
+        String sql = "INSERT INTO turmas(ano, curso_id) VALUES(?, ?) "
+                + "ON DUPLICATE KEY UPDATE id = LAST_INSERT_ID(id)";
+        try (Connection connection = ConexaoSql.conectar();
+             PreparedStatement turma = connection.prepareStatement(sql);
+             PreparedStatement remove = connection.prepareStatement("DELETE FROM turma_estudantes WHERE turma_id = ?");
+             PreparedStatement estudante = connection.prepareStatement(
+                     "INSERT IGNORE INTO turma_estudantes(turma_id, estudante_id) VALUES(?, ?)")) {
+            connection.setAutoCommit(false);
+            try {
+                turma.setInt(1, dp.getAno());
+                turma.setInt(2, curso.getId());
+                turma.executeUpdate();
+
+                int turmaId = buscarId(connection, dp.getAno(), curso.getId());
+                remove.setInt(1, turmaId);
+                remove.executeUpdate();
+                for (Estudante aluno : dp.getEstudantes()) {
+                    estudante.setInt(1, turmaId);
+                    estudante.setInt(2, aluno.getId());
+                    estudante.addBatch();
+                }
+                estudante.executeBatch();
+                connection.commit();
+            } catch (SQLException e) {
+                connection.rollback();
+                throw e;
+            }
+        } catch (SQLException e) {
+            System.out.println("Erro ao salvar turma: " + e.getMessage());
+        }
+    }
+
+    private static int buscarId(Connection connection, int ano, int cursoId) throws SQLException {
+        String sql = "SELECT id FROM turmas WHERE ano = ? AND curso_id = ?";
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, ano);
+            statement.setInt(2, cursoId);
+            try (ResultSet result = statement.executeQuery()) {
+                if (result.next()) {
+                    return result.getInt("id");
+                }
+            }
+        }
+        throw new SQLException("Nao foi possivel encontrar a turma guardada.");
+    }
+
+    static void associarEstudante(Connection connection, int estudanteId, int cursoId, int ano) throws SQLException {
+        String criarTurma = "INSERT INTO turmas(ano, curso_id) VALUES(?, ?) "
+                + "ON DUPLICATE KEY UPDATE id = LAST_INSERT_ID(id)";
+        try (PreparedStatement statement = connection.prepareStatement(criarTurma)) {
+            statement.setInt(1, ano);
+            statement.setInt(2, cursoId);
+            statement.executeUpdate();
+        }
+
+        int turmaId = buscarId(connection, ano, cursoId);
+        try (PreparedStatement removerTurmasAntigas = connection.prepareStatement(
+                "DELETE FROM turma_estudantes WHERE estudante_id = ?");
+             PreparedStatement adicionarNaTurma = connection.prepareStatement(
+                     "INSERT INTO turma_estudantes(turma_id, estudante_id) VALUES(?, ?)")) {
+            removerTurmasAntigas.setInt(1, estudanteId);
+            removerTurmasAntigas.executeUpdate();
+            adicionarNaTurma.setInt(1, turmaId);
+            adicionarNaTurma.setInt(2, estudanteId);
+            adicionarNaTurma.executeUpdate();
         }
     }
 
     public List<Turma> listaTurma(){
         List<Turma> lista=new ArrayList<>();
-        String linha;
-        File arquivo = ArquivoUtils.prepararArquivo(file);
-        try(BufferedReader br= new BufferedReader(new FileReader(arquivo))){
-            while((linha=br.readLine())!=null){
-                String []dados=linha.split("; ");
-                if(dados.length>=2){
-                    int ano = Integer.parseInt(dados[0]);
-                    String cursoNome = dados[1];
-                    Turma turma = new Turma(ano, cursoNome, null);
-                    if(dados.length == 3 && !dados[2].trim().isEmpty()){
-                        String[] ids = dados[2].split(",");
-                        for(String id : ids){
-                            try{
-                                int estudanteId = Integer.parseInt(id.trim());
-                                Estudante estudante = estudanteDAO.buscarEstudantePorId(estudanteId);
-                                if(estudante != null){
-                                    turma.addEstudante(estudante);
-                                }
-                            }catch(NumberFormatException ignored){ }
+        String sql = "SELECT t.id, t.ano, c.id AS curso_id, c.nome AS curso_nome "
+                + "FROM turmas t JOIN cursos c ON c.id = t.curso_id ORDER BY t.ano, c.nome";
+        try (Connection connection = ConexaoSql.conectar();
+             PreparedStatement statement = connection.prepareStatement(sql);
+             ResultSet result = statement.executeQuery()) {
+            while (result.next()) {
+                int turmaId = result.getInt("id");
+                int ano = result.getInt("ano");
+                Curso curso = new Curso(result.getInt("curso_id"), result.getString("curso_nome"));
+                List<Estudante> estudantes = new ArrayList<>();
+                String alunosSql = "SELECT estudante_id FROM turma_estudantes WHERE turma_id = ?";
+                try (PreparedStatement alunos = connection.prepareStatement(alunosSql)) {
+                    alunos.setInt(1, turmaId);
+                    try (ResultSet rows = alunos.executeQuery()) {
+                        while (rows.next()) {
+                            Estudante estudante = estudanteDAO.buscarEstudantePorId(rows.getInt(1));
+                            if (estudante != null) estudantes.add(estudante);
                         }
                     }
-                    lista.add(turma);
                 }
+                Turma turma = new Turma(turmaId, ano, curso, estudantes);
+                lista.add(turma);
             }
-        }catch(IOException e){
-            System.out.println("Erro ao ler o ficheiro "+e.getMessage());
+        } catch (SQLException e) {
+            System.out.println("Erro ao listar turmas: " + e.getMessage());
         }
         return lista;
     }
@@ -83,10 +148,11 @@ public class TurmaDAO {
     }
 
     public int gerarProximoId(){
-        int max = 0;
-        for(Turma dp : listaTurma()){
-            max = Math.max(max, dp.getAno());
+        try (Connection connection = ConexaoSql.conectar();
+             PreparedStatement statement = connection.prepareStatement("SELECT COALESCE(MAX(id), 0) + 1 FROM turmas");
+             ResultSet result = statement.executeQuery()) { return result.next() ? result.getInt(1) : 1; }
+        catch (SQLException e) {
+            throw new IllegalStateException("Erro ao gerar o proximo ano da turma.", e);
         }
-        return max + 1;
     }
 }

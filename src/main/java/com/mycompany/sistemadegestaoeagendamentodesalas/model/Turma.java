@@ -1,20 +1,23 @@
-// Dados: classe Turma
-
 package com.mycompany.sistemadegestaoeagendamentodesalas.model;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class Turma {
+    private int id;
     private String chave;
     private int ano;
     private List<Estudante> estudantes;
     private Curso curso;
 
     public Turma(int ano, String nomeCurso, List<Estudante> estudantes){
+        this(0, ano, new Curso(0, nomeCurso != null ? nomeCurso : ""), estudantes);
+    }
+
+    public Turma(int id, int ano, Curso curso, List<Estudante> estudantes){
+        this.id = id;
         this.ano = ano;
-        this.curso = new Curso(0, nomeCurso != null ? nomeCurso : "");
+        this.curso = curso != null ? curso : new Curso(0, "");
         this.chave = ano + "-" + this.curso.getNome();
         this.estudantes = new ArrayList<>();
         if(estudantes != null){
@@ -22,6 +25,7 @@ public class Turma {
         }
     }
 
+    public int getId(){ return this.id; }
     public int getAno(){ return this.ano; }
     public String getChave(){ return this.chave; }
 
@@ -54,9 +58,14 @@ public class Turma {
     }
 
     public String getEstudanteIds(){
-        return estudantes.stream()
-                .map(es -> String.valueOf(es.getId()))
-                .collect(Collectors.joining(","));
+        String ids = "";
+        for (int i = 0; i < estudantes.size(); i++) {
+            if (i > 0) {
+                ids = ids + ",";
+            }
+            ids = ids + estudantes.get(i).getId();
+        }
+        return ids;
     }
 
     public String toFileString(){

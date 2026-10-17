@@ -1,5 +1,3 @@
-// Dados: classe Sala
-
 package com.mycompany.sistemadegestaoeagendamentodesalas.model;
 
 public class Sala{

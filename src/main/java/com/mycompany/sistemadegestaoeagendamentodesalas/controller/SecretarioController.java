@@ -4,7 +4,7 @@ import java.util.List;
 import com.mycompany.sistemadegestaoeagendamentodesalas.dao.SecretarioDAO;
 import com.mycompany.sistemadegestaoeagendamentodesalas.model.Secretario;
 
-public class SecretarioController {
+public class SecretarioController implements UsuarioController<Secretario> {
     private SecretarioDAO dao = new SecretarioDAO();
 
     public void salvar(Secretario secretario) {
@@ -17,6 +17,10 @@ public class SecretarioController {
 
     public Secretario buscarPorId(int id) {
         return dao.buscarPorSecretario(id);
+    }
+
+    public int gerarProximoId() {
+        return dao.gerarProximoId();
     }
 
     public boolean alterarSenha(int id, String senhaAtual, String senhaNova) {
@@ -33,7 +37,7 @@ public class SecretarioController {
                 secretario.setCargo(cargo);
                 secretario.setNumCel(numCel);
                 secretario.setEmail(email);
-                dao.reescreverArquivo(lista);
+                dao.atualizarTodos(lista);
                 return;
             }
         }
@@ -44,7 +48,7 @@ public class SecretarioController {
         for (int i = 0; i < lista.size(); i++) {
             if (lista.get(i).getId() == id) {
                 lista.remove(i);
-                dao.reescreverArquivo(lista);
+                dao.atualizarTodos(lista);
                 return true;
             }
         }

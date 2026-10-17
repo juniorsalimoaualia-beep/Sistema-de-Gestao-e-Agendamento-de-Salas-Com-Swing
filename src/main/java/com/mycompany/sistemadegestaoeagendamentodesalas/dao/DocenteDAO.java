@@ -1,121 +1,133 @@
-// Dados: classe DocenteDAO
-
 package com.mycompany.sistemadegestaoeagendamentodesalas.dao;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 import com.mycompany.sistemadegestaoeagendamentodesalas.model.Docente;
 public class DocenteDAO {
-    private static final String file ="files/Docente.txt";
+    public int gerarProximoId() {
+        try (Connection connection = ConexaoSql.conectar();
+             PreparedStatement statement = connection.prepareStatement(
+                     "SELECT COALESCE(MAX(id), 0) + 1 FROM usuarios");
+             ResultSet result = statement.executeQuery()) {
+            return result.next() ? result.getInt(1) : 1;
+        } catch (SQLException e) {
+            throw new IllegalStateException("Erro ao gerar ID do docente: " + e.getMessage(), e);
+        }
+    }
 
     public void salvar(Docente dc){
-        File arquivo = ArquivoUtils.prepararArquivo(file);
-        try(BufferedWriter bw= new BufferedWriter(new FileWriter(arquivo, true))){
-            bw.write(dc.toString());
-            bw.newLine();
-        }catch(IOException e){System.out.println("Erro ao salvar Docente "+e.getMessage());}
+        String sql = "INSERT INTO usuarios(id, perfil, nome, apelido, nivel_academico, celular, email, senha_hash) "
+                + "VALUES(?, 'DOCENTE', ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE "
+                + "perfil = VALUES(perfil), nome = VALUES(nome), apelido = VALUES(apelido), "
+                + "nivel_academico = VALUES(nivel_academico), celular = VALUES(celular), "
+                + "email = VALUES(email), senha_hash = VALUES(senha_hash)";
+        try (Connection connection = ConexaoSql.conectar();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, dc.getId());
+            statement.setString(2, dc.getNome());
+            statement.setString(3, dc.getApelido());
+            statement.setString(4, dc.getNivelAcademico());
+            statement.setInt(5, dc.getNumCel());
+            statement.setString(6, dc.getEmail());
+            statement.setString(7, AutenticacaoDAO.prepararSenha(dc.getSenha()));
+            statement.executeUpdate();
+        } catch (SQLException e) { System.out.println("Erro ao salvar docente: " + e.getMessage()); }
     }
 
     public List<Docente> listaDocente(){
         List<Docente> lista=new ArrayList<>();
-        String linha;
-        File arquivo = ArquivoUtils.prepararArquivo(file);
-        try(BufferedReader br= new BufferedReader(new FileReader(arquivo))){
-            while((linha=br.readLine())!=null){
-                String []dados=linha.split("; ");
-                if(dados.length==6){
-                    // formato antigo: id; nomeCompleto; numCel; email; senha; nivel
-                    String nomeCompleto = dados[1];
-                    String nome = nomeCompleto;
-                    String apelido = "";
-                    String[] partes = nomeCompleto.split(" ", 2);
-                    if(partes.length == 2){
-                        nome = partes[0];
-                        apelido = partes[1];
-                    }
-                    lista.add(new Docente(
-                        Integer.parseInt(dados[0]),
-                        nome,
-                        apelido,
-                        dados[5],
-                        Integer.parseInt(dados[2]),
-                        dados[3],
-                        dados[4]));
-                } else if(dados.length==7){
-                    lista.add(new Docente(
-                        Integer.parseInt(dados[0]),
-                        dados[1],
-                        dados[2],
-                        dados[3],
-                        Integer.parseInt(dados[4]),
-                        dados[5],
-                        dados[6]));
-                }
-            }
-        }catch(IOException e){System.out.println("Erro ao ler o ficheiro "+e.getMessage());}
+        String sql = "SELECT id, nome, apelido, nivel_academico, celular, email, senha_hash "
+                + "FROM usuarios WHERE perfil = 'DOCENTE' ORDER BY id";
+        try (Connection connection = ConexaoSql.conectar();
+             PreparedStatement statement = connection.prepareStatement(sql);
+             ResultSet result = statement.executeQuery()) {
+            while (result.next()) lista.add(new Docente(result.getInt("id"), result.getString("nome"),
+                    result.getString("apelido"), result.getString("nivel_academico"), result.getInt("celular"),
+                    result.getString("email"), result.getString("senha_hash")));
+        } catch (SQLException e) { System.out.println("Erro ao listar docentes: " + e.getMessage()); }
         return lista;
     }
 
     public boolean autenticarDocente(String email, String senha){
-        List<Docente> lista=listaDocente();
-        for(Docente dc: lista){
-            if(email.equals(dc.getEmail())&&senha.equals(dc.getSenha())){
-                return true;
+        return autenticar(perfil(), email, senha);
+    }
+
+    private String perfil() { return "DOCENTE"; }
+
+    private boolean autenticar(String perfil, String email, String senha) {
+        String sql = "SELECT senha_hash FROM usuarios WHERE perfil = ? AND lower(email) = lower(?)";
+        try (Connection connection = ConexaoSql.conectar();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, perfil);
+            statement.setString(2, email);
+            try (ResultSet result = statement.executeQuery()) {
+                return result.next() && AutenticacaoDAO.validarHash(senha, result.getString(1));
             }
-        }
-        return false;
+        } catch (SQLException e) { System.out.println("Erro ao autenticar docente: " + e.getMessage()); return false; }
     }
 
     public Docente buscarPorDocente(int id){
-        List<Docente> lista = listaDocente();
-
-        for(Docente dc : lista){
-            if(id == dc.getId()){
-                return dc;
+        String sql = "SELECT id, nome, apelido, nivel_academico, celular, email, senha_hash "
+                + "FROM usuarios WHERE perfil = 'DOCENTE' AND id = ?";
+        try (Connection connection = ConexaoSql.conectar();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, id);
+            try (ResultSet result = statement.executeQuery()) {
+                if (result.next()) return new Docente(result.getInt("id"), result.getString("nome"),
+                        result.getString("apelido"), result.getString("nivel_academico"), result.getInt("celular"),
+                        result.getString("email"), result.getString("senha_hash"));
             }
-        }
+        } catch (SQLException e) { System.out.println("Erro ao procurar docente: " + e.getMessage()); }
         return null;
     }
 
     public boolean alterarSenha(int id, String senhaAtual, String senhaNova) {
-        List<Docente> lista = listaDocente();
-        Docente docenteEncontrado = null;
-        int indice = -1;
-
-        for (int i = 0; i < lista.size(); i++) {
-            if (lista.get(i).getId() == id) {
-                docenteEncontrado = lista.get(i);
-                indice = i;
-                break;
-            }
-        }
-
-        if (docenteEncontrado == null || !docenteEncontrado.getSenha().equals(senhaAtual)) {
-            return false;
-        }
-
-        docenteEncontrado.setSenha(senhaNova);
-        lista.set(indice, docenteEncontrado);
-        reescreverArquivo(lista);
-        return true;
+        Docente docente = buscarPorDocente(id);
+        if (docente == null || !AutenticacaoDAO.validarHash(senhaAtual, docente.getSenha())) return false;
+        String sql = "UPDATE usuarios SET senha_hash = ? WHERE id = ? AND perfil = 'DOCENTE'";
+        try (Connection connection = ConexaoSql.conectar();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, AutenticacaoDAO.criarHash(senhaNova));
+            statement.setInt(2, id);
+            return statement.executeUpdate() == 1;
+        } catch (SQLException e) { System.out.println("Erro ao alterar senha: " + e.getMessage()); return false; }
     }
 
-    public void reescreverArquivo(List<Docente> lista) {
-        File arquivo = ArquivoUtils.prepararArquivo(file);
-        try (BufferedWriter bw = new BufferedWriter(new FileWriter(arquivo, false))) {
-            for (Docente dc : lista) {
-                bw.write(dc.toString());
-                bw.newLine();
+    public void atualizarTodos(List<Docente> lista) {
+        String sql = "INSERT INTO usuarios(id, perfil, nome, apelido, nivel_academico, celular, email, senha_hash) "
+                + "VALUES(?, 'DOCENTE', ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE "
+                + "perfil = VALUES(perfil), nome = VALUES(nome), apelido = VALUES(apelido), "
+                + "nivel_academico = VALUES(nivel_academico), celular = VALUES(celular), "
+                + "email = VALUES(email), senha_hash = VALUES(senha_hash)";
+        try (Connection connection = ConexaoSql.conectar();
+             PreparedStatement delete = connection.prepareStatement("DELETE FROM usuarios WHERE perfil = 'DOCENTE'");
+             PreparedStatement insert = connection.prepareStatement(sql)) {
+            connection.setAutoCommit(false);
+            try {
+                delete.executeUpdate();
+                for (Docente docente : lista) {
+                    insert.setInt(1, docente.getId());
+                    insert.setString(2, docente.getNome());
+                    insert.setString(3, docente.getApelido());
+                    insert.setString(4, docente.getNivelAcademico());
+                    insert.setInt(5, docente.getNumCel());
+                    insert.setString(6, docente.getEmail());
+                    insert.setString(7, AutenticacaoDAO.prepararSenha(docente.getSenha()));
+                    insert.addBatch();
+                }
+                insert.executeBatch();
+                connection.commit();
+            } catch (SQLException e) {
+                connection.rollback();
+                throw e;
             }
-        } catch (IOException e) {
-            System.out.println("Erro ao reescrever arquivo de Docentes: " + e.getMessage());
+        } catch (SQLException e) {
+            System.out.println("Erro ao atualizar docentes: " + e.getMessage());
         }
     }
 }

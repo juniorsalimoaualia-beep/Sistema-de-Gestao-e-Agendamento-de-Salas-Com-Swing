@@ -1,5 +1,3 @@
-// Dados: classe ReservaController
-
 package com.mycompany.sistemadegestaoeagendamentodesalas.controller;
 
 import java.util.List;
@@ -7,7 +5,7 @@ import com.mycompany.sistemadegestaoeagendamentodesalas.dao.GestorReservaDAO;
 import com.mycompany.sistemadegestaoeagendamentodesalas.dao.ReservaDAO;
 import com.mycompany.sistemadegestaoeagendamentodesalas.model.Reserva;
 
-public class ReservaController {
+public class ReservaController implements Controller<Reserva> {
     private ReservaDAO reservaDAO = new ReservaDAO();
     private GestorReservaDAO gestorDAO = new GestorReservaDAO();
 
@@ -29,6 +27,10 @@ public class ReservaController {
 
     public boolean verificarDisponibilidade(String nomeSala, java.time.LocalDate data, java.time.LocalTime inicio, java.time.LocalTime fim) {
         return gestorDAO.verificarDisponibilidade(nomeSala, data, inicio, fim);
+    }
+
+    public boolean verificarDisponibilidade(Reserva reserva) {
+        return gestorDAO.verificarDisponibilidade(reserva);
     }
 
     public boolean confirmar(int id) {

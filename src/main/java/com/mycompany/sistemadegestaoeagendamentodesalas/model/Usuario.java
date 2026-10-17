@@ -1,5 +1,3 @@
-// Dados: classe Usuario
-
 package com.mycompany.sistemadegestaoeagendamentodesalas.model;
 
 public class Usuario {

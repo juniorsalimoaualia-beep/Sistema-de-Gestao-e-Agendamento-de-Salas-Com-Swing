@@ -1,12 +1,10 @@
-// Dados: classe HorarioController
-
 package com.mycompany.sistemadegestaoeagendamentodesalas.controller;
 import com.mycompany.sistemadegestaoeagendamentodesalas.model.Curso;
 import java.util.List;
 import com.mycompany.sistemadegestaoeagendamentodesalas.dao.HorarioDAO;
 import com.mycompany.sistemadegestaoeagendamentodesalas.model.Horario;
 
-public class HorarioController {
+public class HorarioController implements Controller<Horario> {
     private HorarioDAO dao = new HorarioDAO();
 
     public void salvar(Horario horario) {
