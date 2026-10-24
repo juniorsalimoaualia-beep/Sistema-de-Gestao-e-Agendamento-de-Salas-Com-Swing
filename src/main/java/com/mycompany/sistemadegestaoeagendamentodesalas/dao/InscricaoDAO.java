@@ -15,15 +15,83 @@ public class InscricaoDAO {
     private EstudanteDAO estudanteDAO = new EstudanteDAO();
     private DisciplinaDAO disciplinaDAO = new DisciplinaDAO();
 
-    public void salvar(Inscricao inscricao) {
-        String sql = "INSERT IGNORE INTO inscricoes(id, estudante_id, disciplina_id) VALUES(?, ?, ?)";
-        try (Connection connection = ConexaoSql.conectar();
-             PreparedStatement statement = connection.prepareStatement(sql)) {
-            statement.setInt(1, inscricao.getId());
-            statement.setInt(2, inscricao.getEstudante().getId());
-            statement.setInt(3, inscricao.getDisciplina().getId());
-            statement.executeUpdate();
-        } catch (SQLException e) { System.out.println("Erro ao salvar inscricao: " + e.getMessage()); }
+    public boolean salvar(Inscricao inscricao) {
+        if (inscricao == null || inscricao.getEstudante() == null || inscricao.getDisciplina() == null
+                || inscricao.getEstudante().getId() <= 0 || inscricao.getDisciplina().getId() <= 0) {
+            return false;
+        }
+        String sql = "INSERT INTO inscricoes(estudante_id, disciplina_id) VALUES(?, ?)";
+        try (Connection connection = ConexaoSql.conectar()) {
+            connection.setAutoCommit(false);
+            try {
+                try (PreparedStatement lock = connection.prepareStatement(
+                        "SELECT id FROM usuarios WHERE id = ? AND perfil = 'ESTUDANTE' FOR UPDATE")) {
+                    lock.setInt(1, inscricao.getEstudante().getId());
+                    try (ResultSet result = lock.executeQuery()) {
+                        if (!result.next()) {
+                            connection.rollback();
+                            return false;
+                        }
+                    }
+                }
+                try (PreparedStatement disciplina = connection.prepareStatement(
+                        "SELECT d.id FROM disciplinas d JOIN usuarios e ON e.id = ? "
+                                + "AND e.perfil = 'ESTUDANTE' WHERE d.id = ? "
+                                + "AND (d.curso_id IS NULL OR d.curso_id = e.curso_id)")) {
+                    disciplina.setInt(1, inscricao.getEstudante().getId());
+                    disciplina.setInt(2, inscricao.getDisciplina().getId());
+                    try (ResultSet result = disciplina.executeQuery()) {
+                        if (!result.next()) {
+                            connection.rollback();
+                            return false;
+                        }
+                    }
+                }
+                try (PreparedStatement count = connection.prepareStatement(
+                        "SELECT COUNT(*) FROM inscricoes WHERE estudante_id = ?")) {
+                    count.setInt(1, inscricao.getEstudante().getId());
+                    try (ResultSet result = count.executeQuery()) {
+                        if (!result.next() || result.getInt(1) >= 7) {
+                            connection.rollback();
+                            return false;
+                        }
+                    }
+                }
+                try (PreparedStatement duplicate = connection.prepareStatement(
+                        "SELECT 1 FROM inscricoes WHERE estudante_id = ? AND disciplina_id = ? LIMIT 1")) {
+                    duplicate.setInt(1, inscricao.getEstudante().getId());
+                    duplicate.setInt(2, inscricao.getDisciplina().getId());
+                    try (ResultSet result = duplicate.executeQuery()) {
+                        if (result.next()) {
+                            connection.rollback();
+                            return false;
+                        }
+                    }
+                }
+                try (PreparedStatement statement = connection.prepareStatement(sql,
+                        java.sql.Statement.RETURN_GENERATED_KEYS)) {
+                    statement.setInt(1, inscricao.getEstudante().getId());
+                    statement.setInt(2, inscricao.getDisciplina().getId());
+                    if (statement.executeUpdate() != 1) {
+                        connection.rollback();
+                        return false;
+                    }
+                    try (ResultSet generatedKeys = statement.getGeneratedKeys()) {
+                        if (generatedKeys.next()) {
+                            inscricao.setId(generatedKeys.getInt(1));
+                        }
+                    }
+                }
+                connection.commit();
+                return true;
+            } catch (SQLException e) {
+                connection.rollback();
+                throw e;
+            }
+        } catch (SQLException e) {
+            System.out.println("Erro ao salvar inscricao: " + e.getMessage());
+            return false;
+        }
     }
 
     public List<Inscricao> listaInscricao() {
