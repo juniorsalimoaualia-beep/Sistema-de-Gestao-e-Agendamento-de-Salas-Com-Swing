@@ -28,7 +28,9 @@ public class DisciplinaDAO {
             if (ds.getCurso() == null || ds.getCurso().getId() == 0) statement.setNull(4, java.sql.Types.INTEGER);
             else statement.setInt(4, ds.getCurso().getId());
             statement.executeUpdate();
-        } catch (SQLException e) { System.out.println("Erro ao salvar disciplina: " + e.getMessage()); }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Erro ao salvar disciplina.", e);
+        }
     }
 
     public List<Disciplina> listaDisciplina(){
