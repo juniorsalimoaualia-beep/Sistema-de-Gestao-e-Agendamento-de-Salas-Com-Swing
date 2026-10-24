@@ -12,6 +12,8 @@ import com.mycompany.sistemadegestaoeagendamentodesalas.model.EstadoSala;
 import com.mycompany.sistemadegestaoeagendamentodesalas.model.Departamento;
 
 public class SalaDAO {
+    private final DepartamentoDAO departamentoDAO = new DepartamentoDAO();
+
     public void salvar(Sala sala){
         String sql = "INSERT INTO salas(id, nome, estado, reserva_id, departamento_id) VALUES(?, ?, ?, ?, ?) "
                 + "ON DUPLICATE KEY UPDATE nome = VALUES(nome), estado = VALUES(estado), "
@@ -23,7 +25,9 @@ public class SalaDAO {
             if (sala.getDepartamento() == null) statement.setNull(5, java.sql.Types.INTEGER);
             else statement.setInt(5, sala.getDepartamento().getId());
             statement.executeUpdate();
-        } catch (SQLException e) { System.out.println("Erro ao salvar sala: " + e.getMessage()); }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Erro ao salvar sala.", e);
+        }
     }
 
     public List<Sala> listaSala(){
@@ -62,7 +66,11 @@ public class SalaDAO {
         sala.setEstado(EstadoSala.valueOf(result.getString("estado")));
         sala.setReservaId(result.getInt("reserva_id"));
         int departamentoId = result.getInt("departamento_id");
-        if (!result.wasNull()) sala.setDepartamento(new Departamento(departamentoId, ""));
+        if (!result.wasNull()) {
+            Departamento departamento = departamentoDAO.buscarPorId(departamentoId);
+            sala.setDepartamento(departamento == null
+                    ? new Departamento(departamentoId, "") : departamento);
+        }
         return sala;
     }
 
