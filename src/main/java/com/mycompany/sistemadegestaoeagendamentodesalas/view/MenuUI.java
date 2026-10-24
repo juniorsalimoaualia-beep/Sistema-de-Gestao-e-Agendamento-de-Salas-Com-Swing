@@ -1,15 +1,15 @@
 package com.mycompany.sistemadegestaoeagendamentodesalas.view;
 
 import com.mycompany.sistemadegestaoeagendamentodesalas.dao.AutenticacaoDAO;
-import com.mycompany.sistemadegestaoeagendamentodesalas.dao.ConexaoSql;
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.Insets;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -20,36 +20,36 @@ import javax.swing.JPasswordField;
 import javax.swing.JTextField;
 
 public class MenuUI extends JFrame {
-	private static final Color INK = new Color(31, 49, 45);
-	private static final Color GREEN = new Color(38, 105, 78);
-	private static final Color PAPER = new Color(246, 247, 241);
 	private final AutenticacaoDAO autenticacaoDAO = new AutenticacaoDAO();
 	private final JPanel content = new JPanel(new BorderLayout());
 	private String perfil;
 
+	/** Configura a janela principal e apresenta a escolha de perfil. */
 	public MenuUI() {
 		super("SGSAS | Gestão de salas");
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setMinimumSize(new Dimension(760, 560));
 		setLocationRelativeTo(null);
-		content.setBackground(PAPER);
+		content.setBackground(PaletaCores.FUNDO);
 		setContentPane(content);
 		mostrarPerfis();
 	}
 
+	/** Mostra os cartoes para escolher o perfil de acesso. */
 	private void mostrarPerfis() {
+		setTitle("SGSAS | Gestão de salas");
 		JPanel page = new JPanel(new BorderLayout(0, 24));
-		page.setBackground(PAPER);
+		page.setBackground(PaletaCores.FUNDO);
 		page.setBorder(BorderFactory.createEmptyBorder(38, 48, 30, 48));
 
 		JLabel brand = new JLabel("SGSAS  /  PORTAL ACADEMICO");
 		brand.setFont(new Font("Segoe UI", Font.BOLD, 12));
-		brand.setForeground(GREEN);
+		brand.setForeground(PaletaCores.DESTAQUE);
 		JLabel heading = new JLabel("Como pretende aceder?");
 		heading.setFont(new Font("Segoe UI", Font.BOLD, 30));
-		heading.setForeground(INK);
-		JLabel subtitle = new JLabel("Escolha o seu perfil para continuar para o inicio de sessao.");
-		subtitle.setForeground(new Color(92, 105, 97));
+		heading.setForeground(PaletaCores.TEXTO);
+		JLabel subtitle = new JLabel("Escolha um perfil. Depois inicie sessao para abrir a dashboard.");
+		subtitle.setForeground(PaletaCores.SECUNDARIA);
 		JPanel titles = new JPanel(new GridLayout(3, 1, 0, 7));
 		titles.setOpaque(false);
 		titles.add(brand);
@@ -66,23 +66,45 @@ public class MenuUI extends JFrame {
 		page.add(cards, BorderLayout.CENTER);
 
 		JLabel footer = new JLabel("Acesso seguro  /  Sistema de gestao e agendamento de salas");
-		footer.setForeground(new Color(112, 121, 113));
+		footer.setForeground(PaletaCores.SECUNDARIA);
 		page.add(footer, BorderLayout.SOUTH);
 		mostrar(page);
 	}
 
+	/** Cria um cartao de perfil e liga-o ao painel correspondente. */
 	private void adicionarPerfil(JPanel cards, String nome, String descricao, String codigo) {
-		JButton card = new JButton("<html><div style='font-size:18px;font-weight:bold'>" + nome
-				+ "</div><div style='font-size:12px;margin-top:7px'>" + descricao
-				+ "</div><div style='font-size:12px;margin-top:14px'>Continuar &rarr;</div></html>");
+		JButton card = new JButton();
+		card.setLayout(new BorderLayout(0, 10));
 		card.setHorizontalAlignment(JButton.LEFT);
-		card.setVerticalAlignment(JButton.CENTER);
-		card.setForeground(INK);
-		card.setBackground(Color.WHITE);
+		card.setBackground(PaletaCores.SUPERFICIE);
 		card.setFocusPainted(false);
 		card.setBorder(BorderFactory.createCompoundBorder(
-				BorderFactory.createLineBorder(new Color(222, 225, 216)),
+				BorderFactory.createLineBorder(PaletaCores.BORDA),
 				BorderFactory.createEmptyBorder(18, 20, 18, 20)));
+		JLabel title = new JLabel(nome);
+		title.setFont(new Font("Segoe UI", Font.BOLD, 18));
+		title.setForeground(PaletaCores.TEXTO);
+		JLabel detail = new JLabel(descricao);
+		detail.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+		detail.setForeground(PaletaCores.SECUNDARIA);
+		JPanel info = new JPanel(new GridLayout(2, 1, 0, 7));
+		info.setOpaque(false);
+		info.add(title);
+		info.add(detail);
+		card.add(info, BorderLayout.CENTER);
+		card.addMouseListener(new MouseAdapter() {
+			/** Realca o cartao quando o cursor entra na area. */
+			@Override
+			public void mouseEntered(MouseEvent event) {
+				card.setBackground(new java.awt.Color(235, 245, 245));
+			}
+
+			/** Repoe a cor normal quando o cursor sai do cartao. */
+			@Override
+			public void mouseExited(MouseEvent event) {
+				card.setBackground(PaletaCores.SUPERFICIE);
+			}
+		});
 		card.addActionListener(event -> {
 			perfil = codigo;
 			mostrarLogin();
@@ -90,6 +112,7 @@ public class MenuUI extends JFrame {
 		cards.add(card);
 	}
 
+	/** Apresenta e valida o formulario de autenticacao. */
 	private void mostrarLogin() {
 		JTextField email = new JTextField(24);
 		JPasswordField senha = new JPasswordField(24);
@@ -109,17 +132,24 @@ public class MenuUI extends JFrame {
 			criarAdmin.addActionListener(event -> mostrarRegistoAdministrador());
 		}
 		entrar.addActionListener(event -> {
-			String endereco = email.getText().trim();
 			String password = new String(senha.getPassword());
-			if (endereco.isEmpty() || password.isEmpty()) {
+			if (password.isEmpty()) {
 				JOptionPane.showMessageDialog(this, "Preencha o e-mail e a senha.", "Dados em falta",
+						JOptionPane.WARNING_MESSAGE);
+				return;
+			}
+			String endereco;
+			try {
+				endereco = Validacao.validarEnderecoEmail(email.getText());
+			} catch (IllegalArgumentException e) {
+				JOptionPane.showMessageDialog(this, e.getMessage(), "E-mail invalido",
 						JOptionPane.WARNING_MESSAGE);
 				return;
 			}
 			entrar.setEnabled(false);
 			try {
 				if (autenticacaoDAO.autenticarLogin(perfil, endereco, password)) {
-					abrirPainel(perfil, endereco);
+					abrirPainel(perfil, endereco, autenticacaoDAO.buscarIdUtilizador(perfil, endereco));
 				} else {
 					JOptionPane.showMessageDialog(this, "Credenciais invalidas para o perfil selecionado.",
 							"Acesso negado", JOptionPane.WARNING_MESSAGE);
@@ -134,6 +164,7 @@ public class MenuUI extends JFrame {
 		mostrar(form);
 	}
 
+	/** Apresenta o formulario para criar a conta inicial de administrador. */
 	private void mostrarRegistoAdministrador() {
 		JTextField email = new JTextField(24);
 		JPasswordField senha = new JPasswordField(24);
@@ -150,12 +181,19 @@ public class MenuUI extends JFrame {
 		actions.add(voltar);
 		adicionarCampo(form, 3, "", actions);
 		criar.addActionListener(event -> {
-			String endereco = email.getText().trim();
+			String endereco;
 			String password = new String(senha.getPassword());
-			if (!endereco.contains("@") || password.length() < 8
-					|| !password.equals(new String(confirmar.getPassword()))) {
-				JOptionPane.showMessageDialog(this, "Informe um e-mail válido e senhas iguais com pelo menos 8 caracteres.",
-						"Dados inválidos", JOptionPane.WARNING_MESSAGE);
+			try {
+				endereco = Validacao.validarEnderecoEmail(email.getText());
+			} catch (IllegalArgumentException e) {
+				JOptionPane.showMessageDialog(this, e.getMessage(), "E-mail invalido",
+						JOptionPane.WARNING_MESSAGE);
+				return;
+			}
+			if (password.length() < 8 || !password.equals(new String(confirmar.getPassword()))) {
+				JOptionPane.showMessageDialog(this,
+						"As senhas devem coincidir e ter pelo menos 8 caracteres.",
+						"Senha invalida", JOptionPane.WARNING_MESSAGE);
 				return;
 			}
 			criar.setEnabled(false);
@@ -178,9 +216,10 @@ public class MenuUI extends JFrame {
 		mostrar(form);
 	}
 
+	/** Cria um painel de formulario com titulo e descricao. */
 	private JPanel criarFormulario(String titulo, String subtitulo) {
 		JPanel panel = new JPanel(new GridBagLayout());
-		panel.setBackground(new Color(246, 247, 241));
+		panel.setBackground(PaletaCores.FUNDO);
 		panel.setBorder(BorderFactory.createEmptyBorder(24, 28, 24, 28));
 		GridBagConstraints constraints = new GridBagConstraints();
 		constraints.gridx = 0;
@@ -190,16 +229,17 @@ public class MenuUI extends JFrame {
 		constraints.insets = new Insets(0, 0, 8, 0);
 		JLabel heading = new JLabel(titulo);
 		heading.setFont(new Font("Segoe UI", Font.BOLD, 28));
-		heading.setForeground(INK);
+		heading.setForeground(PaletaCores.TEXTO);
 		panel.add(heading, constraints);
 		constraints.gridy++;
 		constraints.insets = new Insets(0, 0, 24, 0);
 		JLabel caption = new JLabel(subtitulo);
-		caption.setForeground(new Color(92, 105, 97));
+		caption.setForeground(PaletaCores.SECUNDARIA);
 		panel.add(caption, constraints);
 		return panel;
 	}
 
+	/** Adiciona um rotulo e um campo ao formulario alinhado. */
 	private void adicionarCampo(JPanel panel, int row, String label, java.awt.Component input) {
 		GridBagConstraints constraints = new GridBagConstraints();
 		constraints.gridy = row + 2;
@@ -214,14 +254,16 @@ public class MenuUI extends JFrame {
 		panel.add(input, constraints);
 	}
 
+	/** Cria um botao principal com o estilo da aplicacao. */
 	private JButton botao(String texto) {
 		JButton button = new JButton(texto);
-		button.setBackground(GREEN);
-		button.setForeground(Color.WHITE);
+		button.setBackground(PaletaCores.PRIMARIA);
+		button.setForeground(PaletaCores.SUPERFICIE);
 		button.setFocusPainted(false);
 		return button;
 	}
 
+	/** Substitui o conteudo visivel da janela pela pagina indicada. */
 	private void mostrar(JPanel panel) {
 		content.removeAll();
 		content.add(panel, BorderLayout.CENTER);
@@ -229,12 +271,34 @@ public class MenuUI extends JFrame {
 		content.repaint();
 	}
 
-	private void abrirPainel(String perfil, String email) {
-		AdminUI painel = new AdminUI(perfil, email);
-		painel.setVisible(true);
-		dispose();
+	/** Cria e apresenta o painel correspondente ao perfil selecionado. */
+	private void abrirPainel(String perfil, String email, int utilizadorId) {
+		try {
+			PerfilDashboardUI painel;
+			switch (perfil.toUpperCase()) {
+				case "ADMIN":
+					painel = new AdminUI(perfil, email, utilizadorId, this::mostrarPerfis);
+					break;
+				case "SECRETARIO":
+					painel = new SecretarioUI(email, utilizadorId, this::mostrarPerfis);
+					break;
+				case "DOCENTE":
+					painel = new DocenteUI(email, utilizadorId, this::mostrarPerfis);
+					break;
+				case "ESTUDANTE":
+					painel = new EstudanteUI(email, utilizadorId, this::mostrarPerfis);
+					break;
+				default:
+					throw new IllegalArgumentException("Perfil desconhecido: " + perfil);
+			}
+			setTitle("SGSAS | Painel de " + nomePerfil(perfil));
+			mostrar(painel);
+		} catch (RuntimeException e) {
+			mostrarErro("Nao foi possivel abrir o painel de " + nomePerfil(perfil) + ": " + mensagem(e));
+		}
 	}
 
+	/** Devolve o nome legivel associado ao codigo do perfil. */
 	private String nomePerfil(String codigo) {
 		switch (codigo) {
 			case "ADMIN":
@@ -250,10 +314,12 @@ public class MenuUI extends JFrame {
 		}
 	}
 
+	/** Apresenta uma mensagem de erro ao utilizador. */
 	private void mostrarErro(String texto) {
 		JOptionPane.showMessageDialog(this, texto, "Erro", JOptionPane.ERROR_MESSAGE);
 	}
 
+	/** Extrai uma mensagem adequada da excecao recebida. */
 	private String mensagem(Exception exception) {
 		Throwable causa = exception.getCause() != null ? exception.getCause() : exception;
 		return causa.getMessage() == null ? causa.getClass().getSimpleName() : causa.getMessage();
