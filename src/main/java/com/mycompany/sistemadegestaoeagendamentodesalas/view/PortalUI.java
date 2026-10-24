@@ -37,11 +37,13 @@ public class PortalUI extends JPanel {
         private DefaultTableModel inscricoesEstudante = new DefaultTableModel(
             new String[]{"ID", "Disciplina", "Estado"}, 0);
 
+    /** Inicializa o portal demonstrativo e apresenta os perfis disponiveis. */
     public PortalUI() {
         setLayout(new BorderLayout());
         mostrarPerfis();
     }
 
+    /** Mostra os cartoes para escolher um perfil de acesso. */
     private void mostrarPerfis() {
         JPanel pagina = new JPanel(new BorderLayout(0, 28));
         pagina.setBackground(BG);
@@ -50,7 +52,10 @@ public class PortalUI extends JPanel {
         JPanel topo = new JPanel(new BorderLayout(0, 9));
         topo.setOpaque(false);
         JLabel marca = texto("SGSAS     /     PORTAL ACADEMICO", 12, Font.BOLD, CORAL);
-        JLabel titulo = texto("<html>Gestao de espacos,<br>sem perder o fio.</html>", 34, Font.BOLD, FOREST);
+        JPanel titulo = new JPanel(new GridLayout(2, 1, 0, 0));
+        titulo.setOpaque(false);
+        titulo.add(texto("Gestao de espacos,", 34, Font.BOLD, FOREST));
+        titulo.add(texto("sem perder o fio.", 34, Font.BOLD, FOREST));
         JLabel descricao = texto("Escolhe o teu perfil para continuar.", 14, Font.PLAIN, MUTED);
         JPanel titulos = new JPanel(new GridLayout(2, 1, 0, 5));
         titulos.setOpaque(false);
@@ -72,6 +77,7 @@ public class PortalUI extends JPanel {
         trocarPagina(pagina);
     }
 
+    /** Cria um cartao de perfil e liga a selecao ao formulario de acesso. */
     private JPanel cartaoPerfil(String numero, String nome, String detalhe, final String codigo) {
         JPanel cartao = new JPanel(new BorderLayout(0, 10));
         cartao.setBackground(SURFACE);
@@ -98,6 +104,7 @@ public class PortalUI extends JPanel {
         escolher.setFocusPainted(false);
         cartao.add(escolher, BorderLayout.SOUTH);
         escolher.addActionListener(new ActionListener() {
+            /** Guarda o perfil selecionado e abre o formulario de acesso. */
             @Override
             public void actionPerformed(ActionEvent evento) {
                 perfil = codigo;
@@ -107,6 +114,7 @@ public class PortalUI extends JPanel {
         return cartao;
     }
 
+    /** Apresenta o formulario de acesso do perfil escolhido. */
     private void mostrarLogin() {
         JPanel pagina = new JPanel(new GridLayout(1, 2));
         pagina.setBackground(BG);
@@ -115,6 +123,7 @@ public class PortalUI extends JPanel {
         trocarPagina(pagina);
     }
 
+    /** Cria o painel visual de identificacao da area de acesso. */
     private JPanel painelMarcaLogin() {
         JPanel painel = new JPanel(new BorderLayout(0, 18));
         painel.setBackground(FOREST);
@@ -135,6 +144,7 @@ public class PortalUI extends JPanel {
         return painel;
     }
 
+    /** Constroi e valida o formulario de e-mail e senha. */
     private JPanel painelFormularioLogin() {
         JPanel painel = new JPanel(new BorderLayout());
         painel.setBackground(BG);
@@ -164,6 +174,7 @@ public class PortalUI extends JPanel {
                 11, Font.PLAIN, MUTED), BorderLayout.SOUTH);
 
         entrar.addActionListener(new ActionListener() {
+            /** Verifica os campos preenchidos e abre a dashboard demonstrativa. */
             @Override
             public void actionPerformed(ActionEvent evento) {
                 if (campoEmail.getText().trim().length() == 0 || campoSenha.getPassword().length == 0) {
@@ -176,6 +187,7 @@ public class PortalUI extends JPanel {
             }
         });
         voltar.addActionListener(new ActionListener() {
+            /** Volta a selecao de perfis sem iniciar a sessao. */
             @Override
             public void actionPerformed(ActionEvent evento) {
                 mostrarPerfis();
@@ -184,6 +196,7 @@ public class PortalUI extends JPanel {
         return painel;
     }
 
+    /** Monta a estrutura da dashboard e abre a seccao inicial. */
     private void mostrarDashboard() {
         JPanel pagina = new JPanel(new BorderLayout());
         pagina.setBackground(BG);
@@ -205,6 +218,7 @@ public class PortalUI extends JPanel {
         mostrarSecao("Visao geral");
     }
 
+    /** Cria a barra superior com a conta e a acao de terminar sessao. */
     private JPanel barraSuperior() {
         JPanel barra = new JPanel(new BorderLayout());
         barra.setBackground(FOREST);
@@ -218,6 +232,7 @@ public class PortalUI extends JPanel {
         utilizador.add(sair);
         barra.add(utilizador, BorderLayout.EAST);
         sair.addActionListener(new ActionListener() {
+            /** Termina a sessao demonstrativa e regressa a selecao de perfis. */
             @Override
             public void actionPerformed(ActionEvent evento) {
                 perfil = "";
@@ -228,6 +243,7 @@ public class PortalUI extends JPanel {
         return barra;
     }
 
+    /** Cria a navegacao lateral com as seccoes permitidas para o perfil. */
     private JPanel menuLateral() {
         JPanel menu = new JPanel(new GridLayout(0, 1, 0, 5));
         menu.setBackground(new Color(235, 237, 228));
@@ -244,7 +260,8 @@ public class PortalUI extends JPanel {
             botao.setFocusPainted(false);
             menu.add(botao);
             botao.addActionListener(new ActionListener() {
-                @Override
+            /** Atualiza a seccao ativa e apresenta o conteudo escolhido. */
+            @Override
                 public void actionPerformed(ActionEvent evento) {
                     if (botaoAtivo != null) {
                         botaoAtivo.setBackground(new Color(235, 237, 228));
@@ -260,6 +277,7 @@ public class PortalUI extends JPanel {
         return menu;
     }
 
+    /** Atualiza o conteudo central para a seccao selecionada. */
     private void mostrarSecao(String secao) {
         conteudo.removeAll();
         conteudo.add(cabecalhoSecao(secao), BorderLayout.NORTH);
@@ -268,6 +286,7 @@ public class PortalUI extends JPanel {
         conteudo.repaint();
     }
 
+    /** Cria o cabecalho da seccao com saudacao e indicadores. */
     private JPanel cabecalhoSecao(String secao) {
         JPanel painel = new JPanel(new BorderLayout(0, 9));
         painel.setOpaque(false);
@@ -284,6 +303,7 @@ public class PortalUI extends JPanel {
         return painel;
     }
 
+    /** Cria um cartao compacto para apresentar uma metrica. */
     private JPanel cartaoMetrica(String numero, String titulo, String detalhe) {
         JPanel cartao = new JPanel(new GridLayout(3, 1, 0, 2));
         cartao.setBackground(SURFACE);
@@ -295,6 +315,7 @@ public class PortalUI extends JPanel {
         return cartao;
     }
 
+    /** Monta a tabela e as acoes demonstrativas da seccao atual. */
     private JPanel tabelaSecao(String secao) {
         JPanel painel = new JPanel(new BorderLayout(0, 9));
         painel.setOpaque(false);
@@ -325,6 +346,7 @@ public class PortalUI extends JPanel {
         return painel;
     }
 
+    /** Define os titulos das colunas conforme o perfil e a seccao. */
     private String[] colunasDaSecao(String secao) {
         if (perfil.equals("ESTUDANTE") && secao.equals("Disciplinas")) {
             return new String[]{"ID", "Disciplina", "Docente", "Estado"};
@@ -338,6 +360,7 @@ public class PortalUI extends JPanel {
         return new String[]{"ID", "Item", "Detalhe", "Estado"};
     }
 
+    /** Cria e preenche o modelo de demonstracao da seccao. */
     private DefaultTableModel modeloDaSecao(String secao, String[] colunas) {
         if (perfil.equals("ESTUDANTE") && secao.equals("Inscricoes")) {
             return inscricoesEstudante;
@@ -357,11 +380,13 @@ public class PortalUI extends JPanel {
         return modelo;
     }
 
+    /** Cria a acao principal aplicavel a seccao e ao perfil atuais. */
     private JButton botaoDaSecao(String secao, JTable tabela, DefaultTableModel modelo) {
         if (perfil.equals("ESTUDANTE")) {
             if (secao.equals("Disciplinas")) {
                 JButton inscrever = botaoPrimario("Inscrever-se na disciplina selecionada");
                 inscrever.addActionListener(new ActionListener() {
+                    /** Valida a selecao e adiciona a inscricao demonstrativa. */
                     @Override
                     public void actionPerformed(ActionEvent evento) {
                         int linha = tabela.getSelectedRow();
@@ -391,6 +416,7 @@ public class PortalUI extends JPanel {
             String texto = secao.equals("Utilizadores") ? "Registar perfil" : "Adicionar registo";
             JButton adicionar = botaoPrimario(texto);
             adicionar.addActionListener(new ActionListener() {
+                /** Encaminha a acao para o registo adequado a seccao selecionada. */
                 @Override
                 public void actionPerformed(ActionEvent evento) {
                     if (secao.equals("Utilizadores")) {
@@ -405,6 +431,7 @@ public class PortalUI extends JPanel {
         return null;
     }
 
+    /** Verifica se o estudante ja esta inscrito na disciplina indicada. */
     private boolean temInscricao(String disciplina) {
         for (int i = 0; i < inscricoesEstudante.getRowCount(); i++) {
             if (disciplina.equals(inscricoesEstudante.getValueAt(i, 1))) {
@@ -414,6 +441,7 @@ public class PortalUI extends JPanel {
         return false;
     }
 
+    /** Recolhe os dados e adiciona um utilizador a tabela demonstrativa. */
     private void registarPerfil(DefaultTableModel modelo) {
         String[] perfis = {"ADMIN", "SECRETARIO", "DOCENTE", "ESTUDANTE"};
         String tipo = (String) JOptionPane.showInputDialog(this, "Escolhe o perfil:",
@@ -421,29 +449,54 @@ public class PortalUI extends JPanel {
         if (tipo == null) {
             return;
         }
-        String nome = JOptionPane.showInputDialog(this, "Nome do " + tipo.toLowerCase() + ":");
-        if (nome == null || nome.trim().length() == 0) {
+        String entradaNome = JOptionPane.showInputDialog(this, "Nome do " + tipo.toLowerCase() + ":");
+        if (entradaNome == null) {
             return;
         }
-        String endereco = JOptionPane.showInputDialog(this, "E-mail:");
-        if (endereco == null || endereco.trim().length() == 0) {
+        String nome;
+        String endereco;
+        try {
+            nome = Validacao.validarNomePessoa(entradaNome, "Nome");
+        } catch (IllegalArgumentException e) {
+            JOptionPane.showMessageDialog(this, e.getMessage(), "Nome invalido",
+                    JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        String entradaEmail = JOptionPane.showInputDialog(this, "E-mail:");
+        if (entradaEmail == null) {
+            return;
+        }
+        try {
+            endereco = Validacao.validarEnderecoEmail(entradaEmail);
+        } catch (IllegalArgumentException e) {
+            JOptionPane.showMessageDialog(this, e.getMessage(), "E-mail invalido",
+                    JOptionPane.WARNING_MESSAGE);
             return;
         }
         modelo.addRow(new String[]{String.valueOf(modelo.getRowCount() + 1),
-            nome.trim(), tipo, endereco.trim()});
+            nome, tipo, endereco});
         rodape.setText("Utilizador registado apenas nesta sessao. O backend nao foi chamado.");
     }
 
+    /** Adiciona a tabela um registo demonstrativo para a seccao indicada. */
     private void adicionarRegisto(DefaultTableModel modelo, String secao) {
         String nome = JOptionPane.showInputDialog(this, "Nome para " + secao.toLowerCase() + ":");
-        if (nome == null || nome.trim().length() == 0) {
+        if (nome == null) {
+            return;
+        }
+        try {
+            nome = Validacao.validarTextoObrigatorio(nome, "nome", 150);
+        } catch (IllegalArgumentException e) {
+            JOptionPane.showMessageDialog(this, e.getMessage(), "Nome invalido",
+                    JOptionPane.WARNING_MESSAGE);
             return;
         }
         modelo.addRow(new String[]{String.valueOf(modelo.getRowCount() + 1),
-            nome.trim(), "Criado nesta sessao", "Teste"});
+            nome, "Criado nesta sessao", "Teste"});
         rodape.setText("Registo de demonstracao. O backend nao foi chamado.");
     }
 
+    /** Devolve as seccoes visiveis para o perfil atual. */
     private String[] secoesDoPerfil() {
         if (perfil.equals("ADMIN")) {
             return new String[]{"Visao geral", "Salas", "Cursos", "Utilizadores", "Reservas"};
@@ -457,6 +510,7 @@ public class PortalUI extends JPanel {
         return new String[]{"Visao geral", "Meu horario", "Inscricoes", "Disciplinas"};
     }
 
+    /** Escolhe um nome de exemplo para os itens de cada seccao. */
     private String nomeItem(String secao) {
         if (secao.equals("Salas")) {
             return "Sala 101";
@@ -479,6 +533,7 @@ public class PortalUI extends JPanel {
         return "Atividade do dia";
     }
 
+    /** Escolhe um detalhe demonstrativo para a seccao indicada. */
     private String detalheItem(String secao) {
         if (secao.equals("Reservas") || secao.equals("Pedir sala")) {
             return "Quarta-feira, 10:00";
@@ -489,6 +544,7 @@ public class PortalUI extends JPanel {
         return "Informacao de demonstracao";
     }
 
+    /** Obtem um identificador de saudacao a partir do e-mail atual. */
     private String primeiroNome() {
         if (email.indexOf('@') > 0) {
             return email.substring(0, email.indexOf('@'));
@@ -496,6 +552,7 @@ public class PortalUI extends JPanel {
         return nomePerfil(perfil);
     }
 
+    /** Converte o codigo do perfil para o respetivo nome visivel. */
     private String nomePerfil(String codigo) {
         if (codigo.equals("ADMIN")) {
             return "Administrador";
@@ -509,6 +566,7 @@ public class PortalUI extends JPanel {
         return "Estudante";
     }
 
+    /** Cria um rotulo com estilo tipografico e cor definidos. */
     private JLabel texto(String valor, int tamanho, int estilo, Color cor) {
         JLabel label = new JLabel(valor);
         label.setFont(new Font("SansSerif", estilo, tamanho));
@@ -516,6 +574,7 @@ public class PortalUI extends JPanel {
         return label;
     }
 
+    /** Cria um botao com as cores e margens principais do portal. */
     private JButton botaoPrimario(String valor) {
         JButton botao = new JButton(valor);
         botao.setBackground(FOREST);
@@ -525,6 +584,7 @@ public class PortalUI extends JPanel {
         return botao;
     }
 
+    /** Substitui o conteudo atual pelo painel indicado. */
     private void trocarPagina(JPanel novaPagina) {
         removeAll();
         add(novaPagina, BorderLayout.CENTER);
