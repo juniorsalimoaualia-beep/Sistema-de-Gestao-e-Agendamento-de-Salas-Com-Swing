@@ -15,6 +15,20 @@ public class AutenticacaoDAO {
         return autenticarUtilizador(perfil, email, senha);
     }
 
+    public int buscarIdUtilizador(String perfil, String email) {
+        String query = "SELECT id FROM usuarios WHERE perfil = ? AND lower(email) = lower(?)";
+        try (Connection connection = ConexaoSql.conectar();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+            statement.setString(1, perfil.toUpperCase());
+            statement.setString(2, email.trim());
+            try (ResultSet result = statement.executeQuery()) {
+                return result.next() ? result.getInt("id") : 0;
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Nao foi possivel localizar a conta autenticada.", e);
+        }
+    }
+
     public boolean existeAdministrador() {
         String query = "SELECT 1 FROM usuarios WHERE perfil = 'ADMIN' LIMIT 1";
         try (Connection connection = ConexaoSql.conectar();
