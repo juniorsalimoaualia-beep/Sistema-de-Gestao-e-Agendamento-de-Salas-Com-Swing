@@ -18,13 +18,11 @@ public class TurmaDAO {
 
     public void salvar(Turma dp){
         if (dp == null) {
-            System.out.println("Erro: Turma invalida.");
-            return;
+            throw new IllegalArgumentException("Turma invalida.");
         }
         Curso curso = cursoDAO.buscarCursoPorNome(dp.getCursoNome());
         if (curso == null || dp.getAno() <= 0) {
-            System.out.println("Erro: Curso e ano validos sao obrigatorios para a turma.");
-            return;
+            throw new IllegalArgumentException("Curso e ano validos sao obrigatorios para a turma.");
         }
         String sql = "INSERT INTO turmas(ano, curso_id) VALUES(?, ?) "
                 + "ON DUPLICATE KEY UPDATE id = LAST_INSERT_ID(id)";
@@ -54,7 +52,7 @@ public class TurmaDAO {
                 throw e;
             }
         } catch (SQLException e) {
-            System.out.println("Erro ao salvar turma: " + e.getMessage());
+            throw new IllegalStateException("Erro ao salvar turma.", e);
         }
     }
 
