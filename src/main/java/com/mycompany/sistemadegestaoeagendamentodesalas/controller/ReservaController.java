@@ -37,6 +37,10 @@ public class ReservaController implements Controller<Reserva> {
         return gestorDAO.confirmarReserva(id);
     }
 
+    public boolean recusar(int id) {
+        return gestorDAO.recusarReserva(id);
+    }
+
     public boolean cancelar(int id) {
         return gestorDAO.cancelarReserva(id);
     }
