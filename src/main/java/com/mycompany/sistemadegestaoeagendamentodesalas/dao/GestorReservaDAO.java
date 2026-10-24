@@ -81,6 +81,10 @@ public class GestorReservaDAO {
         return rsDAO.cancelarReserva(idReserva);
     }
 
+    public boolean recusarReserva(int idReserva) {
+        return rsDAO.recusarReserva(idReserva);
+    }
+
     private boolean atualizarEstado(int idReserva, EstadoReserva estadoAtual, EstadoReserva novoEstado) {
         String sql = "UPDATE reservas SET estado = ? WHERE id = ? AND estado = ?";
         try (Connection connection = ConexaoSql.conectar();
