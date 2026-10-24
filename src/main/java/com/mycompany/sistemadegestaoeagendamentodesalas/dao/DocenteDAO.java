@@ -36,7 +36,9 @@ public class DocenteDAO {
             statement.setString(6, dc.getEmail());
             statement.setString(7, AutenticacaoDAO.prepararSenha(dc.getSenha()));
             statement.executeUpdate();
-        } catch (SQLException e) { System.out.println("Erro ao salvar docente: " + e.getMessage()); }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Erro ao salvar docente.", e);
+        }
     }
 
     public List<Docente> listaDocente(){
