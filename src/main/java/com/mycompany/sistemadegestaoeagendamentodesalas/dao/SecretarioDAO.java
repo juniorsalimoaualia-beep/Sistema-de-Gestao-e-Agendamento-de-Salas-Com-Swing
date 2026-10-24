@@ -8,6 +8,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import com.mycompany.sistemadegestaoeagendamentodesalas.model.Secretario;
+import com.mycompany.sistemadegestaoeagendamentodesalas.model.Departamento;
 
 public class SecretarioDAO {
     public int gerarProximoId() {
@@ -33,13 +34,17 @@ public class SecretarioDAO {
             statement.setString(3, dp.getApelido()); statement.setString(4, dp.getCargo());
             statement.setInt(5, dp.getNumCel()); statement.setString(6, dp.getEmail());
             statement.setString(7, AutenticacaoDAO.prepararSenha(dp.getSenha())); statement.executeUpdate();
-        } catch (SQLException e) { System.out.println("Erro ao salvar secretario: " + e.getMessage()); }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Erro ao salvar secretario.", e);
+        }
     }
 
     public List<Secretario> listaSecretario(){
         List<Secretario> lista=new ArrayList<>();
-        String sql = "SELECT id, nome, apelido, cargo, celular, email, senha_hash "
-                + "FROM usuarios WHERE perfil = 'SECRETARIO' ORDER BY id";
+        String sql = "SELECT u.id, u.nome, u.apelido, u.cargo, u.celular, u.email, u.senha_hash, "
+                + "d.id AS departamento_id, d.nome AS departamento_nome "
+                + "FROM usuarios u LEFT JOIN departamentos d ON d.secretario_id = u.id "
+                + "WHERE u.perfil = 'SECRETARIO' ORDER BY u.id";
         try (Connection connection = ConexaoSql.conectar();
              PreparedStatement statement = connection.prepareStatement(sql);
              ResultSet result = statement.executeQuery()) {
@@ -49,12 +54,20 @@ public class SecretarioDAO {
     }
 
     private Secretario lerSecretario(ResultSet result) throws SQLException {
-        return new Secretario(result.getInt("id"), result.getString("nome"), result.getString("apelido"),
+        Secretario secretario = new Secretario(result.getInt("id"), result.getString("nome"), result.getString("apelido"),
                 result.getString("cargo"), result.getInt("celular"), result.getString("email"), result.getString("senha_hash"));
+        int departamentoId = result.getInt("departamento_id");
+        if (!result.wasNull()) {
+            secretario.setDepartamento(new Departamento(departamentoId, result.getString("departamento_nome")));
+        }
+        return secretario;
     }
 
     public Secretario buscarPorSecretario(int id){
-        String sql = "SELECT id, nome, apelido, cargo, celular, email, senha_hash FROM usuarios WHERE perfil = 'SECRETARIO' AND id = ?";
+        String sql = "SELECT u.id, u.nome, u.apelido, u.cargo, u.celular, u.email, u.senha_hash, "
+                + "d.id AS departamento_id, d.nome AS departamento_nome "
+                + "FROM usuarios u LEFT JOIN departamentos d ON d.secretario_id = u.id "
+                + "WHERE u.perfil = 'SECRETARIO' AND u.id = ?";
         try (Connection connection = ConexaoSql.conectar();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setInt(1, id);
