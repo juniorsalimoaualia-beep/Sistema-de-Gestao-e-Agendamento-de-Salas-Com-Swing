@@ -3,34 +3,18 @@ package com.mycompany.sistemadegestaoeagendamentodesalas.controller;
 import java.util.List;
 import com.mycompany.sistemadegestaoeagendamentodesalas.dao.EstudanteDAO;
 import com.mycompany.sistemadegestaoeagendamentodesalas.model.Estudante;
-import com.mycompany.sistemadegestaoeagendamentodesalas.service.InscricaoService;
-import com.mycompany.sistemadegestaoeagendamentodesalas.model.Disciplina;
 
 public class EstudanteController implements UsuarioController<Estudante> {
     private EstudanteDAO dao = new EstudanteDAO();
-    private InscricaoService inscricaoService = new InscricaoService();
-    private DisciplinaController disciplinaController = new DisciplinaController();
 
     public void salvar(Estudante estudante) {
-        boolean salvo = dao.salvar(estudante);
-        if (!salvo) {
-            return;
-        }
-        // Inscrever automaticamente em disciplinas do curso
-        List<Disciplina> disciplinas = disciplinaController.listarPorCurso(estudante.getCurso());
-        for(Disciplina disciplina : disciplinas) {
-            inscricaoService.inscreverEstudanteAutomatico(estudante.getId(), disciplina.getId());
-        }
+        dao.salvar(estudante);
     }
 
     public boolean cadastrarEstudante(Estudante estudante) {
         boolean salvo = dao.salvar(estudante);
         if (!salvo) {
             return false;
-        }
-        List<Disciplina> disciplinas = disciplinaController.listarPorCurso(estudante.getCurso());
-        for (Disciplina disciplina : disciplinas) {
-            inscricaoService.inscreverEstudanteAutomatico(estudante.getId(), disciplina.getId());
         }
         return true;
     }
