@@ -1,0 +1,4 @@
+USE sgsas;
+
+ALTER TABLE inscricoes
+    MODIFY COLUMN id INT NOT NULL AUTO_INCREMENT;
