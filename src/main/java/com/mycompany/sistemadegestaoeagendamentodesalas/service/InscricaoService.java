@@ -20,37 +20,7 @@ public class InscricaoService {
             return false;
         }
 
-        List<Inscricao> inscricoes = inscricaoDAO.buscarPorEstudante(estudanteId);
-        for (Inscricao inscricao : inscricoes) {
-            if (inscricao.getDisciplina().getId() == disciplinaId) {
-                System.out.println("Erro: Estudante já inscrito nesta disciplina.");
-                return false;
-            }
-        }
-        int id = inscricaoDAO.gerarProximoId();
-        Inscricao inscricao = new Inscricao(id, estudante, disciplina);
-        inscricaoDAO.salvar(inscricao);
-        return true;
-    }
-
-    public boolean inscreverEstudanteAutomatico(int estudanteId, int disciplinaId) {
-        Estudante estudante = estudanteDAO.buscarEstudantePorId(estudanteId);
-        Disciplina disciplina = disciplinaDAO.buscarPorId(disciplinaId);
-        if (estudante == null || disciplina == null) {
-            return false;
-        }
-
-        List<Inscricao> inscricoes = inscricaoDAO.buscarPorEstudante(estudanteId);
-        for (Inscricao inscricao : inscricoes) {
-            if (inscricao.getDisciplina().getId() == disciplinaId) {
-                return false; // Já inscrito
-            }
-        }
-        int id = inscricaoDAO.gerarProximoId();
-        Inscricao inscricao = new Inscricao(id, estudante, disciplina);
-        inscricaoDAO.salvar(inscricao);
-        System.out.println("Estudante " + estudante.getNomeCompleto() + " inscrito automaticamente na disciplina " + disciplina.getNome());
-        return true;
+        return inscricaoDAO.salvar(new Inscricao(0, estudante, disciplina));
     }
 
     public List<Inscricao> listarInscricoesPorEstudante(int estudanteId) {
