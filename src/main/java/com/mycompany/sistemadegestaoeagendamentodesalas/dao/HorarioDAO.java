@@ -12,41 +12,46 @@ import com.mycompany.sistemadegestaoeagendamentodesalas.model.Curso;
 import com.mycompany.sistemadegestaoeagendamentodesalas.model.DiaSemana;
 import com.mycompany.sistemadegestaoeagendamentodesalas.model.Disciplina;
 import com.mycompany.sistemadegestaoeagendamentodesalas.model.Horario;
+import com.mycompany.sistemadegestaoeagendamentodesalas.model.Sala;
 
 public class HorarioDAO {
     private CursoDAO cursoDAO = new CursoDAO();
     private DisciplinaDAO disciplinaDAO = new DisciplinaDAO();
+    private SalaDAO salaDAO = new SalaDAO();
 
     public void salvar(Horario horario) {
         if (horario == null || horario.getCurso() == null || horario.getCurso().getId() <= 0
+                || horario.getSala() == null || horario.getSala().getId() <= 0
                 || horario.getDiaSemana() == null || horario.getHoraInicio() == null
                 || horario.getHoraFim() == null || !horario.getHoraFim().isAfter(horario.getHoraInicio())) {
-            System.out.println("Erro: Curso, dia e intervalo de horas validos sao obrigatorios.");
-            return;
+            throw new IllegalArgumentException("Curso, dia e intervalo de horas validos sao obrigatorios.");
         }
-        String sql = "INSERT INTO horarios(id, curso_id, disciplina_id, dia_semana, hora_inicio, hora_fim) "
-                + "VALUES(?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO horarios(id, curso_id, disciplina_id, sala_id, dia_semana, hora_inicio, hora_fim) "
+                + "VALUES(?, ?, ?, ?, ?, ?, ?)";
         try (Connection connection = ConexaoSql.conectar();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             if (temHorarioSobreposto(connection, horario)) {
-                System.out.println("Erro: O curso ja tem um horario sobreposto nesse dia.");
-                return;
+                throw new IllegalArgumentException("O curso ja tem um horario sobreposto nesse dia.");
             }
             statement.setInt(1, horario.getId());
             if (horario.getCurso() == null || horario.getCurso().getId() == 0) statement.setNull(2, java.sql.Types.INTEGER);
             else statement.setInt(2, horario.getCurso().getId());
             if (horario.getDisciplina() == null || horario.getDisciplina().getId() == 0) statement.setNull(3, java.sql.Types.INTEGER);
             else statement.setInt(3, horario.getDisciplina().getId());
-            statement.setString(4, horario.getDiaSemana().name());
-            statement.setString(5, horario.getHoraInicio().toString());
-            statement.setString(6, horario.getHoraFim().toString());
+            if (horario.getSala() == null || horario.getSala().getId() == 0) statement.setNull(4, java.sql.Types.INTEGER);
+            else statement.setInt(4, horario.getSala().getId());
+            statement.setString(5, horario.getDiaSemana().name());
+            statement.setString(6, horario.getHoraInicio().toString());
+            statement.setString(7, horario.getHoraFim().toString());
             statement.executeUpdate();
-        } catch (SQLException e) { System.out.println("Erro ao salvar horario: " + e.getMessage()); }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Erro ao salvar horario.", e);
+        }
     }
 
     public List<Horario> listaHorario() {
         List<Horario> lista = new ArrayList<>();
-        String sql = "SELECT id, curso_id, disciplina_id, dia_semana, hora_inicio, hora_fim FROM horarios ORDER BY id";
+        String sql = "SELECT id, curso_id, disciplina_id, sala_id, dia_semana, hora_inicio, hora_fim FROM horarios ORDER BY id";
         try (Connection connection = ConexaoSql.conectar();
              PreparedStatement statement = connection.prepareStatement(sql);
              ResultSet result = statement.executeQuery()) {
@@ -58,7 +63,8 @@ public class HorarioDAO {
     private Horario lerHorario(ResultSet result) throws SQLException {
         Curso curso = cursoDAO.buscarCursoPorId(result.getInt("curso_id"));
         Disciplina disciplina = disciplinaDAO.buscarPorId(result.getInt("disciplina_id"));
-        return new Horario(result.getInt("id"), curso, disciplina,
+        Sala sala = salaDAO.buscarPorId(result.getInt("sala_id"));
+        return new Horario(result.getInt("id"), curso, disciplina, sala,
                 DiaSemana.valueOf(result.getString("dia_semana")),
                 LocalTime.parse(result.getString("hora_inicio")), LocalTime.parse(result.getString("hora_fim")));
     }
@@ -79,7 +85,7 @@ public class HorarioDAO {
 
     private List<Horario> listarFiltrado(String coluna, int id) {
         List<Horario> lista = new ArrayList<>();
-        String sql = "SELECT id, curso_id, disciplina_id, dia_semana, hora_inicio, hora_fim FROM horarios WHERE "
+        String sql = "SELECT id, curso_id, disciplina_id, sala_id, dia_semana, hora_inicio, hora_fim FROM horarios WHERE "
                 + coluna + " = ? ORDER BY dia_semana, hora_inicio";
         try (Connection connection = ConexaoSql.conectar();
              PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -92,7 +98,7 @@ public class HorarioDAO {
     }
 
     public Horario buscarPorId(int id) {
-        String sql = "SELECT id, curso_id, disciplina_id, dia_semana, hora_inicio, hora_fim FROM horarios WHERE id = ?";
+        String sql = "SELECT id, curso_id, disciplina_id, sala_id, dia_semana, hora_inicio, hora_fim FROM horarios WHERE id = ?";
         try (Connection connection = ConexaoSql.conectar();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setInt(1, id);
@@ -107,6 +113,7 @@ public class HorarioDAO {
         return "Curso: " + nomeCurso
             + " | Disciplina: " + nomeDisciplina
             + " | Dia: " + hr.getDiaSemana()
+            + " | Sala: " + (hr.getSala() == null ? "Nao definida" : hr.getSala().getNome())
             + " | Inicio: " + hr.getHoraInicio()
             + " | Fim: " + hr.getHoraFim();
     }
