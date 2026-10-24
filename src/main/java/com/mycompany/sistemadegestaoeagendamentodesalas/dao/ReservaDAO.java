@@ -28,6 +28,7 @@ public class ReservaDAO {
         if (reserva == null || reserva.getSalaId() == null || reserva.getDocenteId() == null
                 || reserva.getData() == null || reserva.getHoraInicio() == null || reserva.getHoraFim() == null
                 || reserva.getTipoReserva() == null || reserva.getDiaSemana() == null
+                || (reserva.getTipoReserva() == TipoReserva.AULA && reserva.getDisciplina() == null)
                 || reserva.getEstadoReserva() != EstadoReserva.PENDENTE
                 || reserva.getSalaId().getId() <= 0 || reserva.getDocenteId().getId() <= 0
                 || (reserva.getTurma() != null && reserva.getTurma().getId() <= 0)
@@ -314,6 +315,44 @@ public class ReservaDAO {
             }
         } catch (SQLException e) {
             System.out.println("Erro ao cancelar reserva: " + e.getMessage());
+            return false;
+        }
+    }
+
+    public boolean recusarReserva(int id) {
+        try (Connection connection = ConexaoSql.conectar()) {
+            connection.setAutoCommit(false);
+            try {
+                int salaId;
+                try (PreparedStatement statement = connection.prepareStatement(
+                        "SELECT sala_id FROM reservas WHERE id = ? AND estado = 'PENDENTE' FOR UPDATE")) {
+                    statement.setInt(1, id);
+                    try (ResultSet result = statement.executeQuery()) {
+                        if (!result.next()) {
+                            connection.rollback();
+                            return false;
+                        }
+                        salaId = result.getInt("sala_id");
+                    }
+                }
+                bloquearSala(connection, salaId);
+                try (PreparedStatement statement = connection.prepareStatement(
+                        "UPDATE reservas SET estado = 'RECUSADA' WHERE id = ? AND estado = 'PENDENTE'")) {
+                    statement.setInt(1, id);
+                    if (statement.executeUpdate() != 1) {
+                        connection.rollback();
+                        return false;
+                    }
+                }
+                atualizarEstadoDaSala(connection, salaId);
+                connection.commit();
+                return true;
+            } catch (SQLException e) {
+                connection.rollback();
+                throw e;
+            }
+        } catch (SQLException e) {
+            System.out.println("Erro ao recusar reserva: " + e.getMessage());
             return false;
         }
     }
