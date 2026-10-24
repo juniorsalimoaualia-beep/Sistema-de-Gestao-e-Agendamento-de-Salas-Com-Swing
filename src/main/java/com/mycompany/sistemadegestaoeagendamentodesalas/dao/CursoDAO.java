@@ -11,6 +11,12 @@ import java.util.List;
 
 
 public class CursoDAO {
+    private final DepartamentoDAO departamentoDAO = new DepartamentoDAO();
+
+    private Departamento buscarDepartamento(int id) {
+        return id <= 0 ? null : departamentoDAO.buscarPorId(id);
+    }
+
     public void salvar(Curso cr){
         String sql = "INSERT INTO cursos(id, nome, departamento_id) VALUES(?, ?, ?) "
                 + "ON DUPLICATE KEY UPDATE nome = VALUES(nome), departamento_id = VALUES(departamento_id)";
@@ -21,7 +27,9 @@ public class CursoDAO {
             if (cr.getDepartamento() == null || cr.getDepartamento().getId() == 0) statement.setNull(3, java.sql.Types.INTEGER);
             else statement.setInt(3, cr.getDepartamento().getId());
             statement.executeUpdate();
-        } catch (SQLException e) { System.out.println("Erro ao salvar curso: " + e.getMessage()); }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Erro ao salvar curso.", e);
+        }
     }
 
     public List<Curso> listaCurso(){
@@ -32,7 +40,7 @@ public class CursoDAO {
              ResultSet result = statement.executeQuery()) {
             while (result.next()) {
                 int departamentoId = result.getInt("departamento_id");
-                Departamento departamento = result.wasNull() ? null : new Departamento(departamentoId, "");
+                Departamento departamento = result.wasNull() ? null : buscarDepartamento(departamentoId);
                 lista.add(new Curso(result.getInt("id"), result.getString("nome"), departamento));
             }
         } catch (SQLException e) { System.out.println("Erro ao listar cursos: " + e.getMessage()); }
@@ -72,7 +80,7 @@ public class CursoDAO {
             try (ResultSet result = statement.executeQuery()) {
                 if (result.next()) {
                     int departamentoId = result.getInt("departamento_id");
-                    Departamento departamento = result.wasNull() ? null : new Departamento(departamentoId, "");
+                    Departamento departamento = result.wasNull() ? null : buscarDepartamento(departamentoId);
                     return new Curso(result.getInt("id"), result.getString("nome"), departamento);
                 }
             }
