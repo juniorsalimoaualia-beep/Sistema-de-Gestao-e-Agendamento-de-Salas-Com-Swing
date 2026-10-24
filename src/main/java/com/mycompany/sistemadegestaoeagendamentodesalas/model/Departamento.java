@@ -5,16 +5,22 @@ public class Departamento {
     private String nome;
     private Curso curso;
     private Sala sala;
+    private Secretario secretario;
     
     public Departamento(int id, String nome){
         this(id, nome, null, null);
     }
 
     public Departamento(int id, String nome, Curso curso, Sala sala){
+        this(id, nome, curso, sala, null);
+    }
+
+    public Departamento(int id, String nome, Curso curso, Sala sala, Secretario secretario){
         this.id = id;
         this.nome = nome;
         this.curso = curso;
         this.sala = sala;
+        this.secretario = secretario;
     }
 
     public int getId(){return id;}
@@ -36,6 +42,14 @@ public class Departamento {
 
     public void setSala(Sala sala){
         this.sala = sala;
+    }
+
+    public Secretario getSecretario(){
+        return secretario;
+    }
+
+    public void setSecretario(Secretario secretario){
+        this.secretario = secretario;
     }
 
     @Override
