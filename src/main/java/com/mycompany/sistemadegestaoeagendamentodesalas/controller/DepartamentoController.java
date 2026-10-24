@@ -19,6 +19,14 @@ public class DepartamentoController implements Controller<Departamento> {
         return dao.buscarPorId(id);
     }
 
+    public Departamento buscarPorEmailSecretario(String email) {
+        return dao.buscarPorEmailSecretario(email);
+    }
+
+    public boolean atribuirSecretario(int departamentoId, int secretarioId) {
+        return dao.atribuirSecretario(departamentoId, secretarioId);
+    }
+
     public String buscarNomePorId(int id) {
         return dao.buscarPorDepartamento(id);
     }
