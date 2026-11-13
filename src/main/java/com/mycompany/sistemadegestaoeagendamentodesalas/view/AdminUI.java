@@ -23,7 +23,9 @@ import com.mycompany.sistemadegestaoeagendamentodesalas.model.Turma;
 import com.mycompany.sistemadegestaoeagendamentodesalas.service.EmailGenarator;
 import java.awt.Component;
 import java.awt.BorderLayout;
+import java.awt.Dialog;
 import java.awt.FlowLayout;
+import java.awt.Window;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,6 +33,7 @@ import java.util.function.Function;
 import javax.swing.DefaultListModel;
 import javax.swing.JComboBox;
 import javax.swing.JButton;
+import javax.swing.JDialog;
 import javax.swing.JList;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -722,8 +725,32 @@ public class AdminUI extends PerfilDashboardUI {
 
 	/** Apresenta o formulario e devolve se o utilizador confirmou. */
 	private boolean confirmarFormulario(String titulo, JPanel form) {
-		return JOptionPane.showConfirmDialog(this, form, titulo,
-				JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE) == JOptionPane.OK_OPTION;
+		Window proprietaria = javax.swing.SwingUtilities.getWindowAncestor(this);
+		JDialog dialogo = new JDialog(proprietaria, titulo, Dialog.ModalityType.APPLICATION_MODAL);
+		dialogo.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+
+		JPanel conteudo = new JPanel(new BorderLayout(0, 12));
+		conteudo.add(form, BorderLayout.CENTER);
+
+		JButton aceitar = new JButton("OK");
+		JButton cancelar = new JButton("Cancelar");
+		JPanel acoes = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+		acoes.add(aceitar);
+		acoes.add(cancelar);
+		conteudo.add(acoes, BorderLayout.SOUTH);
+		dialogo.setContentPane(conteudo);
+
+		boolean[] confirmado = {false};
+		aceitar.addActionListener(event -> {
+			confirmado[0] = true;
+			dialogo.dispose();
+		});
+		cancelar.addActionListener(event -> dialogo.dispose());
+		dialogo.getRootPane().setDefaultButton(aceitar);
+		dialogo.pack();
+		dialogo.setLocationRelativeTo(this);
+		dialogo.setVisible(true);
+		return confirmado[0];
 	}
 
 	/** Cria um seletor de objetos e inclui uma opcao vazia quando solicitada. */
