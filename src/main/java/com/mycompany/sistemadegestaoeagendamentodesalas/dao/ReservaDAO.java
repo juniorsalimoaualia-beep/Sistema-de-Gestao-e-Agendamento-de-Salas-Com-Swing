@@ -74,15 +74,7 @@ public class ReservaDAO {
                     }
                 }
 
-                try (PreparedStatement statement = connection.prepareStatement(
-                        "UPDATE salas SET reserva_id = ?, estado = 'RESERVADA' WHERE id = ?")) {
-                    statement.setInt(1, reserva.getId());
-                    statement.setInt(2, reserva.getSalaId().getId());
-                    if (statement.executeUpdate() != 1) {
-                        connection.rollback();
-                        return false;
-                    }
-                }
+                atualizarEstadoDaSala(connection, reserva.getSalaId().getId());
                 connection.commit();
                 return true;
             } catch (SQLException e) {
@@ -115,6 +107,77 @@ public class ReservaDAO {
             return temConflito(connection, salaId, docenteId, turmaId, data, inicio, fim, reservaIgnorada);
         } catch (SQLException e) {
             throw new IllegalStateException("Erro ao verificar conflitos da reserva.", e);
+        }
+    }
+
+    boolean confirmarReserva(int id) {
+        try (Connection connection = ConexaoSql.conectar()) {
+            connection.setAutoCommit(false);
+            try {
+                int salaId;
+                try (PreparedStatement statement = connection.prepareStatement(
+                        "SELECT sala_id FROM reservas WHERE id = ? AND estado = 'PENDENTE'")) {
+                    statement.setInt(1, id);
+                    try (ResultSet result = statement.executeQuery()) {
+                        if (!result.next()) {
+                            connection.rollback();
+                            return false;
+                        }
+                        salaId = result.getInt("sala_id");
+                    }
+                }
+
+                bloquearSala(connection, salaId);
+                Integer docenteId;
+                Integer turmaId;
+                LocalDate data;
+                LocalTime inicio;
+                LocalTime fim;
+                try (PreparedStatement statement = connection.prepareStatement(
+                        "SELECT sala_id, docente_id, turma_id, data, hora_inicio, hora_fim "
+                                + "FROM reservas WHERE id = ? AND estado = 'PENDENTE' FOR UPDATE")) {
+                    statement.setInt(1, id);
+                    try (ResultSet result = statement.executeQuery()) {
+                        if (!result.next()) {
+                            connection.rollback();
+                            return false;
+                        }
+                        salaId = result.getInt("sala_id");
+                        docenteId = result.getInt("docente_id");
+                        int turmaValor = result.getInt("turma_id");
+                        turmaId = result.wasNull() ? null : turmaValor;
+                        data = LocalDate.parse(result.getString("data"));
+                        inicio = LocalTime.parse(result.getString("hora_inicio"));
+                        fim = LocalTime.parse(result.getString("hora_fim"));
+                    }
+                }
+
+                if (!salaDisponivel(connection, salaId)
+                        || temConflito(connection, salaId, docenteId, turmaId,
+                                data, inicio, fim, id)) {
+                    connection.rollback();
+                    return false;
+                }
+
+                try (PreparedStatement statement = connection.prepareStatement(
+                        "UPDATE reservas SET estado = 'CONFIRMADA' "
+                                + "WHERE id = ? AND estado = 'PENDENTE'")) {
+                    statement.setInt(1, id);
+                    if (statement.executeUpdate() != 1) {
+                        connection.rollback();
+                        return false;
+                    }
+                }
+                atualizarEstadoDaSala(connection, salaId);
+                connection.commit();
+                return true;
+            } catch (SQLException e) {
+                connection.rollback();
+                throw e;
+            }
+        } catch (SQLException e) {
+            System.out.println("Erro ao confirmar reserva: " + e.getMessage());
+            return false;
         }
     }
 
@@ -373,7 +436,7 @@ public class ReservaDAO {
 
     private void atualizarEstadoDaSala(Connection connection, int salaId) throws SQLException {
         String buscarReservaAtiva = "SELECT id FROM reservas WHERE sala_id = ? "
-                + "AND estado IN ('PENDENTE', 'CONFIRMADA') ORDER BY data, hora_inicio, id LIMIT 1";
+                + "AND estado = 'CONFIRMADA' ORDER BY data, hora_inicio, id LIMIT 1";
         int reservaAtivaId = -1;
         try (PreparedStatement statement = connection.prepareStatement(buscarReservaAtiva)) {
             statement.setInt(1, salaId);
@@ -404,20 +467,34 @@ public class ReservaDAO {
     }
 
     public void vincularSalaAReserva(int salaId, int reservaId) {
-        String sql = "UPDATE salas SET reserva_id = ?, estado = 'RESERVADA' WHERE id = ?";
+        String sql = "UPDATE salas SET reserva_id = ?, estado = 'RESERVADA' "
+                + "WHERE id = ? AND estado <> 'MANUTENCAO' AND EXISTS ("
+                + "SELECT 1 FROM reservas WHERE id = ? AND sala_id = ? AND estado = 'CONFIRMADA')";
         try (Connection connection = ConexaoSql.conectar();
              PreparedStatement statement = connection.prepareStatement(sql)) {
-            statement.setInt(1, reservaId); statement.setInt(2, salaId); statement.executeUpdate();
+            statement.setInt(1, reservaId);
+            statement.setInt(2, salaId);
+            statement.setInt(3, reservaId);
+            statement.setInt(4, salaId);
+            statement.executeUpdate();
         } catch (SQLException e) { System.out.println("Erro ao vincular sala: " + e.getMessage()); }
     }
 
     public void desvinculaSalaDeReserva(int salaId) {
-        if (salaId == 0) return;
-        String sql = "UPDATE salas SET reserva_id = -1, estado = 'LIVRE' WHERE id = ?";
-        try (Connection connection = ConexaoSql.conectar();
-             PreparedStatement statement = connection.prepareStatement(sql)) {
-            statement.setInt(1, salaId); statement.executeUpdate();
-        } catch (SQLException e) { System.out.println("Erro ao libertar sala: " + e.getMessage()); }
+        if (salaId <= 0) return;
+        try (Connection connection = ConexaoSql.conectar()) {
+            connection.setAutoCommit(false);
+            try {
+                bloquearSala(connection, salaId);
+                atualizarEstadoDaSala(connection, salaId);
+                connection.commit();
+            } catch (SQLException e) {
+                connection.rollback();
+                throw e;
+            }
+        } catch (SQLException e) {
+            System.out.println("Erro ao libertar sala: " + e.getMessage());
+        }
     }
 
     public void atualizarTodos(List<Reserva> reservas) {

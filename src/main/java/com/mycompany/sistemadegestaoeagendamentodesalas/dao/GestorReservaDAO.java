@@ -6,10 +6,6 @@ import com.mycompany.sistemadegestaoeagendamentodesalas.model.Reserva;
 import com.mycompany.sistemadegestaoeagendamentodesalas.model.DiaSemana;
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 
 
 
@@ -76,7 +72,7 @@ public class GestorReservaDAO {
                 || !verificarDisponibilidade(reserva)) {
             return false;
         }
-        return atualizarEstado(idReserva, EstadoReserva.PENDENTE, EstadoReserva.CONFIRMADA);
+        return rsDAO.confirmarReserva(idReserva);
     }
 
     public boolean cancelarReserva(int idReserva){
@@ -85,20 +81,6 @@ public class GestorReservaDAO {
 
     public boolean recusarReserva(int idReserva) {
         return rsDAO.recusarReserva(idReserva);
-    }
-
-    private boolean atualizarEstado(int idReserva, EstadoReserva estadoAtual, EstadoReserva novoEstado) {
-        String sql = "UPDATE reservas SET estado = ? WHERE id = ? AND estado = ?";
-        try (Connection connection = ConexaoSql.conectar();
-             PreparedStatement statement = connection.prepareStatement(sql)) {
-            statement.setString(1, novoEstado.name());
-            statement.setInt(2, idReserva);
-            statement.setString(3, estadoAtual.name());
-            return statement.executeUpdate() == 1;
-        } catch (SQLException e) {
-            System.out.println("Erro ao atualizar reserva: " + e.getMessage());
-            return false;
-        }
     }
 
     public boolean excluirReserva(int idReserva){

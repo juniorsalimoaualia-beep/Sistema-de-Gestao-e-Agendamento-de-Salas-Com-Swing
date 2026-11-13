@@ -91,17 +91,9 @@ public class DocenteUI extends PerfilDashboardUI {
 		JPanel panel = criarPainelTabela("Reservas", tabela);
 		JButton atualizar = new JButton("Atualizar");
 		JButton solicitar = new JButton("Solicitar reserva");
-		JButton cancelar = new JButton("Cancelar reserva selecionada");
-		cancelar.setEnabled(false);
-		panel.add(criarAcoes(atualizar, solicitar, cancelar), BorderLayout.SOUTH);
-		tabela.getSelectionModel().addListSelectionListener(event -> {
-			if (!event.getValueIsAdjusting()) {
-				cancelar.setEnabled(reservaPodeSerCancelada(tabela));
-			}
-		});
+		panel.add(criarAcoes(atualizar, solicitar), BorderLayout.SOUTH);
 		atualizar.addActionListener(event -> carregarReservas());
 		solicitar.addActionListener(event -> solicitarReserva());
-		cancelar.addActionListener(event -> cancelarReservaSelecionada(tabela, cancelar));
 		carregarReservas();
 		adicionarPainel("Reservas", panel);
 	}
@@ -118,40 +110,6 @@ public class DocenteUI extends PerfilDashboardUI {
 					reserva.getData(), reserva.getHoraInicio(), reserva.getHoraFim(),
 					reserva.getTipoReserva(), reserva.getEstadoReserva()});
 		}
-	}
-
-	/** Indica se a reserva selecionada pode ser cancelada. */
-	private boolean reservaPodeSerCancelada(JTable tabela) {
-		int linha = tabela.getSelectedRow();
-		if (linha < 0) return false;
-		Object estado = tabela.getValueAt(linha, 8);
-		return "PENDENTE".equals(estado) || "CONFIRMADA".equals(estado);
-	}
-
-	/** Confirma e executa o cancelamento da reserva selecionada. */
-	private void cancelarReservaSelecionada(JTable tabela, JButton cancelar) {
-		int linha = tabela.getSelectedRow();
-		if (linha < 0 || !reservaPodeSerCancelada(tabela)) {
-			cancelar.setEnabled(false);
-			JOptionPane.showMessageDialog(this, "Selecione uma reserva pendente ou confirmada.",
-					"Reserva indisponivel", JOptionPane.WARNING_MESSAGE);
-			return;
-		}
-		int resposta = JOptionPane.showConfirmDialog(this,
-				"Tem a certeza de que deseja cancelar esta reserva?", "Confirmar cancelamento",
-				JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
-		if (resposta != JOptionPane.YES_OPTION) return;
-		int id = Integer.parseInt(tabela.getValueAt(linha, 0).toString());
-		boolean cancelada;
-		cancelada = reservaController.cancelarDoDocente(id, docenteId);
-		if (cancelada) {
-			JOptionPane.showMessageDialog(this, "Reserva cancelada.");
-			carregarReservas();
-		} else {
-			JOptionPane.showMessageDialog(this, "Nao foi possivel cancelar a reserva.",
-					"Cancelamento nao realizado", JOptionPane.WARNING_MESSAGE);
-		}
-		cancelar.setEnabled(false);
 	}
 
 	/** Recolhe dados e envia ou demonstra um pedido de reserva. */
