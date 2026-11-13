@@ -51,7 +51,9 @@ public class DocenteDAO {
             while (result.next()) lista.add(new Docente(result.getInt("id"), result.getString("nome"),
                     result.getString("apelido"), result.getString("nivel_academico"), result.getInt("celular"),
                     result.getString("email"), result.getString("senha_hash")));
-        } catch (SQLException e) { System.out.println("Erro ao listar docentes: " + e.getMessage()); }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Erro ao listar docentes.", e);
+        }
         return lista;
     }
 
@@ -84,7 +86,9 @@ public class DocenteDAO {
                         result.getString("apelido"), result.getString("nivel_academico"), result.getInt("celular"),
                         result.getString("email"), result.getString("senha_hash"));
             }
-        } catch (SQLException e) { System.out.println("Erro ao procurar docente: " + e.getMessage()); }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Erro ao procurar docente.", e);
+        }
         return null;
     }
 

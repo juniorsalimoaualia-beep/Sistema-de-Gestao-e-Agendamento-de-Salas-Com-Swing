@@ -4,16 +4,22 @@ import com.mycompany.sistemadegestaoeagendamentodesalas.controller.Controller;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Dialog;
 import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.function.Function;
+import java.util.function.BooleanSupplier;
+import java.awt.KeyboardFocusManager;
+import com.mycompany.sistemadegestaoeagendamentodesalas.dao.AutenticacaoDAO;
+import com.mycompany.sistemadegestaoeagendamentodesalas.model.Usuario;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.AbstractAction;
@@ -24,6 +30,7 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.SwingUtilities;
 import javax.swing.JTabbedPane;
 import javax.swing.JTable;
 import javax.swing.KeyStroke;
@@ -38,9 +45,7 @@ abstract class PerfilDashboardUI extends JPanel {
 	private final String perfil;
 	private JLabel accountLabel;
 	private JLabel greetingLabel;
-	private final String nomeCompleto;
-	private final int idConta;
-	private final int celular;
+	private final Usuario conta;
 
 	/** Inicializa a estrutura comum dos paineis por perfil. */
 	PerfilDashboardUI(String perfil, String email, int utilizadorId, Runnable voltarMenu) {
@@ -49,9 +54,10 @@ abstract class PerfilDashboardUI extends JPanel {
 		this.utilizadorId = utilizadorId;
 		this.voltarMenu = voltarMenu;
 		this.perfil = perfil;
-		nomeCompleto = nomeDemo(perfil);
-		idConta = idDemo(perfil);
-		celular = celularDemo(perfil);
+		conta = new AutenticacaoDAO().buscarConta(perfil, utilizadorId);
+		if (conta == null) {
+			throw new IllegalStateException("Nao foi possivel carregar a conta autenticada.");
+		}
 		setBackground(PaletaCores.FUNDO);
 		add(criarCabecalho(perfil), BorderLayout.NORTH);
 		tabs.setBackground(PaletaCores.SUPERFICIE);
@@ -66,7 +72,7 @@ abstract class PerfilDashboardUI extends JPanel {
 	/** Adiciona as abas de inicio e conta e apresenta a dashboard. */
 	protected final void finalizarDashboard(String perfil, String aviso) {
 		tabs.insertTab("Inicio", null, criarInicio(perfil, aviso), null, 0);
-		tabs.addTab("Conta", new UsuarioUI(perfil, idConta, nomeCompleto, celular, email));
+		tabs.addTab("Conta", new UsuarioUI(perfil, conta));
 		add(tabs, BorderLayout.CENTER);
 		tabs.setSelectedIndex(0);
 		tabs.addChangeListener(event -> atualizarSelecionado());
@@ -147,10 +153,105 @@ abstract class PerfilDashboardUI extends JPanel {
 		constraints.insets = new Insets(0, 0, 0, 8);
 		constraints.anchor = GridBagConstraints.WEST;
 		for (JButton botao : botoes) {
+			estilizarBotao(botao);
 			actions.add(botao, constraints);
 			constraints.gridx++;
 		}
 		return actions;
+	}
+
+	protected final void estilizarBotao(JButton botao) {
+		String texto = botao.getText().toLowerCase();
+		Color fundo;
+		Color textoCor;
+		if (texto.contains("cancelar") || texto.contains("recusar")) {
+			fundo = new Color(174, 60, 60);
+			textoCor = Color.WHITE;
+		} else if (texto.contains("atualizar")) {
+			fundo = PaletaCores.SUPERFICIE;
+			textoCor = PaletaCores.PRIMARIA;
+		} else {
+			fundo = PaletaCores.DESTAQUE;
+			textoCor = Color.WHITE;
+		}
+		botao.setBackground(fundo);
+		botao.setForeground(textoCor);
+		botao.setFont(new Font("Segoe UI", Font.BOLD, 13));
+		botao.setFocusPainted(false);
+		botao.setOpaque(true);
+		botao.setBorder(BorderFactory.createCompoundBorder(
+				BorderFactory.createLineBorder(PaletaCores.BORDA),
+				BorderFactory.createEmptyBorder(8, 14, 8, 14)));
+		botao.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.HAND_CURSOR));
+		botao.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseEntered(MouseEvent event) {
+				if (botao.isEnabled() && !texto.contains("cancelar") && !texto.contains("recusar")) {
+					botao.setBackground(PaletaCores.PRIMARIA);
+					botao.setForeground(Color.WHITE);
+				}
+			}
+
+			@Override
+			public void mouseExited(MouseEvent event) {
+				botao.setBackground(fundo);
+				botao.setForeground(textoCor);
+			}
+		});
+	}
+
+	protected final boolean mostrarFormulario(String titulo, Component formulario,
+			BooleanSupplier confirmar) {
+		Window proprietaria = SwingUtilities.getWindowAncestor(this);
+		JDialog dialogo = new JDialog(proprietaria, titulo, Dialog.ModalityType.APPLICATION_MODAL);
+		dialogo.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+
+		JPanel conteudo = new JPanel(new BorderLayout(0, 14));
+		conteudo.setBackground(PaletaCores.FUNDO);
+		conteudo.setBorder(BorderFactory.createEmptyBorder(18, 20, 16, 20));
+		conteudo.add(formulario, BorderLayout.CENTER);
+
+		JButton guardar = new JButton("Guardar");
+		JButton cancelar = new JButton("Cancelar");
+		estilizarBotao(guardar);
+		cancelar.setBackground(PaletaCores.SUPERFICIE);
+		cancelar.setForeground(PaletaCores.SECUNDARIA);
+		cancelar.setFocusPainted(false);
+		cancelar.setBorder(BorderFactory.createCompoundBorder(
+				BorderFactory.createLineBorder(PaletaCores.BORDA),
+				BorderFactory.createEmptyBorder(8, 14, 8, 14)));
+		JPanel acoes = new JPanel(new GridBagLayout());
+		acoes.setOpaque(false);
+		GridBagConstraints constraints = new GridBagConstraints();
+		constraints.insets = new Insets(0, 0, 0, 8);
+		constraints.anchor = GridBagConstraints.EAST;
+		acoes.add(guardar, constraints);
+		constraints.gridx = 1;
+		acoes.add(cancelar, constraints);
+		conteudo.add(acoes, BorderLayout.SOUTH);
+
+		boolean[] submetido = {false};
+		guardar.addActionListener(event -> {
+			try {
+				if (confirmar.getAsBoolean()) {
+					submetido[0] = true;
+					dialogo.dispose();
+				}
+			} catch (IllegalArgumentException e) {
+				JOptionPane.showMessageDialog(dialogo, e.getMessage(),
+						"Dados invalidos", JOptionPane.WARNING_MESSAGE);
+			} catch (RuntimeException e) {
+				JOptionPane.showMessageDialog(dialogo, "Operacao falhou: " + mensagem(e),
+						"Erro", JOptionPane.ERROR_MESSAGE);
+			}
+		});
+		cancelar.addActionListener(event -> dialogo.dispose());
+		dialogo.setContentPane(conteudo);
+		dialogo.getRootPane().setDefaultButton(guardar);
+		dialogo.pack();
+		dialogo.setLocationRelativeTo(this);
+		dialogo.setVisible(true);
+		return submetido[0];
 	}
 
 	/** Cria uma caixa de selecao tipada a partir de uma lista de objetos. */
@@ -176,18 +277,30 @@ abstract class PerfilDashboardUI extends JPanel {
 
 	/** Apresenta uma mensagem de erro ao utilizador. */
 	protected final void mostrarErro(String texto) {
-		JOptionPane.showMessageDialog(this, texto, "Erro", JOptionPane.ERROR_MESSAGE);
+		JOptionPane.showMessageDialog(janelaAtiva(), texto, "Erro", JOptionPane.ERROR_MESSAGE);
+	}
+
+	protected final void mostrarInformacao(String texto) {
+		JOptionPane.showMessageDialog(janelaAtiva(), texto,
+				"Informacao", JOptionPane.INFORMATION_MESSAGE);
+	}
+
+	private Window janelaAtiva() {
+		Window ativa = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
+		return ativa == null ? SwingUtilities.getWindowAncestor(this) : ativa;
 	}
 
 	/** Executa uma operacao com indicacao de progresso e tratamento de erros. */
-	protected final void executarOperacao(String titulo, Runnable operacao, String sucesso) {
+	protected final boolean executarOperacao(String titulo, Runnable operacao, String sucesso) {
 		setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.WAIT_CURSOR));
 		try {
 			operacao.run();
-			JOptionPane.showMessageDialog(this, sucesso, titulo, JOptionPane.INFORMATION_MESSAGE);
+			JOptionPane.showMessageDialog(janelaAtiva(), sucesso, titulo, JOptionPane.INFORMATION_MESSAGE);
 			atualizarSelecionado();
+			return true;
 		} catch (RuntimeException e) {
 			mostrarErro("Operacao falhou: " + mensagem(e));
+			return false;
 		} finally {
 			setCursor(java.awt.Cursor.getDefaultCursor());
 		}
@@ -240,23 +353,7 @@ abstract class PerfilDashboardUI extends JPanel {
 		constraints.gridx = 1;
 		constraints.insets = new Insets(0, 14, 0, 0);
 		JButton logout = new JButton("Terminar sessao");
-		logout.setBackground(PaletaCores.DESTAQUE);
-		logout.setForeground(PaletaCores.SUPERFICIE);
-		logout.setFocusPainted(false);
-		Color corSaida = PaletaCores.DESTAQUE;
-		logout.addMouseListener(new MouseAdapter() {
-			@Override
-			/** Realca o botao quando o cursor entra na area. */
-			public void mouseEntered(MouseEvent event) {
-				logout.setBackground(PaletaCores.PRIMARIA);
-			}
-
-			@Override
-			/** Repoe a cor do botao quando o cursor sai da area. */
-			public void mouseExited(MouseEvent event) {
-				logout.setBackground(corSaida);
-			}
-		});
+		estilizarBotao(logout);
 		logout.addActionListener(event -> {
 			if (confirmarTerminoSessao()) {
 				voltarMenu.run();
@@ -272,6 +369,13 @@ abstract class PerfilDashboardUI extends JPanel {
 	private boolean confirmarTerminoSessao() {
 		JButton sim = new JButton("Sim");
 		JButton nao = new JButton("Nao");
+		estilizarBotao(sim);
+		nao.setBackground(PaletaCores.SUPERFICIE);
+		nao.setForeground(PaletaCores.SECUNDARIA);
+		nao.setFocusPainted(false);
+		nao.setBorder(BorderFactory.createCompoundBorder(
+				BorderFactory.createLineBorder(PaletaCores.BORDA),
+				BorderFactory.createEmptyBorder(8, 14, 8, 14)));
 		JOptionPane escolha = new JOptionPane("Tem a certeza de que deseja terminar a sessao?",
 				JOptionPane.QUESTION_MESSAGE, JOptionPane.DEFAULT_OPTION, null,
 				new Object[]{sim, nao}, sim);
@@ -374,36 +478,4 @@ abstract class PerfilDashboardUI extends JPanel {
 		}
 	}
 
-	/** Obtem o nome de demonstracao associado a cada perfil. */
-	private static String nomeDemo(String perfil) {
-		switch (perfil.toUpperCase()) {
-			case "ADMIN": return "Administrador de Demonstracao";
-			case "SECRETARIO": return "Celina Mavume";
-			case "DOCENTE": return "Ana Mucavele";
-			case "ESTUDANTE": return "Carlos Nhantumbo";
-			default: return "Utilizador";
-		}
-	}
-
-	/** Obtem o identificador demonstrativo associado a cada perfil. */
-	private static int idDemo(String perfil) {
-		switch (perfil.toUpperCase()) {
-			case "ADMIN": return 1;
-			case "SECRETARIO": return 2;
-			case "DOCENTE": return 1;
-			case "ESTUDANTE": return 101;
-			default: return 0;
-		}
-	}
-
-	/** Obtem o numero de telefone demonstrativo associado a cada perfil. */
-	private static int celularDemo(String perfil) {
-		switch (perfil.toUpperCase()) {
-			case "ADMIN": return 840000001;
-			case "SECRETARIO": return 840000002;
-			case "DOCENTE": return 840000003;
-			case "ESTUDANTE": return 840000004;
-			default: return 0;
-		}
-	}
 }

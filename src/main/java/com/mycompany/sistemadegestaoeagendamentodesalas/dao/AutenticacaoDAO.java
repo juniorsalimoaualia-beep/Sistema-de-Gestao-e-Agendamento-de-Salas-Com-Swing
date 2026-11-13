@@ -8,6 +8,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import com.mycompany.sistemadegestaoeagendamentodesalas.model.Usuario;
 import org.mindrot.jbcrypt.BCrypt;
 
 public class AutenticacaoDAO {
@@ -26,6 +27,53 @@ public class AutenticacaoDAO {
             }
         } catch (SQLException e) {
             throw new IllegalStateException("Nao foi possivel localizar a conta autenticada.", e);
+        }
+    }
+
+    public Usuario buscarConta(String perfil, int id) {
+        String query = "SELECT id, perfil, nome, apelido, celular, email "
+                + "FROM usuarios WHERE perfil = ? AND id = ?";
+        try (Connection connection = ConexaoSql.conectar();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+            statement.setString(1, perfil.toUpperCase());
+            statement.setInt(2, id);
+            try (ResultSet result = statement.executeQuery()) {
+                if (!result.next()) {
+                    return null;
+                }
+                return new Usuario(result.getInt("id"), result.getString("nome"),
+                        result.getString("apelido"), result.getInt("celular"),
+                        result.getString("email"), null);
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Nao foi possivel carregar os dados da conta.", e);
+        }
+    }
+
+    public boolean alterarSenha(int id, String senhaAtual, String senhaNova) {
+        String query = "SELECT senha_hash FROM usuarios WHERE id = ?";
+        try (Connection connection = ConexaoSql.conectar();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+            statement.setInt(1, id);
+            String senhaGuardada;
+            try (ResultSet result = statement.executeQuery()) {
+                if (!result.next()) {
+                    return false;
+                }
+                senhaGuardada = result.getString("senha_hash");
+            }
+            if (!validarHash(senhaAtual, senhaGuardada)) {
+                return false;
+            }
+            String update = "UPDATE usuarios SET senha_hash = ? WHERE id = ? AND senha_hash = ?";
+            try (PreparedStatement atualizar = connection.prepareStatement(update)) {
+                atualizar.setString(1, prepararSenha(senhaNova));
+                atualizar.setInt(2, id);
+                atualizar.setString(3, senhaGuardada);
+                return atualizar.executeUpdate() == 1;
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Nao foi possivel alterar a senha da conta.", e);
         }
     }
 

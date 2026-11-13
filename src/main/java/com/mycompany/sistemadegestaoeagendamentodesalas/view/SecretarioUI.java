@@ -172,25 +172,30 @@ public class SecretarioUI extends PerfilDashboardUI {
 		JTextField fim = new JTextField("09:00", 16);
 		Validacao.filtrarDataHora(inicio, false);
 		Validacao.filtrarDataHora(fim, false);
-		Object[] campos = {"Curso", curso, "Disciplina", disciplina, "Sala", sala, "Dia", dia,
-				"Hora de inicio (HH:MM)", inicio, "Hora de fim (HH:MM)", fim};
-		if (JOptionPane.showConfirmDialog(this, campos, "Novo horario",
-				JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE) != JOptionPane.OK_OPTION) {
-			return;
-		}
-		try {
+		JPanel formulario = new JPanel(new java.awt.GridLayout(0, 2, 8, 8));
+		formulario.add(new javax.swing.JLabel("Curso"));
+		formulario.add(curso);
+		formulario.add(new javax.swing.JLabel("Disciplina"));
+		formulario.add(disciplina);
+		formulario.add(new javax.swing.JLabel("Sala"));
+		formulario.add(sala);
+		formulario.add(new javax.swing.JLabel("Dia"));
+		formulario.add(dia);
+		formulario.add(new javax.swing.JLabel("Hora de inicio (HH:MM)"));
+		formulario.add(inicio);
+		formulario.add(new javax.swing.JLabel("Hora de fim (HH:MM)"));
+		formulario.add(fim);
+		mostrarFormulario("Novo horario", formulario, () -> {
 			LocalTime horaInicio = Validacao.validarHora(inicio.getText(), "a hora de inicio");
 			LocalTime horaFim = Validacao.validarHora(fim.getText(), "a hora de fim");
 			if (!horaFim.isAfter(horaInicio)) {
 				throw new IllegalArgumentException("A hora final deve ser posterior a hora inicial.");
 			}
-			executarOperacao("A guardar horario...", () -> horarioController.salvar(new Horario(
+			return executarOperacao("A guardar horario...", () -> horarioController.salvar(new Horario(
 					horarioController.gerarProximoId(), valorSelecionado(curso),
 					valorSelecionado(disciplina), valorSelecionado(sala), (DiaSemana) dia.getSelectedItem(),
 					horaInicio, horaFim)), "Horario registado.");
-		} catch (IllegalArgumentException e) {
-			mostrarErro(e.getMessage());
-		}
+		});
 	}
 
 	/** Regista uma sala vinculada ao departamento do secretario. */
@@ -201,21 +206,17 @@ public class SecretarioUI extends PerfilDashboardUI {
 		}
 		JTextField nome = new JTextField();
 		Validacao.filtrarTexto(nome, 100);
-		if (JOptionPane.showConfirmDialog(this, new Object[]{"Nome da sala", nome}, "Nova sala",
-				JOptionPane.OK_CANCEL_OPTION) != JOptionPane.OK_OPTION) {
-			return;
-		}
-		try {
+		JPanel formulario = new JPanel(new java.awt.GridLayout(0, 2, 8, 8));
+		formulario.add(new javax.swing.JLabel("Nome da sala"));
+		formulario.add(nome);
+		mostrarFormulario("Nova sala", formulario, () -> {
 			Validacao.validarTextoObrigatorio(nome.getText(), "nome da sala", 100);
-		} catch (IllegalArgumentException e) {
-			mostrarErro(e.getMessage());
-			return;
-		}
-		executarOperacao("A guardar sala...", () -> {
-			Sala sala = new Sala(salaController.gerarProximoId(), nome.getText().trim());
-			sala.setDepartamento(departamento);
-			salaController.salvar(sala);
-		}, "Sala registada.");
+			return executarOperacao("A guardar sala...", () -> {
+				Sala sala = new Sala(salaController.gerarProximoId(), nome.getText().trim());
+				sala.setDepartamento(departamento);
+				salaController.salvar(sala);
+			}, "Sala registada.");
+		});
 	}
 
 	/** Verifica se a sala pertence ao departamento do secretario atual. */

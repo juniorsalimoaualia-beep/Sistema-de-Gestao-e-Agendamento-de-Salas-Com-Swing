@@ -4,6 +4,8 @@ import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.GridLayout;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JLabel;
@@ -11,15 +13,20 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPasswordField;
 import javax.swing.JScrollPane;
+import com.mycompany.sistemadegestaoeagendamentodesalas.dao.AutenticacaoDAO;
+import com.mycompany.sistemadegestaoeagendamentodesalas.model.Usuario;
 
 public class UsuarioUI extends JPanel {
+	private final int usuarioId;
+	private final JPasswordField currentPasswordField = new JPasswordField(20);
 	private final JPasswordField passwordField = new JPasswordField(20);
 	private final JPasswordField confirmPasswordField = new JPasswordField(20);
-	private char[] senhaDemo = "demo123".toCharArray();
+	private final AutenticacaoDAO autenticacaoDAO = new AutenticacaoDAO();
 
-	/** Monta os dados da conta e a area para alterar a senha. */
-	public UsuarioUI(String perfil, int id, String nomeCompleto, int celular, String email) {
+	/** Carrega os dados da conta autenticada e prepara a alteracao de senha. */
+	public UsuarioUI(String perfil, Usuario usuario) {
 		super(new BorderLayout(0, 18));
+		usuarioId = usuario.getId();
 		setBackground(PaletaCores.FUNDO);
 		setBorder(BorderFactory.createEmptyBorder(28, 30, 28, 30));
 
@@ -32,21 +39,38 @@ public class UsuarioUI extends JPanel {
 		details.setBorder(BorderFactory.createCompoundBorder(
 				BorderFactory.createLineBorder(PaletaCores.BORDA),
 				BorderFactory.createEmptyBorder(20, 22, 20, 22)));
-		adicionarDetalhe(details, "Nome completo", nomeCompleto);
-		adicionarDetalhe(details, "ID", Integer.toString(id));
-		adicionarDetalhe(details, "Numero de celular", Integer.toString(celular));
-		adicionarDetalhe(details, "E-mail", email);
+		adicionarDetalhe(details, "Nome completo", usuario.getNomeCompleto());
+		adicionarDetalhe(details, "ID", Integer.toString(usuario.getId()));
+		adicionarDetalhe(details, "Numero de celular", Integer.toString(usuario.getNumCel()));
+		adicionarDetalhe(details, "E-mail", usuario.getEmail());
 
 		JButton changePassword = new JButton("Alterar senha");
 		changePassword.setBackground(PaletaCores.PRIMARIA);
 		changePassword.setForeground(PaletaCores.SUPERFICIE);
+		changePassword.setFont(new Font("Segoe UI", Font.BOLD, 13));
 		changePassword.setFocusPainted(false);
-		changePassword.setPreferredSize(new java.awt.Dimension(150, 36));
-		JPanel passwordForm = new JPanel(new GridLayout(2, 2, 10, 8));
+		changePassword.setBorder(BorderFactory.createCompoundBorder(
+				BorderFactory.createLineBorder(PaletaCores.BORDA),
+				BorderFactory.createEmptyBorder(9, 15, 9, 15)));
+		changePassword.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.HAND_CURSOR));
+		changePassword.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseEntered(MouseEvent event) {
+				changePassword.setBackground(PaletaCores.DESTAQUE);
+			}
+
+			@Override
+			public void mouseExited(MouseEvent event) {
+				changePassword.setBackground(PaletaCores.PRIMARIA);
+			}
+		});
+		JPanel passwordForm = new JPanel(new GridLayout(3, 2, 10, 8));
 		passwordForm.setBackground(PaletaCores.SUPERFICIE);
 		passwordForm.setBorder(BorderFactory.createCompoundBorder(
 				BorderFactory.createLineBorder(PaletaCores.BORDA),
 				BorderFactory.createEmptyBorder(18, 22, 18, 22)));
+		passwordForm.add(rotulo("Senha actual"));
+		passwordForm.add(currentPasswordField);
 		passwordForm.add(rotulo("Nova senha"));
 		passwordForm.add(passwordField);
 		passwordForm.add(rotulo("Confirmar senha"));
@@ -68,8 +92,8 @@ public class UsuarioUI extends JPanel {
 		accountContent.setOpaque(false);
 		accountContent.add(details, BorderLayout.NORTH);
 		accountContent.add(passwordSection, BorderLayout.CENTER);
-		JLabel notice = new JLabel("Modo demonstracao: alteracoes validas apenas nesta sessao.");
-		notice.setForeground(PaletaCores.AVISO);
+		JLabel notice = new JLabel("Os dados da conta sao carregados da base de dados.");
+		notice.setForeground(PaletaCores.SECUNDARIA);
 		add(title, BorderLayout.NORTH);
 		JScrollPane accountScroll = new JScrollPane(accountContent);
 		accountScroll.setBorder(BorderFactory.createEmptyBorder());
@@ -105,11 +129,17 @@ public class UsuarioUI extends JPanel {
 		return label;
 	}
 
-	/** Valida a nova senha e atualiza a senha demonstrativa da sessao. */
+	/** Valida a senha actual e guarda a nova senha na base de dados. */
 	private void alterarSenha() {
+		char[] senhaActual = currentPasswordField.getPassword();
 		char[] novaSenha = passwordField.getPassword();
 		char[] confirmacao = confirmPasswordField.getPassword();
 		try {
+			if (senhaActual.length == 0) {
+				JOptionPane.showMessageDialog(this, "Informe a senha actual.",
+						"Senha em falta", JOptionPane.WARNING_MESSAGE);
+				return;
+			}
 			if (novaSenha.length < 8) {
 				JOptionPane.showMessageDialog(this, "A nova senha deve ter pelo menos 8 caracteres.",
 						"Senha invalida", JOptionPane.WARNING_MESSAGE);
@@ -120,14 +150,25 @@ public class UsuarioUI extends JPanel {
 						"Senhas diferentes", JOptionPane.WARNING_MESSAGE);
 				return;
 			}
-			java.util.Arrays.fill(senhaDemo, '\0');
-			senhaDemo = novaSenha.clone();
+			if (!autenticacaoDAO.alterarSenha(usuarioId, new String(senhaActual), new String(novaSenha))) {
+				JOptionPane.showMessageDialog(this, "A senha actual esta incorrecta ou a conta foi alterada.",
+						"Senha nao alterada", JOptionPane.WARNING_MESSAGE);
+				return;
+			}
+			currentPasswordField.setText("");
 			passwordField.setText("");
 			confirmPasswordField.setText("");
-			JOptionPane.showMessageDialog(this, "Senha alterada nesta sessao.");
+			JOptionPane.showMessageDialog(this, "Senha alterada com sucesso.");
+		} catch (RuntimeException e) {
+			Throwable causa = e.getCause() == null ? e : e.getCause();
+			String mensagem = causa.getMessage() == null ? causa.getClass().getSimpleName() : causa.getMessage();
+			JOptionPane.showMessageDialog(this, "Nao foi possivel alterar a senha: " + mensagem,
+					"Erro", JOptionPane.ERROR_MESSAGE);
 		} finally {
+			java.util.Arrays.fill(senhaActual, '\0');
 			java.util.Arrays.fill(novaSenha, '\0');
 			java.util.Arrays.fill(confirmacao, '\0');
 		}
 	}
+
 }

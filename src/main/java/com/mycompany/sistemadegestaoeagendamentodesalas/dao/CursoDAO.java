@@ -43,7 +43,9 @@ public class CursoDAO {
                 Departamento departamento = result.wasNull() ? null : buscarDepartamento(departamentoId);
                 lista.add(new Curso(result.getInt("id"), result.getString("nome"), departamento));
             }
-        } catch (SQLException e) { System.out.println("Erro ao listar cursos: " + e.getMessage()); }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Erro ao listar cursos.", e);
+        }
         return lista;
     }
 
@@ -58,7 +60,9 @@ public class CursoDAO {
             try (ResultSet result = statement.executeQuery()) {
                 if (result.next()) return new Curso(result.getInt("id"), result.getString("nome"));
             }
-        } catch (SQLException e) { System.out.println("Erro ao procurar curso: " + e.getMessage()); }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Erro ao procurar curso.", e);
+        }
         return null;
     }
 
@@ -84,7 +88,9 @@ public class CursoDAO {
                     return new Curso(result.getInt("id"), result.getString("nome"), departamento);
                 }
             }
-        } catch (SQLException e) { System.out.println("Erro ao procurar curso: " + e.getMessage()); }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Erro ao procurar curso.", e);
+        }
         return null;
     }
 

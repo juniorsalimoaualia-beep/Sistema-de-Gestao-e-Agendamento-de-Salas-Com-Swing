@@ -37,7 +37,9 @@ public class SalaDAO {
              PreparedStatement statement = connection.prepareStatement(sql);
              ResultSet result = statement.executeQuery()) {
             while (result.next()) lista.add(lerSala(result));
-        } catch (SQLException e) { System.out.println("Erro ao listar salas: " + e.getMessage()); }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Erro ao listar salas.", e);
+        }
         return lista;
     }
 
@@ -47,7 +49,9 @@ public class SalaDAO {
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setString(1, nome);
             try (ResultSet result = statement.executeQuery()) { if (result.next()) return lerSala(result); }
-        } catch (SQLException e) { System.out.println("Erro ao procurar sala: " + e.getMessage()); }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Erro ao procurar sala.", e);
+        }
         return null;
     }
 
@@ -57,7 +61,9 @@ public class SalaDAO {
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setInt(1, id);
             try (ResultSet result = statement.executeQuery()) { if (result.next()) return lerSala(result); }
-        } catch (SQLException e) { System.out.println("Erro ao procurar sala: " + e.getMessage()); }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Erro ao procurar sala.", e);
+        }
         return null;
     }
 

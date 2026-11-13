@@ -118,7 +118,7 @@ public class TurmaDAO {
                 lista.add(turma);
             }
         } catch (SQLException e) {
-            System.out.println("Erro ao listar turmas: " + e.getMessage());
+            throw new IllegalStateException("Erro ao listar turmas.", e);
         }
         return lista;
     }

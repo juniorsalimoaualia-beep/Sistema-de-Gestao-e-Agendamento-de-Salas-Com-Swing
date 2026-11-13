@@ -89,8 +89,7 @@ public class InscricaoDAO {
                 throw e;
             }
         } catch (SQLException e) {
-            System.out.println("Erro ao salvar inscricao: " + e.getMessage());
-            return false;
+            throw new IllegalStateException("Erro ao salvar inscricao.", e);
         }
     }
 
@@ -102,7 +101,7 @@ public class InscricaoDAO {
              ResultSet result = statement.executeQuery()) {
             while (result.next()) lista.add(criarInscricao(result));
         } catch (SQLException e) {
-            System.out.println("Erro ao listar inscricoes: " + e.getMessage());
+            throw new IllegalStateException("Erro ao listar inscricoes.", e);
         }
         return lista;
     }
@@ -119,7 +118,9 @@ public class InscricaoDAO {
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setInt(1, id);
             try (ResultSet result = statement.executeQuery()) { if (result.next()) return criarInscricao(result); }
-        } catch (SQLException e) { System.out.println("Erro ao procurar inscricao: " + e.getMessage()); }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Erro ao procurar inscricao.", e);
+        }
         return null;
     }
 
@@ -140,7 +141,9 @@ public class InscricaoDAO {
             try (ResultSet result = statement.executeQuery()) {
                 while (result.next()) lista.add(criarInscricao(result));
             }
-        } catch (SQLException e) { System.out.println("Erro ao filtrar inscricoes: " + e.getMessage()); }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Erro ao filtrar inscricoes.", e);
+        }
         return lista;
     }
 

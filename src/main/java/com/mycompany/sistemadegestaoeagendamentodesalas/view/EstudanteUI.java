@@ -37,17 +37,8 @@ import javax.swing.SwingConstants;
 import javax.swing.table.DefaultTableModel;
 
 public class EstudanteUI extends PerfilDashboardUI {
-	private static final String AVISO_DEMO = "Modo demonstracao: dados ficticios; nenhuma ligacao a base de dados.";
 	private static final String TODOS_CURSOS = "Todas as disciplinas permitidas";
 	private static final int LIMITE_INSCRICOES = 7;
-	private static final String CURSO_DEMO = "Engenharia Informatica";
-	private static final DisciplinaDemo[] DISCIPLINAS_DEMO = {
-			new DisciplinaDemo(1, "Programacao Orientada a Objectos", "Ana Mucavele", CURSO_DEMO),
-			new DisciplinaDemo(2, "Bases de Dados", "Ana Mucavele", CURSO_DEMO),
-			new DisciplinaDemo(3, "Redes de Computadores", "Paulo Cossa", CURSO_DEMO, true),
-			new DisciplinaDemo(4, "Desenvolvimento Web", "Paulo Cossa", CURSO_DEMO),
-			new DisciplinaDemo(5, "Matematica Geral", "Celina Mavume", "Geral")
-	};
 
 	private final EstudanteController estudanteController = new EstudanteController();
 	private final DisciplinaController disciplinaController = new DisciplinaController();
@@ -55,17 +46,18 @@ public class EstudanteUI extends PerfilDashboardUI {
 	private final InscricaoController inscricaoController = new InscricaoController();
 	private final ReservaController reservaController = new ReservaController();
 	private final Estudante estudante;
-	private final boolean demonstracao;
 	private final List<DisciplinaItem> inscricoes = new ArrayList<>();
 	private final JPanel listaInscricoes = new JPanel(new GridLayout(0, 1, 0, 10));
 	private JPanel cartoesDisciplinas;
 
-	/** Prepara o painel do estudante e carrega os dados da conta ou de demonstracao. */
+	/** Prepara o painel do estudante e carrega os dados guardados na base de dados. */
 	public EstudanteUI(String email, int utilizadorId, Runnable voltarMenu) {
 		super("ESTUDANTE", email, utilizadorId, voltarMenu);
-		demonstracao = utilizadorId <= 0;
-		estudante = demonstracao ? null : estudanteController.buscarPorId(utilizadorId);
-		if (!demonstracao && estudante == null) {
+		if (utilizadorId <= 0) {
+			throw new IllegalArgumentException("A conta do estudante nao e valida.");
+		}
+		estudante = estudanteController.buscarPorId(utilizadorId);
+		if (estudante == null) {
 			throw new IllegalStateException("A conta autenticada nao corresponde a um estudante.");
 		}
 		carregarInscricoes();
@@ -73,17 +65,12 @@ public class EstudanteUI extends PerfilDashboardUI {
 		adicionarDisciplinas();
 		adicionarInscricoes();
 		adicionarEventos();
-		finalizarDashboard("ESTUDANTE", demonstracao ? AVISO_DEMO : null);
+		finalizarDashboard("ESTUDANTE");
 	}
 
-	/** Carrega as disciplinas inscritas pelo estudante ou os exemplos demonstrativos. */
+	/** Carrega as disciplinas em que o estudante esta inscrito na base de dados. */
 	private void carregarInscricoes() {
 		inscricoes.clear();
-		if (demonstracao) {
-			inscricoes.add(itemDemo(DISCIPLINAS_DEMO[0]));
-			inscricoes.add(itemDemo(DISCIPLINAS_DEMO[1]));
-			return;
-		}
 		for (Inscricao inscricao : inscricaoController.listarPorEstudante(estudante.getId())) {
 			if (inscricao.getDisciplina() != null) {
 				inscricoes.add(itemReal(inscricao.getDisciplina()));
@@ -93,50 +80,44 @@ public class EstudanteUI extends PerfilDashboardUI {
 
 	/** Monta a grelha semanal com horarios e salas do curso do estudante. */
 	private void adicionarHorarios() {
-		String curso = demonstracao ? CURSO_DEMO : estudante.getCursoNome();
-		List<Horario> horarios = demonstracao ? new ArrayList<>() : horarioController.listarPorCurso(estudante.getCurso());
+		String curso = estudante.getCursoNome();
+		List<Horario> horarios = horarioController.listarPorCurso(estudante.getCurso());
 		DefaultTableModel model = modeloTabela(new String[]{
 				"Horario", "SEGUNDA", "TERCA", "QUARTA", "QUINTA", "SEXTA", "SABADO"});
-		if (demonstracao) {
-			model.addRow(new Object[]{"08:00 - 09:30", "Programacao Orientada a Objectos\nSala 12",
-					"", "", "", "", ""});
-			model.addRow(new Object[]{"10:00 - 11:30", "", "", "Bases de Dados\nSala 08", "", "", ""});
-		} else {
-			List<Horario> linhas = new ArrayList<>();
-			for (Horario horario : horarios) {
-				boolean jaExiste = false;
-				for (Horario linha : linhas) {
-					if (linha.getHoraInicio().equals(horario.getHoraInicio())
-							&& linha.getHoraFim().equals(horario.getHoraFim())) {
-						jaExiste = true;
-						break;
-					}
-				}
-				if (!jaExiste) linhas.add(horario);
-			}
-			linhas.sort(Comparator.comparing(Horario::getHoraInicio));
+		List<Horario> linhas = new ArrayList<>();
+		for (Horario horario : horarios) {
+			boolean jaExiste = false;
 			for (Horario linha : linhas) {
-				model.addRow(new Object[]{linha.getHoraInicio() + " - " + linha.getHoraFim(),
-						"", "", "", "", "", ""});
-			}
-			for (Horario horario : horarios) {
-				int linha = -1;
-				String faixa = horario.getHoraInicio() + " - " + horario.getHoraFim();
-				for (int i = 0; i < model.getRowCount(); i++) {
-					if (faixa.equals(model.getValueAt(i, 0))) {
-						linha = i;
-						break;
-					}
+				if (linha.getHoraInicio().equals(horario.getHoraInicio())
+						&& linha.getHoraFim().equals(horario.getHoraFim())) {
+					jaExiste = true;
+					break;
 				}
-				int coluna = horario.getDiaSemana().ordinal() + 1;
-				String disciplina = horario.getDisciplina() == null
-						? "Sem disciplina" : horario.getDisciplina().getNome();
-				String sala = horario.getSala() == null ? "Sala por definir" : horario.getSala().getNome();
-				String conteudo = disciplina + "\n" + horario.getHoraInicio() + " - "
-						+ horario.getHoraFim() + "  |  " + sala;
-				String existente = (String) model.getValueAt(linha, coluna);
-				model.setValueAt(existente.isEmpty() ? conteudo : existente + "\n\n" + conteudo, linha, coluna);
 			}
+			if (!jaExiste) linhas.add(horario);
+		}
+		linhas.sort(Comparator.comparing(Horario::getHoraInicio));
+		for (Horario linha : linhas) {
+			model.addRow(new Object[]{linha.getHoraInicio() + " - " + linha.getHoraFim(),
+					"", "", "", "", "", ""});
+		}
+		for (Horario horario : horarios) {
+			int linha = -1;
+			String faixa = horario.getHoraInicio() + " - " + horario.getHoraFim();
+			for (int i = 0; i < model.getRowCount(); i++) {
+				if (faixa.equals(model.getValueAt(i, 0))) {
+					linha = i;
+					break;
+				}
+			}
+			int coluna = horario.getDiaSemana().ordinal() + 1;
+			String disciplina = horario.getDisciplina() == null
+					? "Sem disciplina" : horario.getDisciplina().getNome();
+			String sala = horario.getSala() == null ? "Sala por definir" : horario.getSala().getNome();
+			String conteudo = disciplina + "\n" + horario.getHoraInicio() + " - "
+					+ horario.getHoraFim() + "  |  " + sala;
+			String existente = (String) model.getValueAt(linha, coluna);
+			model.setValueAt(existente.isEmpty() ? conteudo : existente + "\n\n" + conteudo, linha, coluna);
 		}
 		JTable table = new JTable(model);
 		table.setRowHeight(62);
@@ -185,9 +166,7 @@ public class EstudanteUI extends PerfilDashboardUI {
 		painel.add(new JScrollPane(listaInscricoes), BorderLayout.CENTER);
 
 		JButton inscrever = new JButton("Inscrever-se em disciplinas");
-		inscrever.setBackground(PaletaCores.DESTAQUE);
-		inscrever.setForeground(Color.WHITE);
-		inscrever.setFocusPainted(false);
+		estilizarBotao(inscrever);
 		inscrever.addActionListener(event -> inscreverEmDisciplinas());
 		painel.add(inscrever, BorderLayout.SOUTH);
 		adicionarPainel("Inscricoes", painel);
@@ -235,52 +214,44 @@ public class EstudanteUI extends PerfilDashboardUI {
 		conteudo.setPreferredSize(new Dimension(460, 300));
 		conteudo.add(seletorCurso, BorderLayout.NORTH);
 		conteudo.add(new JScrollPane(listaCaixas), BorderLayout.CENTER);
-		if (JOptionPane.showConfirmDialog(this, conteudo, "Nova inscricao",
-				JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE) != JOptionPane.OK_OPTION) {
-			return;
-		}
-		if (selecionadas.isEmpty()) {
-			JOptionPane.showMessageDialog(this, "Selecione pelo menos uma disciplina.",
-					"Nenhuma disciplina selecionada", JOptionPane.INFORMATION_MESSAGE);
-			return;
-		}
-		if (inscricoes.size() + selecionadas.size() > LIMITE_INSCRICOES) {
-			JOptionPane.showMessageDialog(this,
-					"So pode adicionar " + (LIMITE_INSCRICOES - inscricoes.size())
-							+ " disciplina(s), respeitando o limite de " + LIMITE_INSCRICOES + ".",
-					"Limite de inscricoes", JOptionPane.WARNING_MESSAGE);
-			return;
-		}
+		mostrarFormulario("Nova inscricao", conteudo, () -> {
+			if (selecionadas.isEmpty()) {
+				throw new IllegalArgumentException("Selecione pelo menos uma disciplina.");
+			}
+			if (inscricoes.size() + selecionadas.size() > LIMITE_INSCRICOES) {
+				throw new IllegalArgumentException("So pode adicionar "
+						+ (LIMITE_INSCRICOES - inscricoes.size())
+						+ " disciplina(s), respeitando o limite de " + LIMITE_INSCRICOES + ".");
+			}
 
-		int adicionadas = 0;
-		for (DisciplinaItem disciplina : disponiveis) {
-			if (!selecionadas.contains(disciplina.id)) {
-				continue;
+			int adicionadas = 0;
+			Set<Integer> idsAdicionados = new HashSet<>();
+			for (DisciplinaItem disciplina : disponiveis) {
+				if (!selecionadas.contains(disciplina.id)) {
+					continue;
+				}
+				if (inscricaoController.salvar(new Inscricao(0, estudante,
+						new Disciplina(disciplina.id, disciplina.nome, null)))) {
+					adicionadas++;
+					idsAdicionados.add(disciplina.id);
+				} else {
+					break;
+				}
 			}
-			if (demonstracao) {
-				inscricoes.add(disciplina);
-				adicionadas++;
-			} else if (inscricaoController.salvar(new Inscricao(0, estudante,
-					new Disciplina(disciplina.id, disciplina.nome, null)))) {
-				adicionadas++;
-			} else {
-				break;
-			}
-		}
-		if (!demonstracao) {
 			carregarInscricoes();
-		}
-		atualizarCartoesDisciplinas();
-		atualizarListaInscricoes();
-		if (adicionadas == selecionadas.size()) {
-			JOptionPane.showMessageDialog(this, demonstracao
-					? "Inscricoes adicionadas a lista demonstrativa (nao foram enviadas a base de dados)."
-					: "Inscricoes guardadas com sucesso.");
-		} else {
-			JOptionPane.showMessageDialog(this, "Foram guardadas " + adicionadas + " de "
-					+ selecionadas.size() + " inscricao(oes). Verifique o limite e os dados.",
-					"Inscricao parcial", JOptionPane.WARNING_MESSAGE);
-		}
+			atualizarCartoesDisciplinas();
+			atualizarListaInscricoes();
+			if (adicionadas != selecionadas.size()) {
+				selecionadas.removeAll(idsAdicionados);
+				disponiveis.removeIf(disciplina -> idsAdicionados.contains(disciplina.id));
+				atualizarCaixasDisciplinas(listaCaixas, disponiveis, filtro, selecionadas);
+				throw new IllegalArgumentException("Foram guardadas " + adicionadas + " de "
+						+ (adicionadas + selecionadas.size())
+						+ " inscricao(oes). As restantes continuam selecionadas.");
+			}
+			mostrarInformacao("Inscricoes guardadas com sucesso.");
+			return true;
+		});
 	}
 
 	/** Atualiza as caixas de selecao conforme o filtro escolhido. */
@@ -324,12 +295,6 @@ public class EstudanteUI extends PerfilDashboardUI {
 	/** Retorna disciplinas do curso do estudante e disciplinas gerais. */
 	private List<DisciplinaItem> disciplinasPermitidas() {
 		List<DisciplinaItem> disciplinas = new ArrayList<>();
-		if (demonstracao) {
-			for (DisciplinaDemo disciplina : DISCIPLINAS_DEMO) {
-				if (!disciplina.outroCurso) disciplinas.add(itemDemo(disciplina));
-			}
-			return disciplinas;
-		}
 		Curso cursoEstudante = estudante.getCurso();
 		if (cursoEstudante == null || cursoEstudante.getId() <= 0) {
 			return disciplinas;
@@ -360,33 +325,21 @@ public class EstudanteUI extends PerfilDashboardUI {
 		return new DisciplinaItem(disciplina.getId(), disciplina.getNome(), docente, curso);
 	}
 
-	/** Converte uma disciplina de demonstracao para o formato da interface. */
-	private DisciplinaItem itemDemo(DisciplinaDemo disciplina) {
-		return new DisciplinaItem(disciplina.id, disciplina.nome, disciplina.docente, disciplina.curso);
-	}
-
 	/** Apresenta os eventos e as reservas associados ao curso do estudante. */
 	private void adicionarEventos() {
 		JPanel cartoes = new JPanel(new GridLayout(0, 1, 0, 10));
 		cartoes.setOpaque(false);
-		if (demonstracao) {
-			cartoes.add(criarCartao("AULA | Programacao Orientada a Objectos",
-					"26/10/2026  |  08:00 - 09:30  |  Sala 12  |  Ana Mucavele  |  CONFIRMADA"));
-			cartoes.add(criarCartao("AULA | Bases de Dados",
-					"28/10/2026  |  10:00 - 11:30  |  Sala 08  |  Ana Mucavele  |  CONFIRMADA"));
-		} else {
-			for (Reserva reserva : reservaController.listar()) {
-				if (!reservaDoCurso(reserva)) continue;
-				String disciplina = reserva.getDisciplina() == null ? "Evento geral"
-						: reserva.getDisciplina().getNome();
-				String sala = reserva.getSalaId() == null ? "Sala por definir" : reserva.getSalaId().getNome();
-				String docente = reserva.getDocenteId() == null ? "Docente por definir"
-						: reserva.getDocenteId().getNomeCompleto();
-				cartoes.add(criarCartao(reserva.getTipoReserva() + " | " + disciplina,
-						reserva.getData() + "  |  " + reserva.getHoraInicio() + " - "
-								+ reserva.getHoraFim() + "  |  " + sala + "  |  " + docente
-								+ "  |  " + reserva.getEstadoReserva()));
-			}
+		for (Reserva reserva : reservaController.listar()) {
+			if (!reservaDoCurso(reserva)) continue;
+			String disciplina = reserva.getDisciplina() == null ? "Evento geral"
+					: reserva.getDisciplina().getNome();
+			String sala = reserva.getSalaId() == null ? "Sala por definir" : reserva.getSalaId().getNome();
+			String docente = reserva.getDocenteId() == null ? "Docente por definir"
+					: reserva.getDocenteId().getNomeCompleto();
+			cartoes.add(criarCartao(reserva.getTipoReserva() + " | " + disciplina,
+					reserva.getData() + "  |  " + reserva.getHoraInicio() + " - "
+							+ reserva.getHoraFim() + "  |  " + sala + "  |  " + docente
+							+ "  |  " + reserva.getEstadoReserva()));
 		}
 		if (cartoes.getComponentCount() == 0) {
 			cartoes.add(new JLabel("Nao ha eventos ou reservas para o seu curso."));
@@ -434,28 +387,6 @@ public class EstudanteUI extends PerfilDashboardUI {
 		titulo.setFont(new Font("Segoe UI", Font.BOLD, 20));
 		titulo.setForeground(PaletaCores.TEXTO);
 		return titulo;
-	}
-
-	private static final class DisciplinaDemo {
-		private final int id;
-		private final String nome;
-		private final String docente;
-		private final String curso;
-		private final boolean outroCurso;
-
-		/** Cria uma disciplina de demonstracao sem marcacao de curso externo. */
-		private DisciplinaDemo(int id, String nome, String docente, String curso) {
-			this(id, nome, docente, curso, false);
-		}
-
-		/** Cria uma disciplina demonstrativa e indica se pertence a outro curso. */
-		private DisciplinaDemo(int id, String nome, String docente, String curso, boolean outroCurso) {
-			this.id = id;
-			this.nome = nome;
-			this.docente = docente;
-			this.curso = curso;
-			this.outroCurso = outroCurso;
-		}
 	}
 
 	private static final class DisciplinaItem {

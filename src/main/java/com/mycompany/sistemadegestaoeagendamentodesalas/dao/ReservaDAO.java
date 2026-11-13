@@ -34,7 +34,8 @@ public class ReservaDAO {
                 || (reserva.getTurma() != null && reserva.getTurma().getId() <= 0)
                 || reserva.getData().isBefore(LocalDate.now())
                 || !reserva.getHoraFim().isAfter(reserva.getHoraInicio())
-                || diaDaSemana(reserva.getData()) != reserva.getDiaSemana()) {
+                || diaDaSemana(reserva.getData()) != reserva.getDiaSemana()
+                || !reserva.getTipoReserva().permiteDia(reserva.getDiaSemana())) {
             return false;
         }
         String sql = "INSERT INTO reservas(id, sala_id, docente_id, disciplina_id, turma_id, data, hora_inicio, "
@@ -168,7 +169,7 @@ public class ReservaDAO {
              ResultSet result = statement.executeQuery()) {
             while (result.next()) lista.add(lerReserva(result));
         } catch (SQLException e) {
-            System.out.println("Erro ao listar reservas: " + e.getMessage());
+            throw new IllegalStateException("Erro ao listar reservas.", e);
         }
         return lista;
     }
@@ -210,7 +211,7 @@ public class ReservaDAO {
             statement.setInt(1, id);
             try (ResultSet result = statement.executeQuery()) { if (result.next()) return lerReserva(result); }
         } catch (SQLException e) {
-            System.out.println("Erro ao procurar reserva: " + e.getMessage());
+            throw new IllegalStateException("Erro ao procurar reserva.", e);
         }
         return null;
     }

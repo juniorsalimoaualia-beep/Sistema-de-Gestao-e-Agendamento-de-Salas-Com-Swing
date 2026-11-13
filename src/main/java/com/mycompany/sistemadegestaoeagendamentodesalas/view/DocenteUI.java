@@ -5,8 +5,6 @@ import java.awt.GridLayout;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.DayOfWeek;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -23,17 +21,20 @@ import com.mycompany.sistemadegestaoeagendamentodesalas.controller.DisciplinaCon
 import com.mycompany.sistemadegestaoeagendamentodesalas.controller.DocenteController;
 import com.mycompany.sistemadegestaoeagendamentodesalas.controller.ReservaController;
 import com.mycompany.sistemadegestaoeagendamentodesalas.controller.SalaController;
+import com.mycompany.sistemadegestaoeagendamentodesalas.controller.HorarioController;
+import com.mycompany.sistemadegestaoeagendamentodesalas.controller.InscricaoController;
 import com.mycompany.sistemadegestaoeagendamentodesalas.model.Departamento;
 import com.mycompany.sistemadegestaoeagendamentodesalas.model.DiaSemana;
 import com.mycompany.sistemadegestaoeagendamentodesalas.model.Disciplina;
 import com.mycompany.sistemadegestaoeagendamentodesalas.model.Docente;
+import com.mycompany.sistemadegestaoeagendamentodesalas.model.Horario;
+import com.mycompany.sistemadegestaoeagendamentodesalas.model.Inscricao;
 import com.mycompany.sistemadegestaoeagendamentodesalas.model.Reserva;
 import com.mycompany.sistemadegestaoeagendamentodesalas.model.Sala;
 import com.mycompany.sistemadegestaoeagendamentodesalas.model.EstadoSala;
 import com.mycompany.sistemadegestaoeagendamentodesalas.model.TipoReserva;
 
 public class DocenteUI extends PerfilDashboardUI {
-	private static final String AVISO_DEMO = "Modo demonstracao: dados ficticios; nenhuma ligacao a base de dados.";
 	private final DefaultTableModel reservasModel = modeloTabela(new String[]{"ID", "Sala", "Docente",
 			"Disciplina", "Data", "Inicio", "Fim", "Tipo", "Estado"});
 	private final DocenteController docenteController = new DocenteController();
@@ -41,41 +42,46 @@ public class DocenteUI extends PerfilDashboardUI {
 	private final DepartamentoController departamentoController = new DepartamentoController();
 	private final SalaController salaController = new SalaController();
 	private final ReservaController reservaController = new ReservaController();
+	private final HorarioController horarioController = new HorarioController();
+	private final InscricaoController inscricaoController = new InscricaoController();
 	private final int docenteId;
-	private final boolean demonstracao;
 
-	/** Prepara o painel do docente e carrega as seccoes da sua conta. */
+	/** Prepara o painel do docente e carrega os dados guardados na base de dados. */
 	public DocenteUI(String email, int utilizadorId, Runnable voltarMenu) {
 		super("DOCENTE", email, utilizadorId, voltarMenu);
 		docenteId = utilizadorId;
-		demonstracao = utilizadorId <= 0;
-		if (!demonstracao && docenteController.buscarPorId(utilizadorId) == null) {
+		if (utilizadorId <= 0 || docenteController.buscarPorId(utilizadorId) == null) {
 			throw new IllegalStateException("A conta autenticada nao corresponde a um docente.");
 		}
 		adicionarDisciplinas();
 		adicionarHorarios();
 		adicionarReservas();
 		adicionarEstudantesInscritos();
-		finalizarDashboard("DOCENTE", demonstracao ? AVISO_DEMO : null);
+		finalizarDashboard("DOCENTE");
 	}
 
 	/** Apresenta as disciplinas associadas ao docente. */
 	private void adicionarDisciplinas() {
-		adicionarTabelaDemo("Disciplinas", new String[]{"ID", "Disciplina", "Docente", "Curso"},
-				new Object[][]{
-						{1, "Programacao Orientada a Objetos", "Ana Mucavele", "Engenharia Informatica"},
-						{2, "Bases de Dados", "Ana Mucavele", "Engenharia Informatica"}
-				});
+		DefaultTableModel model = modeloTabela(new String[]{"ID", "Disciplina", "Docente", "Curso"});
+		for (Disciplina disciplina : disciplinaController.listarPorDocente(docenteId)) {
+			model.addRow(new Object[]{disciplina.getId(), disciplina.getNome(),
+					disciplina.getDocente() == null ? "-" : disciplina.getDocente().getNomeCompleto(),
+					disciplina.getCurso() == null ? "Geral" : disciplina.getCurso().getNome()});
+		}
+		adicionarPainel("Disciplinas", criarPainelTabela("Disciplinas", new JTable(model)));
 	}
 
 	/** Apresenta os horarios associados as disciplinas do docente. */
 	private void adicionarHorarios() {
-		adicionarTabelaDemo("Horarios", new String[]{"ID", "Dia", "Inicio", "Fim", "Curso", "Disciplina"},
-				new Object[][]{
-						{1, "SEGUNDA", "08:00", "09:30", "Engenharia Informatica",
-								"Programacao Orientada a Objetos"},
-						{2, "QUARTA", "10:00", "11:30", "Engenharia Informatica", "Bases de Dados"}
-				});
+		DefaultTableModel model = modeloTabela(new String[]{"ID", "Dia", "Inicio", "Fim", "Curso", "Disciplina"});
+		for (Disciplina disciplina : disciplinaController.listarPorDocente(docenteId)) {
+			for (Horario horario : horarioController.listarPorDisciplina(disciplina.getId())) {
+				model.addRow(new Object[]{horario.getId(), horario.getDiaSemana(), horario.getHoraInicio(),
+						horario.getHoraFim(), horario.getCurso() == null ? "-" : horario.getCurso().getNome(),
+						horario.getDisciplina() == null ? disciplina.getNome() : horario.getDisciplina().getNome()});
+			}
+		}
+		adicionarPainel("Horarios", criarPainelTabela("Horarios", new JTable(model)));
 	}
 
 	/** Cria a tabela de reservas e as acoes disponiveis para o docente. */
@@ -100,17 +106,9 @@ public class DocenteUI extends PerfilDashboardUI {
 		adicionarPainel("Reservas", panel);
 	}
 
-	/** Carrega as reservas da demonstracao ou pertencentes ao docente. */
+	/** Carrega da base de dados as reservas pertencentes ao docente. */
 	private void carregarReservas() {
 		reservasModel.setRowCount(0);
-		if (demonstracao) {
-			reservasModel.addRow(new Object[]{1, "Sala 12", "Ana Mucavele",
-					"Programacao Orientada a Objectos", "2026-10-26", "08:00", "09:30",
-					"AULA", "CONFIRMADA"});
-			reservasModel.addRow(new Object[]{2, "Sala 08", "Ana Mucavele", "-", "2026-10-28",
-					"14:00", "15:00", "OUTRA", "PENDENTE"});
-			return;
-		}
 		for (Reserva reserva : reservaController.listar()) {
 			if (reserva.getDocenteId() == null || reserva.getDocenteId().getId() != docenteId) continue;
 			reservasModel.addRow(new Object[]{reserva.getId(),
@@ -145,17 +143,10 @@ public class DocenteUI extends PerfilDashboardUI {
 		if (resposta != JOptionPane.YES_OPTION) return;
 		int id = Integer.parseInt(tabela.getValueAt(linha, 0).toString());
 		boolean cancelada;
-		if (demonstracao) {
-			reservasModel.setValueAt("CANCELADA", linha, 8);
-			cancelada = true;
-		} else {
-			cancelada = reservaController.cancelarDoDocente(id, docenteId);
-		}
+		cancelada = reservaController.cancelarDoDocente(id, docenteId);
 		if (cancelada) {
-			JOptionPane.showMessageDialog(this, demonstracao
-					? "Reserva cancelada na lista demonstrativa."
-					: "Reserva cancelada.");
-			if (!demonstracao) carregarReservas();
+			JOptionPane.showMessageDialog(this, "Reserva cancelada.");
+			carregarReservas();
 		} else {
 			JOptionPane.showMessageDialog(this, "Nao foi possivel cancelar a reserva.",
 					"Cancelamento nao realizado", JOptionPane.WARNING_MESSAGE);
@@ -165,9 +156,7 @@ public class DocenteUI extends PerfilDashboardUI {
 
 	/** Recolhe dados e envia ou demonstra um pedido de reserva. */
 	private void solicitarReserva() {
-		List<Departamento> departamentos = demonstracao
-				? Collections.singletonList(new Departamento(1, "Engenharia Informatica"))
-				: departamentoController.listar();
+		List<Departamento> departamentos = departamentoController.listar();
 		if (departamentos.isEmpty()) {
 			JOptionPane.showMessageDialog(this, "Nao existem departamentos registados.",
 					"Sem departamentos", JOptionPane.INFORMATION_MESSAGE);
@@ -175,8 +164,7 @@ public class DocenteUI extends PerfilDashboardUI {
 		}
 		JComboBox<Opcao<Departamento>> departamento = comboOpcoes(departamentos, Departamento::getNome);
 		JComboBox<Opcao<Sala>> sala = new JComboBox<>();
-		List<Sala> salas = demonstracao ? Collections.singletonList(new Sala(1, "Sala 04",
-				departamentos.get(0))) : salaController.listar();
+		List<Sala> salas = salaController.listar();
 		JTextField data = new JTextField(LocalDate.now().plusDays(1).toString(), 16);
 		JTextField inicio = new JTextField("08:00", 16);
 		JTextField fim = new JTextField("09:00", 16);
@@ -208,6 +196,12 @@ public class DocenteUI extends PerfilDashboardUI {
 		JComboBox<Opcao<Disciplina>> disciplina = new JComboBox<>();
 		atualizarDisciplinasDocente(disciplina);
 		JComboBox<TipoReserva> tipo = new JComboBox<>(TipoReserva.values());
+		JLabel regraDias = new JLabel();
+		Runnable atualizarRegraDias = () -> regraDias.setText(tipo.getSelectedItem() == TipoReserva.AULA
+				? "Aula: segunda a sexta; sabado e permitido como excecao."
+				: "Teste, exame e evento: de segunda a sabado.");
+		tipo.addActionListener(event -> atualizarRegraDias.run());
+		atualizarRegraDias.run();
 		JPanel formulario = new JPanel(new GridLayout(0, 2, 8, 8));
 		formulario.add(new JLabel("Departamento"));
 		formulario.add(departamento);
@@ -217,6 +211,8 @@ public class DocenteUI extends PerfilDashboardUI {
 		formulario.add(estadoSalas);
 		formulario.add(new JLabel("Tipo"));
 		formulario.add(tipo);
+		formulario.add(new JLabel("Dias permitidos"));
+		formulario.add(regraDias);
 		formulario.add(new JLabel("Disciplina"));
 		formulario.add(disciplina);
 		formulario.add(new JLabel("Data (AAAA-MM-DD)"));
@@ -225,16 +221,11 @@ public class DocenteUI extends PerfilDashboardUI {
 		formulario.add(inicio);
 		formulario.add(new JLabel("Hora de fim (HH:MM)"));
 		formulario.add(fim);
-		if (JOptionPane.showConfirmDialog(this, formulario, "Solicitar reserva",
-				JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE) != JOptionPane.OK_OPTION) {
-			return;
-		}
-		Sala salaSelecionada = valorSelecionado(sala);
-		if (salaSelecionada == null) {
-			mostrarErro("Selecione uma sala disponivel no departamento escolhido.");
-			return;
-		}
-		try {
+		mostrarFormulario("Solicitar reserva", formulario, () -> {
+			Sala salaSelecionada = valorSelecionado(sala);
+			if (salaSelecionada == null) {
+				throw new IllegalArgumentException("Selecione uma sala disponivel no departamento escolhido.");
+			}
 			LocalDate dia = Validacao.validarDataIso(data.getText());
 			LocalTime horaInicio = Validacao.validarHora(inicio.getText(), "a hora de inicio");
 			LocalTime horaFim = Validacao.validarHora(fim.getText(), "a hora de fim");
@@ -254,33 +245,26 @@ public class DocenteUI extends PerfilDashboardUI {
 					&& disciplinaEscolhida == null) {
 				throw new IllegalArgumentException("Selecione a disciplina para uma reserva do tipo AULA.");
 			}
-			if (demonstracao) {
-				reservasModel.addRow(new Object[]{proximoIdReserva(), salaSelecionada.getNome(),
-						"Ana Mucavele", disciplinaEscolhida == null ? "-" : disciplinaEscolhida.getNome(),
-						dia, horaInicio, horaFim, tipo.getSelectedItem(), "PENDENTE"});
-				JOptionPane.showMessageDialog(this,
-						"Pedido de reserva adicionado a lista demonstrativa (nao foi enviado a BD).");
-			} else {
-				DiaSemana diaSemana = converterDia(dia.getDayOfWeek());
-				if (diaSemana == null) {
-					throw new IllegalArgumentException("As reservas nao podem ser marcadas ao domingo.");
-				}
-				Docente docente = docenteController.buscarPorId(docenteId);
-				if (docente == null) {
-					throw new IllegalStateException("Nao foi possivel localizar a conta do docente.");
-				}
-				Reserva reserva = new Reserva(reservaController.gerarProximoId(), salaSelecionada,
-						docente, disciplinaEscolhida, null, dia, horaInicio, horaFim,
-						(TipoReserva) tipo.getSelectedItem(), diaSemana);
-				if (!reservaController.salvar(reserva)) {
-					throw new IllegalArgumentException("A sala deixou de estar disponivel ou existe conflito.");
-				}
-				carregarReservas();
-				JOptionPane.showMessageDialog(this, "Pedido de reserva enviado ao secretario do departamento.");
+			DiaSemana diaSemana = converterDia(dia.getDayOfWeek());
+			TipoReserva tipoSelecionado = (TipoReserva) tipo.getSelectedItem();
+			if (diaSemana == null || tipoSelecionado == null
+					|| !tipoSelecionado.permiteDia(diaSemana)) {
+				throw new IllegalArgumentException("As reservas nao podem ser marcadas ao domingo.");
 			}
-		} catch (IllegalArgumentException e) {
-			mostrarErro(e.getMessage());
-		}
+			Docente docente = docenteController.buscarPorId(docenteId);
+			if (docente == null) {
+				throw new IllegalStateException("Nao foi possivel localizar a conta do docente.");
+			}
+			Reserva reserva = new Reserva(reservaController.gerarProximoId(), salaSelecionada,
+					docente, disciplinaEscolhida, null, dia, horaInicio, horaFim,
+					tipoSelecionado, diaSemana);
+			if (!reservaController.salvar(reserva)) {
+				throw new IllegalArgumentException("A sala deixou de estar disponivel ou existe conflito.");
+			}
+			carregarReservas();
+			mostrarInformacao("Pedido de reserva enviado ao secretario do departamento.");
+			return true;
+		});
 	}
 
 	/** Filtra salas do departamento que estao livres no periodo informado. */
@@ -315,7 +299,7 @@ public class DocenteUI extends PerfilDashboardUI {
 					|| item.getEstado() == EstadoSala.MANUTENCAO) {
 				continue;
 			}
-			if (!demonstracao && !reservaController.verificarDisponibilidade(
+			if (!reservaController.verificarDisponibilidade(
 					item.getNome(), dia, horaInicio, horaFim)) {
 				continue;
 			}
@@ -334,12 +318,6 @@ public class DocenteUI extends PerfilDashboardUI {
 	private void atualizarDisciplinasDocente(JComboBox<Opcao<Disciplina>> combo) {
 		combo.removeAllItems();
 		combo.addItem(new Opcao<>(null, "Sem disciplina"));
-		if (demonstracao) {
-			combo.addItem(new Opcao<>(new Disciplina(1, "Programacao Orientada a Objectos", null),
-					"Programacao Orientada a Objectos"));
-			combo.addItem(new Opcao<>(new Disciplina(2, "Bases de Dados", null), "Bases de Dados"));
-			return;
-		}
 		for (Disciplina disciplina : disciplinaController.listarPorDocente(docenteId)) {
 			combo.addItem(new Opcao<>(disciplina, disciplina.getNome()));
 		}
@@ -358,30 +336,18 @@ public class DocenteUI extends PerfilDashboardUI {
 		}
 	}
 
-	/** Calcula o proximo identificador para uma reserva demonstrativa. */
-	private int proximoIdReserva() {
-		int maiorId = 0;
-		for (int linha = 0; linha < reservasModel.getRowCount(); linha++) {
-			maiorId = Math.max(maiorId, Integer.parseInt(reservasModel.getValueAt(linha, 0).toString()));
-		}
-		return maiorId + 1;
-	}
-
 	/** Apresenta os estudantes inscritos nas disciplinas do docente. */
 	private void adicionarEstudantesInscritos() {
-		adicionarTabelaDemo("Estudantes inscritos", new String[]{
-				"Disciplina", "ID estudante", "Estudante", "E-mail"}, new Object[][]{
-						{"Programacao Orientada a Objetos", 101, "Carlos Nhantumbo", "carlos@example.test"},
-						{"Bases de Dados", 102, "Lina Jamal", "lina@example.test"}
-				});
-	}
-
-	/** Cria uma tabela de exemplo para uma seccao demonstrativa. */
-	private void adicionarTabelaDemo(String titulo, String[] colunas, Object[][] linhas) {
-		DefaultTableModel model = modeloTabela(colunas);
-		for (Object[] linha : linhas) {
-			model.addRow(linha);
+		DefaultTableModel model = modeloTabela(new String[]{
+				"Disciplina", "ID estudante", "Estudante", "E-mail"});
+		for (Disciplina disciplina : disciplinaController.listarPorDocente(docenteId)) {
+			for (Inscricao inscricao : inscricaoController.listarPorDisciplina(disciplina.getId())) {
+				if (inscricao.getEstudante() == null) continue;
+				model.addRow(new Object[]{disciplina.getNome(), inscricao.getEstudante().getId(),
+						inscricao.getEstudante().getNomeCompleto(), inscricao.getEstudante().getEmail()});
+			}
 		}
-		adicionarPainel(titulo, criarPainelTabela(titulo, new JTable(model)));
+		adicionarPainel("Estudantes inscritos",
+				criarPainelTabela("Estudantes inscritos", new JTable(model)));
 	}
 }

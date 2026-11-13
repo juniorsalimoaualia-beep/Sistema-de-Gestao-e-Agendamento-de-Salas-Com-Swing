@@ -43,7 +43,9 @@ public class DepartamentoDAO {
              PreparedStatement statement = connection.prepareStatement(sql);
              ResultSet result = statement.executeQuery()) {
             while (result.next()) lista.add(lerDepartamento(result));
-        } catch (SQLException e) { System.out.println("Erro ao listar departamentos: " + e.getMessage()); }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Erro ao listar departamentos.", e);
+        }
         return lista;
     }
 
@@ -55,7 +57,9 @@ public class DepartamentoDAO {
             try (ResultSet result = statement.executeQuery()) {
                 if (result.next()) return lerDepartamento(result);
             }
-        } catch (SQLException e) { System.out.println("Erro ao procurar departamento: " + e.getMessage()); }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Erro ao procurar departamento.", e);
+        }
         return null;
     }
 

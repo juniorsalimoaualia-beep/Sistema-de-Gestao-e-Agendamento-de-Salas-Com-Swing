@@ -26,7 +26,7 @@ public class MenuUI extends JFrame {
 
 	/** Configura a janela principal e apresenta a escolha de perfil. */
 	public MenuUI() {
-		super("SGSAS | Gestão de salas");
+		super("SGSAS | GestÃ£o de salas");
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setMinimumSize(new Dimension(760, 560));
 		setLocationRelativeTo(null);
@@ -37,7 +37,7 @@ public class MenuUI extends JFrame {
 
 	/** Mostra os cartoes para escolher o perfil de acesso. */
 	private void mostrarPerfis() {
-		setTitle("SGSAS | Gestão de salas");
+		setTitle("SGSAS | GestÃ£o de salas");
 		JPanel page = new JPanel(new BorderLayout(0, 24));
 		page.setBackground(PaletaCores.FUNDO);
 		page.setBorder(BorderFactory.createEmptyBorder(38, 48, 30, 48));
@@ -120,7 +120,7 @@ public class MenuUI extends JFrame {
 		adicionarCampo(form, 0, "E-mail", email);
 		adicionarCampo(form, 1, "Senha", senha);
 		JButton entrar = botao("Entrar");
-		JButton voltar = new JButton("Voltar aos perfis");
+		JButton voltar = botao("Voltar aos perfis");
 		JPanel actions = new JPanel(new GridLayout(1, 2, 8, 0));
 		actions.setOpaque(false);
 		actions.add(entrar);

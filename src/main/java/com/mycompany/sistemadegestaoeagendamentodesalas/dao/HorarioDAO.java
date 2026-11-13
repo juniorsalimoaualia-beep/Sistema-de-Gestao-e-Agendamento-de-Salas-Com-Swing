@@ -56,7 +56,9 @@ public class HorarioDAO {
              PreparedStatement statement = connection.prepareStatement(sql);
              ResultSet result = statement.executeQuery()) {
             while (result.next()) lista.add(lerHorario(result));
-        } catch (SQLException e) { System.out.println("Erro ao listar horarios: " + e.getMessage()); }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Erro ao listar horarios.", e);
+        }
         return lista;
     }
 
@@ -93,7 +95,9 @@ public class HorarioDAO {
             try (ResultSet result = statement.executeQuery()) {
                 while (result.next()) lista.add(lerHorario(result));
             }
-        } catch (SQLException e) { System.out.println("Erro ao filtrar horarios: " + e.getMessage()); }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Erro ao filtrar horarios.", e);
+        }
         return lista;
     }
 
@@ -103,7 +107,9 @@ public class HorarioDAO {
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setInt(1, id);
             try (ResultSet result = statement.executeQuery()) { if (result.next()) return lerHorario(result); }
-        } catch (SQLException e) { System.out.println("Erro ao procurar horario: " + e.getMessage()); }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Erro ao procurar horario.", e);
+        }
         return null;
     }
 

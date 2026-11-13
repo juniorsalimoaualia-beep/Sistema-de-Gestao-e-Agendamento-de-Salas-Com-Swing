@@ -41,7 +41,7 @@ public class DisciplinaDAO {
              ResultSet result = statement.executeQuery()) {
             while (result.next()) lista.add(lerDisciplina(result));
         } catch (SQLException e) {
-            System.out.println("Erro ao listar disciplinas: " + e.getMessage());
+            throw new IllegalStateException("Erro ao listar disciplinas.", e);
         }
         return lista;
     }
@@ -71,7 +71,9 @@ public class DisciplinaDAO {
             try (ResultSet result = statement.executeQuery()) {
                 while (result.next()) lista.add(lerDisciplina(result));
             }
-        } catch (SQLException e) { System.out.println("Erro ao filtrar disciplinas: " + e.getMessage()); }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Erro ao filtrar disciplinas.", e);
+        }
         return lista;
     }
 
@@ -83,7 +85,9 @@ public class DisciplinaDAO {
             try (ResultSet result = statement.executeQuery()) {
                 if (result.next()) return lerDisciplina(result);
             }
-        } catch (SQLException e) { System.out.println("Erro ao procurar disciplina: " + e.getMessage()); }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Erro ao procurar disciplina.", e);
+        }
         return null;
     }
 
@@ -106,7 +110,9 @@ public class DisciplinaDAO {
             try (ResultSet result = statement.executeQuery()) {
                 if (result.next()) return lerDisciplina(result);
             }
-        } catch (SQLException e) { System.out.println("Erro ao procurar disciplina: " + e.getMessage()); }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Erro ao procurar disciplina.", e);
+        }
         return null;
     }
 

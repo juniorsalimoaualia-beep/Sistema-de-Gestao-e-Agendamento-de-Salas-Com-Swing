@@ -19,7 +19,7 @@ public class GestorReservaDAO {
 
     public boolean verificarDisponibilidade(String nomeSala, LocalDate data, LocalTime inicio, LocalTime fim){
         if (data == null || data.isBefore(LocalDate.now()) || inicio == null || fim == null
-                || !fim.isAfter(inicio)) {
+                || data.getDayOfWeek() == java.time.DayOfWeek.SUNDAY || !fim.isAfter(inicio)) {
             return false;
         }
         Sala sala = salaDao.buscarPorSala(nomeSala);
@@ -41,7 +41,9 @@ public class GestorReservaDAO {
                 || reserva.getData() == null || reserva.getData().isBefore(LocalDate.now())
                 || reserva.getHoraInicio() == null || reserva.getHoraFim() == null
                 || !reserva.getHoraFim().isAfter(reserva.getHoraInicio())
+                || reserva.getTipoReserva() == null
                 || reserva.getDiaSemana() == null
+                || !reserva.getTipoReserva().permiteDia(reserva.getDiaSemana())
                 || !dataCorrespondeAoDia(reserva.getData(), reserva.getDiaSemana())) {
             return false;
         }

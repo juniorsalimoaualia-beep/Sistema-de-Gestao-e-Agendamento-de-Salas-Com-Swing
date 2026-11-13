@@ -17,10 +17,10 @@ import com.mycompany.sistemadegestaoeagendamentodesalas.model.Disciplina;
 import com.mycompany.sistemadegestaoeagendamentodesalas.model.Docente;
 import com.mycompany.sistemadegestaoeagendamentodesalas.model.Estudante;
 import com.mycompany.sistemadegestaoeagendamentodesalas.model.Horario;
-import com.mycompany.sistemadegestaoeagendamentodesalas.model.Inscricao;
 import com.mycompany.sistemadegestaoeagendamentodesalas.model.Sala;
 import com.mycompany.sistemadegestaoeagendamentodesalas.model.Secretario;
 import com.mycompany.sistemadegestaoeagendamentodesalas.model.Turma;
+import com.mycompany.sistemadegestaoeagendamentodesalas.service.EmailGenarator;
 import java.awt.Component;
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
@@ -28,7 +28,6 @@ import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
-import javax.swing.DefaultListCellRenderer;
 import javax.swing.DefaultListModel;
 import javax.swing.JComboBox;
 import javax.swing.JButton;
@@ -55,6 +54,7 @@ public class AdminUI extends PerfilDashboardUI {
 	private final InscricaoController inscricaoController = new InscricaoController();
 	private final SecretarioController secretarioController = new SecretarioController();
 	private final TurmaController turmaController = new TurmaController();
+	private final EmailGenarator emGen= new EmailGenarator();
 
 	/** Monta o painel administrativo e regista as suas seccoes de gestao. */
 	public AdminUI(String perfil, String email, int utilizadorId, Runnable voltarMenu) {
@@ -451,7 +451,6 @@ public class AdminUI extends PerfilDashboardUI {
 		JTextField apelido = new JTextField(20);
 		JTextField nivel = new JTextField(20);
 		JTextField celular = new JTextField(20);
-		JTextField email = new JTextField(20);
 		JPasswordField senha = new JPasswordField(20);
 		Validacao.filtrarNomePessoa(nome);
 		Validacao.filtrarNomePessoa(apelido);
@@ -459,16 +458,17 @@ public class AdminUI extends PerfilDashboardUI {
 		Validacao.filtrarDigitos(celular, 9);
 		if (!confirmarFormulario("Novo docente", formulario(
 				"Nome", nome, "Apelido", apelido, "Nivel academico", nivel,
-				"Celular", celular, "E-mail", email, "Senha", senha))) {
+				"Celular", celular, "Senha", senha))) {
 			return;
 		}
 		try {
+			String email = emGen.gerarEmail(nome, apelido);
 			validarDadosUsuario(nome, apelido, celular, email, senha);
 			Validacao.validarTextoObrigatorio(nivel.getText(), "nivel academico", 100);
 			executarOperacao("A guardar docente...", () -> docenteController.salvar(new Docente(
 					docenteController.gerarProximoId(), nome.getText().trim(), apelido.getText().trim(),
 					nivel.getText().trim(), Validacao.validarCelular(celular.getText()),
-					Validacao.validarEnderecoEmail(email.getText()), new String(senha.getPassword()))),
+					Validacao.validarEnderecoEmail(email), new String(senha.getPassword()))),
 					"Docente registado.");
 		} catch (IllegalArgumentException e) {
 			mostrarErro(e.getMessage());
@@ -482,7 +482,6 @@ public class AdminUI extends PerfilDashboardUI {
 		JComboBox<Opcao<Curso>> curso = opcoes(cursoController.listar(), Curso::getNome, null);
 		JTextField ano = new JTextField(20);
 		JTextField celular = new JTextField(20);
-		JTextField email = new JTextField(20);
 		JPasswordField senha = new JPasswordField(20);
 		Validacao.filtrarNomePessoa(nome);
 		Validacao.filtrarNomePessoa(apelido);
@@ -490,10 +489,11 @@ public class AdminUI extends PerfilDashboardUI {
 		Validacao.filtrarDigitos(celular, 9);
 		if (!confirmarFormulario("Novo estudante", formulario(
 				"Nome", nome, "Apelido", apelido, "Curso", curso, "Ano", ano,
-				"Celular", celular, "E-mail", email, "Senha", senha))) {
+				"Celular", celular, "Senha", senha))) {
 			return;
 		}
 		try {
+			String email = emGen.gerarEmail(nome, apelido);
 			validarDadosUsuario(nome, apelido, celular, email, senha);
 			Curso cursoSelecionado = valorSelecionado(curso);
 			if (cursoSelecionado == null) {
@@ -503,7 +503,7 @@ public class AdminUI extends PerfilDashboardUI {
 			Estudante estudante = new Estudante(estudanteController.gerarProximoId(),
 					nome.getText().trim(), apelido.getText().trim(), cursoSelecionado, anoEstudo,
 					Validacao.validarCelular(celular.getText()),
-					Validacao.validarEnderecoEmail(email.getText()),
+					Validacao.validarEnderecoEmail(email),
 					new String(senha.getPassword()));
 			if (estudanteController.cadastrarEstudante(estudante)) {
 				JOptionPane.showMessageDialog(this, "Estudante registado.");
@@ -522,7 +522,6 @@ public class AdminUI extends PerfilDashboardUI {
 		JTextField apelido = new JTextField(20);
 		JTextField cargo = new JTextField(20);
 		JTextField celular = new JTextField(20);
-		JTextField email = new JTextField(20);
 		JPasswordField senha = new JPasswordField(20);
 		Validacao.filtrarNomePessoa(nome);
 		Validacao.filtrarNomePessoa(apelido);
@@ -530,16 +529,17 @@ public class AdminUI extends PerfilDashboardUI {
 		Validacao.filtrarDigitos(celular, 9);
 		if (!confirmarFormulario("Novo secretario", formulario(
 				"Nome", nome, "Apelido", apelido, "Cargo", cargo,
-				"Celular", celular, "E-mail", email, "Senha", senha))) {
+				"Celular", celular, "Senha", senha))) {
 			return;
 		}
 		try {
+			String email= emGen.gerarEmail(nome, apelido);
 			validarDadosUsuario(nome, apelido, celular, email, senha);
 			Validacao.validarTextoObrigatorio(cargo.getText(), "cargo", 100);
 			executarOperacao("A guardar secretario...", () -> secretarioController.salvar(new Secretario(
 					secretarioController.gerarProximoId(), nome.getText().trim(), apelido.getText().trim(),
 					cargo.getText().trim(), Validacao.validarCelular(celular.getText()),
-					Validacao.validarEnderecoEmail(email.getText()), new String(senha.getPassword()))),
+					Validacao.validarEnderecoEmail(email), new String(senha.getPassword()))),
 					"Secretario registado.");
 		} catch (IllegalArgumentException e) {
 			mostrarErro(e.getMessage());
@@ -741,11 +741,11 @@ public class AdminUI extends PerfilDashboardUI {
 
 	/** Valida os campos comuns usados no registo de utilizadores. */
 	private void validarDadosUsuario(JTextField nome, JTextField apelido, JTextField celular,
-			JTextField email, JPasswordField senha) {
+			String email, JPasswordField senha) {
 		Validacao.validarNomePessoa(nome.getText(), "Nome");
 		Validacao.validarNomePessoa(apelido.getText(), "Apelido");
 		Validacao.validarCelular(celular.getText());
-		Validacao.validarEnderecoEmail(email.getText());
+		Validacao.validarEnderecoEmail(email);
 		if (senha.getPassword().length < 8) {
 			throw new IllegalArgumentException("A senha deve ter pelo menos 8 caracteres.");
 		}
@@ -761,4 +761,5 @@ public class AdminUI extends PerfilDashboardUI {
 		}
 		return true;
 	}
+
 }

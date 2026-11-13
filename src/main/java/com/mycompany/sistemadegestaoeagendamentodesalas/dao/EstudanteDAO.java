@@ -64,7 +64,9 @@ public class EstudanteDAO {
                         curso, result.getInt("ano"), result.getInt("celular"), result.getString("email"),
                         result.getString("senha_hash")));
             }
-        } catch (SQLException e) { System.out.println("Erro ao listar estudantes: " + e.getMessage()); }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Erro ao listar estudantes.", e);
+        }
         return lista;
     }
 
@@ -82,7 +84,9 @@ public class EstudanteDAO {
                             result.getString("senha_hash"));
                 }
             }
-        } catch (SQLException e) { System.out.println("Erro ao procurar estudante: " + e.getMessage()); }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Erro ao procurar estudante.", e);
+        }
         return null;
     }
 

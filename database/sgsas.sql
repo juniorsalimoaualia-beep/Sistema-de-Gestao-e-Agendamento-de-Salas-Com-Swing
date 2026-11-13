@@ -1,3 +1,32 @@
+-- =====================================================================
+-- S G S A S
+-- Base de dados consolidada - instalação de raiz
+-- MySQL / MariaDB (InnoDB, utf8mb4)
+--
+-- Inclui as alterações anteriormente separadas em:
+--   * 001_add_ano_estudante.sql
+--   * 002_identificar_turma_por_curso_ano.sql
+--   * BD 3: AUTO_INCREMENT em inscricoes.id
+--   * BD 4: sala_id em horarios e secretario_id em departamentos
+--
+-- NOTA:
+-- Este ficheiro consolida a estrutura para uma NOVA instalação.
+-- CREATE TABLE IF NOT EXISTS não altera tabelas que já existam.
+-- Para atualizar uma instalação antiga, faça backup e aplique apenas
+-- as migrações que ainda não tenham sido executadas.
+-- =====================================================================
+
+-- Alterações consolidadas na estrutura:
+--   usuarios.ano                         (ano do estudante)
+--   turmas.id                            (AUTO_INCREMENT)
+--   turmas UNIQUE (ano, curso_id)        (uma turma por curso/ano)
+--   inscricoes.id                        (AUTO_INCREMENT)
+--   horarios.sala_id + ix_horarios_sala
+--   departamentos.secretario_id + UNIQUE uq_departamentos_secretario
+--
+-- A definição de horarios.sala_id permanece NOT NULL porque os triggers
+-- abaixo exigem que todo horário tenha uma sala associada.
+--
 CREATE DATABASE IF NOT EXISTS sgsas
     CHARACTER SET utf8mb4
     COLLATE utf8mb4_unicode_ci;

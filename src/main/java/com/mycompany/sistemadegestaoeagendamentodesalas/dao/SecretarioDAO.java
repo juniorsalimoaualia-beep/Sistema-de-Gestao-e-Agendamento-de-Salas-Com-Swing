@@ -49,7 +49,9 @@ public class SecretarioDAO {
              PreparedStatement statement = connection.prepareStatement(sql);
              ResultSet result = statement.executeQuery()) {
             while (result.next()) lista.add(lerSecretario(result));
-        } catch (SQLException e) { System.out.println("Erro ao listar secretarios: " + e.getMessage()); }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Erro ao listar secretarios.", e);
+        }
         return lista;
     }
 
@@ -72,7 +74,9 @@ public class SecretarioDAO {
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setInt(1, id);
             try (ResultSet result = statement.executeQuery()) { if (result.next()) return lerSecretario(result); }
-        } catch (SQLException e) { System.out.println("Erro ao procurar secretario: " + e.getMessage()); }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Erro ao procurar secretario.", e);
+        }
         return null;
     }
 
