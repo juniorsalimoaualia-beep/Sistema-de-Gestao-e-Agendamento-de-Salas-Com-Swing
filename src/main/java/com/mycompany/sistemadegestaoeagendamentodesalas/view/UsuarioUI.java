@@ -15,6 +15,7 @@ import javax.swing.JPasswordField;
 import javax.swing.JScrollPane;
 import com.mycompany.sistemadegestaoeagendamentodesalas.dao.AutenticacaoDAO;
 import com.mycompany.sistemadegestaoeagendamentodesalas.model.Usuario;
+import com.mycompany.sistemadegestaoeagendamentodesalas.service.DatabaseTaskExecutor;
 
 public class UsuarioUI extends JPanel {
 	private final int usuarioId;
@@ -102,7 +103,7 @@ public class UsuarioUI extends JPanel {
 		add(accountScroll, BorderLayout.CENTER);
 		add(notice, BorderLayout.SOUTH);
 
-		changePassword.addActionListener(event -> alterarSenha());
+		changePassword.addActionListener(event -> alterarSenha(changePassword));
 	}
 
 	/** Adiciona ao painel um par de rotulo e valor da conta. */
@@ -130,7 +131,7 @@ public class UsuarioUI extends JPanel {
 	}
 
 	/** Valida a senha actual e guarda a nova senha na base de dados. */
-	private void alterarSenha() {
+	private void alterarSenha(JButton changePassword) {
 		char[] senhaActual = currentPasswordField.getPassword();
 		char[] novaSenha = passwordField.getPassword();
 		char[] confirmacao = confirmPasswordField.getPassword();
@@ -150,15 +151,35 @@ public class UsuarioUI extends JPanel {
 						"Senhas diferentes", JOptionPane.WARNING_MESSAGE);
 				return;
 			}
-			if (!autenticacaoDAO.alterarSenha(usuarioId, new String(senhaActual), new String(novaSenha))) {
-				JOptionPane.showMessageDialog(this, "A senha actual esta incorrecta ou a conta foi alterada.",
-						"Senha nao alterada", JOptionPane.WARNING_MESSAGE);
-				return;
-			}
-			currentPasswordField.setText("");
-			passwordField.setText("");
-			confirmPasswordField.setText("");
-			JOptionPane.showMessageDialog(this, "Senha alterada com sucesso.");
+			String senhaActualTexto = new String(senhaActual);
+			String novaSenhaTexto = new String(novaSenha);
+			definirCamposSenhaHabilitados(false);
+			changePassword.setEnabled(false);
+			DatabaseTaskExecutor.submit(
+					() -> autenticacaoDAO.alterarSenha(usuarioId, senhaActualTexto, novaSenhaTexto),
+					alterada -> {
+						definirCamposSenhaHabilitados(true);
+						changePassword.setEnabled(true);
+						if (!alterada) {
+							JOptionPane.showMessageDialog(this,
+									"A senha actual esta incorrecta ou a conta foi alterada.",
+									"Senha nao alterada", JOptionPane.WARNING_MESSAGE);
+							return;
+						}
+						currentPasswordField.setText("");
+						passwordField.setText("");
+						confirmPasswordField.setText("");
+						JOptionPane.showMessageDialog(this, "Senha alterada com sucesso.");
+					},
+					exception -> {
+						definirCamposSenhaHabilitados(true);
+						changePassword.setEnabled(true);
+						Throwable causa = exception.getCause() == null ? exception : exception.getCause();
+						String mensagem = causa.getMessage() == null
+								? causa.getClass().getSimpleName() : causa.getMessage();
+						JOptionPane.showMessageDialog(this, "Nao foi possivel alterar a senha: " + mensagem,
+								"Erro", JOptionPane.ERROR_MESSAGE);
+					});
 		} catch (RuntimeException e) {
 			Throwable causa = e.getCause() == null ? e : e.getCause();
 			String mensagem = causa.getMessage() == null ? causa.getClass().getSimpleName() : causa.getMessage();
@@ -169,6 +190,12 @@ public class UsuarioUI extends JPanel {
 			java.util.Arrays.fill(novaSenha, '\0');
 			java.util.Arrays.fill(confirmacao, '\0');
 		}
+	}
+
+	private void definirCamposSenhaHabilitados(boolean habilitados) {
+		currentPasswordField.setEnabled(habilitados);
+		passwordField.setEnabled(habilitados);
+		confirmPasswordField.setEnabled(habilitados);
 	}
 
 }
