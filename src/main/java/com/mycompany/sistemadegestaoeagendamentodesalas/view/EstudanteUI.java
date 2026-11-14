@@ -12,6 +12,7 @@ import com.mycompany.sistemadegestaoeagendamentodesalas.model.Estudante;
 import com.mycompany.sistemadegestaoeagendamentodesalas.model.Horario;
 import com.mycompany.sistemadegestaoeagendamentodesalas.model.Inscricao;
 import com.mycompany.sistemadegestaoeagendamentodesalas.model.Reserva;
+import com.mycompany.sistemadegestaoeagendamentodesalas.service.DatabaseTaskExecutor;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -49,6 +50,7 @@ public class EstudanteUI extends PerfilDashboardUI {
 	private final List<DisciplinaItem> inscricoes = new ArrayList<>();
 	private final JPanel listaInscricoes = new JPanel(new GridLayout(0, 1, 0, 10));
 	private JPanel cartoesDisciplinas;
+	private JButton botaoInscrever;
 
 	/** Prepara o painel do estudante e carrega os dados guardados na base de dados. */
 	public EstudanteUI(String email, int utilizadorId, Runnable voltarMenu) {
@@ -165,10 +167,10 @@ public class EstudanteUI extends PerfilDashboardUI {
 		painel.add(criarTitulo("As minhas inscricoes"), BorderLayout.NORTH);
 		painel.add(new JScrollPane(listaInscricoes), BorderLayout.CENTER);
 
-		JButton inscrever = new JButton("Inscrever-se em disciplinas");
-		estilizarBotao(inscrever);
-		inscrever.addActionListener(event -> inscreverEmDisciplinas());
-		painel.add(inscrever, BorderLayout.SOUTH);
+		botaoInscrever = new JButton("Inscrever-se em disciplinas");
+		estilizarBotao(botaoInscrever);
+		botaoInscrever.addActionListener(event -> inscreverEmDisciplinas());
+		painel.add(botaoInscrever, BorderLayout.SOUTH);
 		adicionarPainel("Inscricoes", painel);
 	}
 
@@ -223,34 +225,62 @@ public class EstudanteUI extends PerfilDashboardUI {
 						+ (LIMITE_INSCRICOES - inscricoes.size())
 						+ " disciplina(s), respeitando o limite de " + LIMITE_INSCRICOES + ".");
 			}
-
-			int adicionadas = 0;
-			Set<Integer> idsAdicionados = new HashSet<>();
+			Set<Integer> idsSelecionados = new HashSet<>(selecionadas);
+			List<DisciplinaItem> disciplinasSelecionadas = new ArrayList<>();
 			for (DisciplinaItem disciplina : disponiveis) {
-				if (!selecionadas.contains(disciplina.id)) {
-					continue;
+				if (idsSelecionados.contains(disciplina.id)) {
+					disciplinasSelecionadas.add(disciplina);
 				}
-				if (inscricaoController.salvar(new Inscricao(0, estudante,
-						new Disciplina(disciplina.id, disciplina.nome, null)))) {
+			}
+			botaoInscrever.setEnabled(false);
+			return DatabaseTaskExecutor.submit(() -> {
+				int adicionadas = 0;
+				Set<Integer> idsAdicionados = new HashSet<>();
+				RuntimeException falha = null;
+				for (DisciplinaItem disciplina : disciplinasSelecionadas) {
+					try {
+						if (!inscricaoController.salvar(new Inscricao(0, estudante,
+								new Disciplina(disciplina.id, disciplina.nome, null)))) {
+							break;
+						}
+					} catch (RuntimeException exception) {
+						falha = exception;
+						break;
+					}
 					adicionadas++;
 					idsAdicionados.add(disciplina.id);
-				} else {
-					break;
 				}
-			}
-			carregarInscricoes();
-			atualizarCartoesDisciplinas();
-			atualizarListaInscricoes();
-			if (adicionadas != selecionadas.size()) {
-				selecionadas.removeAll(idsAdicionados);
-				disponiveis.removeIf(disciplina -> idsAdicionados.contains(disciplina.id));
-				atualizarCaixasDisciplinas(listaCaixas, disponiveis, filtro, selecionadas);
-				throw new IllegalArgumentException("Foram guardadas " + adicionadas + " de "
-						+ (adicionadas + selecionadas.size())
-						+ " inscricao(oes). As restantes continuam selecionadas.");
-			}
-			mostrarInformacao("Inscricoes guardadas com sucesso.");
-			return true;
+				return new ResultadoInscricoes(adicionadas, idsSelecionados.size(),
+						idsAdicionados, falha);
+			}, resultado -> {
+				botaoInscrever.setEnabled(true);
+				carregarInscricoes();
+				atualizarCartoesDisciplinas();
+				atualizarListaInscricoes();
+				if (resultado.adicionadas > 0) {
+					selecionadas.removeAll(resultado.idsAdicionados);
+					disponiveis.removeIf(disciplina -> resultado.idsAdicionados.contains(disciplina.id));
+					atualizarCaixasDisciplinas(listaCaixas, disponiveis, filtro, selecionadas);
+				}
+				if (resultado.falha != null || resultado.adicionadas != resultado.totalSelecionadas) {
+					restaurarFormularioAtual();
+					String detalhe = resultado.falha == null ? ""
+							: " Erro: " + mensagem(resultado.falha);
+					JOptionPane.showMessageDialog(this, "Foram guardadas " + resultado.adicionadas
+							+ " de " + resultado.totalSelecionadas + " inscricao(oes)." + detalhe,
+							"Inscricoes parciais", JOptionPane.WARNING_MESSAGE);
+					return;
+				}
+				fecharFormularioAtual();
+				mostrarInformacao("Inscricoes guardadas com sucesso.");
+			}, exception -> {
+				botaoInscrever.setEnabled(true);
+				restaurarFormularioAtual();
+				carregarInscricoes();
+				atualizarCartoesDisciplinas();
+				atualizarListaInscricoes();
+				mostrarErro("Nao foi possivel guardar as inscricoes: " + mensagem(exception));
+			});
 		});
 	}
 
@@ -401,6 +431,21 @@ public class EstudanteUI extends PerfilDashboardUI {
 			this.nome = nome;
 			this.docente = docente;
 			this.curso = curso;
+		}
+	}
+
+	private static final class ResultadoInscricoes {
+		private final int adicionadas;
+		private final int totalSelecionadas;
+		private final Set<Integer> idsAdicionados;
+		private final RuntimeException falha;
+
+		private ResultadoInscricoes(int adicionadas, int totalSelecionadas,
+				Set<Integer> idsAdicionados, RuntimeException falha) {
+			this.adicionadas = adicionadas;
+			this.totalSelecionadas = totalSelecionadas;
+			this.idsAdicionados = idsAdicionados;
+			this.falha = falha;
 		}
 	}
 }
