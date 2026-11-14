@@ -6,6 +6,7 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dialog;
 import java.awt.Font;
+import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -17,9 +18,12 @@ import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.function.Function;
 import java.util.function.BooleanSupplier;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 import java.awt.KeyboardFocusManager;
 import com.mycompany.sistemadegestaoeagendamentodesalas.dao.AutenticacaoDAO;
 import com.mycompany.sistemadegestaoeagendamentodesalas.model.Usuario;
+import com.mycompany.sistemadegestaoeagendamentodesalas.service.DatabaseTaskExecutor;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.AbstractAction;
@@ -33,6 +37,7 @@ import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
 import javax.swing.JTabbedPane;
 import javax.swing.JTable;
+import javax.swing.UIManager;
 import javax.swing.KeyStroke;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -46,6 +51,10 @@ abstract class PerfilDashboardUI extends JPanel {
 	private JLabel accountLabel;
 	private JLabel greetingLabel;
 	private final Usuario conta;
+	private JDialog formularioAtivo;
+	private JButton guardarFormularioAtivo;
+	private JButton cancelarFormularioAtivo;
+	private boolean formularioSubmetido;
 
 	/** Inicializa a estrutura comum dos paineis por perfil. */
 	PerfilDashboardUI(String perfil, String email, int utilizadorId, Runnable voltarMenu) {
@@ -54,6 +63,9 @@ abstract class PerfilDashboardUI extends JPanel {
 		this.utilizadorId = utilizadorId;
 		this.voltarMenu = voltarMenu;
 		this.perfil = perfil;
+		UIManager.put("Button.background", PaletaCores.DESTAQUE);
+		UIManager.put("Button.foreground", Color.WHITE);
+		UIManager.put("Button.font", new Font("Segoe UI", Font.BOLD, 13));
 		conta = new AutenticacaoDAO().buscarConta(perfil, utilizadorId);
 		if (conta == null) {
 			throw new IllegalStateException("Nao foi possivel carregar a conta autenticada.");
@@ -145,17 +157,13 @@ abstract class PerfilDashboardUI extends JPanel {
 		});
 	}
 
-	/** Organiza os botoes de acao numa linha alinhada a esquerda. */
+	/** Organiza os botoes de acao numa linha centralizada. */
 	protected final JPanel criarAcoes(JButton... botoes) {
-		JPanel actions = new JPanel(new GridBagLayout());
+		JPanel actions = new JPanel(new FlowLayout(FlowLayout.CENTER, 8, 0));
 		actions.setOpaque(false);
-		GridBagConstraints constraints = new GridBagConstraints();
-		constraints.insets = new Insets(0, 0, 0, 8);
-		constraints.anchor = GridBagConstraints.WEST;
 		for (JButton botao : botoes) {
 			estilizarBotao(botao);
-			actions.add(botao, constraints);
-			constraints.gridx++;
+			actions.add(botao);
 		}
 		return actions;
 	}
@@ -164,7 +172,7 @@ abstract class PerfilDashboardUI extends JPanel {
 		String texto = botao.getText().toLowerCase();
 		Color fundo;
 		Color textoCor;
-		if (texto.contains("cancelar") || texto.contains("recusar")) {
+		if (texto.contains("cancelar") || texto.contains("recusar") || texto.contains("remover")) {
 			fundo = new Color(174, 60, 60);
 			textoCor = Color.WHITE;
 		} else if (texto.contains("atualizar")) {
@@ -186,7 +194,8 @@ abstract class PerfilDashboardUI extends JPanel {
 		botao.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseEntered(MouseEvent event) {
-				if (botao.isEnabled() && !texto.contains("cancelar") && !texto.contains("recusar")) {
+				if (botao.isEnabled() && !texto.contains("cancelar")
+						&& !texto.contains("recusar") && !texto.contains("remover")) {
 					botao.setBackground(PaletaCores.PRIMARIA);
 					botao.setForeground(Color.WHITE);
 				}
@@ -200,11 +209,32 @@ abstract class PerfilDashboardUI extends JPanel {
 		});
 	}
 
+	/** Mostra botoes contextuais apenas enquanto existir uma linha selecionada. */
+	protected final void mostrarAcoesAoSelecionar(JTable tabela, JButton... botoes) {
+		Runnable atualizarVisibilidade = () -> {
+			boolean linhaSelecionada = tabela.getSelectedRow() >= 0;
+			for (JButton botao : botoes) {
+				botao.setVisible(linhaSelecionada);
+			}
+			if (botoes.length > 0 && botoes[0].getParent() != null) {
+				botoes[0].getParent().revalidate();
+				botoes[0].getParent().repaint();
+			}
+		};
+		atualizarVisibilidade.run();
+		tabela.getSelectionModel().addListSelectionListener(event -> {
+			if (!event.getValueIsAdjusting()) {
+				atualizarVisibilidade.run();
+			}
+		});
+	}
+
 	protected final boolean mostrarFormulario(String titulo, Component formulario,
 			BooleanSupplier confirmar) {
 		Window proprietaria = SwingUtilities.getWindowAncestor(this);
 		JDialog dialogo = new JDialog(proprietaria, titulo, Dialog.ModalityType.APPLICATION_MODAL);
 		dialogo.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+		formularioSubmetido = false;
 
 		JPanel conteudo = new JPanel(new BorderLayout(0, 14));
 		conteudo.setBackground(PaletaCores.FUNDO);
@@ -220,22 +250,20 @@ abstract class PerfilDashboardUI extends JPanel {
 		cancelar.setBorder(BorderFactory.createCompoundBorder(
 				BorderFactory.createLineBorder(PaletaCores.BORDA),
 				BorderFactory.createEmptyBorder(8, 14, 8, 14)));
-		JPanel acoes = new JPanel(new GridBagLayout());
+		JPanel acoes = new JPanel(new FlowLayout(FlowLayout.CENTER, 8, 0));
 		acoes.setOpaque(false);
-		GridBagConstraints constraints = new GridBagConstraints();
-		constraints.insets = new Insets(0, 0, 0, 8);
-		constraints.anchor = GridBagConstraints.EAST;
-		acoes.add(guardar, constraints);
-		constraints.gridx = 1;
-		acoes.add(cancelar, constraints);
+		acoes.add(guardar);
+		acoes.add(cancelar);
 		conteudo.add(acoes, BorderLayout.SOUTH);
 
-		boolean[] submetido = {false};
+		formularioAtivo = dialogo;
+		guardarFormularioAtivo = guardar;
+		cancelarFormularioAtivo = cancelar;
 		guardar.addActionListener(event -> {
 			try {
 				if (confirmar.getAsBoolean()) {
-					submetido[0] = true;
-					dialogo.dispose();
+					guardar.setEnabled(false);
+					cancelar.setEnabled(false);
 				}
 			} catch (IllegalArgumentException e) {
 				JOptionPane.showMessageDialog(dialogo, e.getMessage(),
@@ -251,7 +279,28 @@ abstract class PerfilDashboardUI extends JPanel {
 		dialogo.pack();
 		dialogo.setLocationRelativeTo(this);
 		dialogo.setVisible(true);
-		return submetido[0];
+		boolean submetido = formularioSubmetido;
+		if (formularioAtivo == dialogo) {
+			formularioAtivo = null;
+			guardarFormularioAtivo = null;
+			cancelarFormularioAtivo = null;
+		}
+		return submetido;
+	}
+
+	protected final void fecharFormularioAtual() {
+		if (formularioAtivo == null) return;
+		JDialog dialogo = formularioAtivo;
+		formularioSubmetido = true;
+		formularioAtivo = null;
+		guardarFormularioAtivo = null;
+		cancelarFormularioAtivo = null;
+		dialogo.dispose();
+	}
+
+	protected final void restaurarFormularioAtual() {
+		if (guardarFormularioAtivo != null) guardarFormularioAtivo.setEnabled(true);
+		if (cancelarFormularioAtivo != null) cancelarFormularioAtivo.setEnabled(true);
 	}
 
 	/** Cria uma caixa de selecao tipada a partir de uma lista de objetos. */
@@ -292,18 +341,23 @@ abstract class PerfilDashboardUI extends JPanel {
 
 	/** Executa uma operacao com indicacao de progresso e tratamento de erros. */
 	protected final boolean executarOperacao(String titulo, Runnable operacao, String sucesso) {
+		return executarOperacao(titulo, operacao, sucesso, () -> { });
+	}
+
+	protected final boolean executarOperacao(String titulo, Runnable operacao, String sucesso,
+			Runnable aoFalhar) {
 		setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.WAIT_CURSOR));
-		try {
-			operacao.run();
+		return DatabaseTaskExecutor.submit(operacao, () -> {
+			fecharFormularioAtual();
+			setCursor(java.awt.Cursor.getDefaultCursor());
 			JOptionPane.showMessageDialog(janelaAtiva(), sucesso, titulo, JOptionPane.INFORMATION_MESSAGE);
 			atualizarSelecionado();
-			return true;
-		} catch (RuntimeException e) {
-			mostrarErro("Operacao falhou: " + mensagem(e));
-			return false;
-		} finally {
+		}, exception -> {
+			restaurarFormularioAtual();
 			setCursor(java.awt.Cursor.getDefaultCursor());
-		}
+			mostrarErro("Operacao falhou: " + mensagem(exception));
+			aoFalhar.run();
+		});
 	}
 
 	/** Obtem uma mensagem util da excecao ou da sua causa. */
@@ -424,20 +478,31 @@ abstract class PerfilDashboardUI extends JPanel {
 	/** Carrega os dados do controlador e preenche o modelo da tabela. */
 	private <T> void carregar(Controller<T> controller, Function<T, Object[]> mapear,
 			DefaultTableModel model, JButton refresh) {
-		refresh.setEnabled(false);
-		setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.WAIT_CURSOR));
-		try {
-			List<T> items = controller.listar();
+		executarAtualizacao(refresh, controller::listar, items -> {
 			model.setRowCount(0);
 			for (T item : items) {
 				model.addRow(mapear.apply(item));
 			}
-		} catch (RuntimeException e) {
-			mostrarErro("Nao foi possivel carregar os dados: " + mensagem(e));
-		} finally {
-			refresh.setEnabled(true);
+		});
+	}
+
+	protected final <T> void executarAtualizacao(JButton atualizar, Supplier<T> carregar,
+			Consumer<T> aplicar) {
+		if (!atualizar.isEnabled()) return;
+		atualizar.setEnabled(false);
+		setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.WAIT_CURSOR));
+		DatabaseTaskExecutor.submit(carregar, resultado -> {
+			try {
+				aplicar.accept(resultado);
+			} finally {
+				atualizar.setEnabled(true);
+				setCursor(java.awt.Cursor.getDefaultCursor());
+			}
+		}, exception -> {
+			mostrarErro("Nao foi possivel carregar os dados: " + mensagem(exception));
+			atualizar.setEnabled(true);
 			setCursor(java.awt.Cursor.getDefaultCursor());
-		}
+		});
 	}
 
 	/** Executa a atualizacao da aba selecionada quando existe uma acao de recarga. */
