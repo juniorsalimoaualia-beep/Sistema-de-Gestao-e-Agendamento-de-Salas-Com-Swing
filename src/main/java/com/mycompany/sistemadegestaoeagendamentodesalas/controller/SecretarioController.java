@@ -44,14 +44,6 @@ public class SecretarioController implements UsuarioController<Secretario> {
     }
 
     public boolean deletarSecretario(int id) {
-        List<Secretario> lista = dao.listaSecretario();
-        for (int i = 0; i < lista.size(); i++) {
-            if (lista.get(i).getId() == id) {
-                lista.remove(i);
-                dao.atualizarTodos(lista);
-                return true;
-            }
-        }
-        return false;
+        return dao.removerPorId(id);
     }
 }
