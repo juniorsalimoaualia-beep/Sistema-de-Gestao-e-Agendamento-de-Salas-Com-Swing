@@ -33,6 +33,59 @@ public class DisciplinaDAO {
         }
     }
 
+    public boolean atribuirDocente(int disciplinaId, Integer docenteId) {
+        String sql = "UPDATE disciplinas SET docente_id = ? WHERE id = ?";
+        try (Connection connection = ConexaoSql.conectar();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            if (docenteId == null) statement.setNull(1, java.sql.Types.INTEGER);
+            else statement.setInt(1, docenteId);
+            statement.setInt(2, disciplinaId);
+            if (statement.executeUpdate() > 0) return true;
+            try (PreparedStatement existe = connection.prepareStatement(
+                    "SELECT 1 FROM disciplinas WHERE id = ?")) {
+                existe.setInt(1, disciplinaId);
+                try (ResultSet resultado = existe.executeQuery()) {
+                    return resultado.next();
+                }
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Erro ao atualizar o docente da disciplina.", e);
+        }
+    }
+
+    public boolean removerPorId(int disciplinaId) {
+        String referencias = "SELECT (SELECT COUNT(*) FROM inscricoes WHERE disciplina_id = ?) "
+                + "+ (SELECT COUNT(*) FROM horarios WHERE disciplina_id = ?) "
+                + "+ (SELECT COUNT(*) FROM reservas WHERE disciplina_id = ?)";
+        try (Connection connection = ConexaoSql.conectar()) {
+            connection.setAutoCommit(false);
+            try (PreparedStatement verificar = connection.prepareStatement(referencias)) {
+                verificar.setInt(1, disciplinaId);
+                verificar.setInt(2, disciplinaId);
+                verificar.setInt(3, disciplinaId);
+                try (ResultSet resultado = verificar.executeQuery()) {
+                    if (resultado.next() && resultado.getInt(1) > 0) {
+                        connection.rollback();
+                        throw new IllegalStateException("Nao e possivel remover a disciplina porque esta "
+                                + "associada a inscricoes, horarios ou reservas.");
+                    }
+                }
+            }
+            try (PreparedStatement remover = connection.prepareStatement(
+                    "DELETE FROM disciplinas WHERE id = ?")) {
+                remover.setInt(1, disciplinaId);
+                boolean removida = remover.executeUpdate() > 0;
+                connection.commit();
+                return removida;
+            } catch (SQLException e) {
+                connection.rollback();
+                throw e;
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Erro ao remover disciplina.", e);
+        }
+    }
+
     public List<Disciplina> listaDisciplina(){
         List<Disciplina> lista= new ArrayList<>();
         String sql = "SELECT id, nome, docente_id, curso_id FROM disciplinas ORDER BY id";
