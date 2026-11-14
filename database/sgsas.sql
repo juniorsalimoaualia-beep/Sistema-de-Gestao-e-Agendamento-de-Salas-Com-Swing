@@ -1,40 +1,11 @@
--- =====================================================================
--- S G S A S
--- Base de dados consolidada - instalação de raiz
--- MySQL / MariaDB (InnoDB, utf8mb4)
---
--- Inclui as alterações anteriormente separadas em:
---   * 001_add_ano_estudante.sql
---   * 002_identificar_turma_por_curso_ano.sql
---   * BD 3: AUTO_INCREMENT em inscricoes.id
---   * BD 4: sala_id em horarios e secretario_id em departamentos
---
--- NOTA:
--- Este ficheiro consolida a estrutura para uma NOVA instalação.
--- CREATE TABLE IF NOT EXISTS não altera tabelas que já existam.
--- Para atualizar uma instalação antiga, faça backup e aplique apenas
--- as migrações que ainda não tenham sido executadas.
--- =====================================================================
 
--- Alterações consolidadas na estrutura:
---   usuarios.ano                         (ano do estudante)
---   turmas.id                            (AUTO_INCREMENT)
---   turmas UNIQUE (ano, curso_id)        (uma turma por curso/ano)
---   inscricoes.id                        (AUTO_INCREMENT)
---   horarios.sala_id + ix_horarios_sala
---   departamentos.secretario_id + UNIQUE uq_departamentos_secretario
---
--- A definição de horarios.sala_id permanece NOT NULL porque os triggers
--- abaixo exigem que todo horário tenha uma sala associada.
---
 CREATE DATABASE IF NOT EXISTS sgsas
     CHARACTER SET utf8mb4
     COLLATE utf8mb4_unicode_ci;
 
 USE sgsas;
 
--- As chaves estrangeiras ficam de fora porque os DAOs substituem utilizadores por perfil
--- e usam -1 como valor da sala sem reserva associada.
+
 CREATE TABLE IF NOT EXISTS usuarios (
     id INT NOT NULL AUTO_INCREMENT,
     perfil ENUM('ADMIN', 'SECRETARIO', 'DOCENTE', 'ESTUDANTE') NOT NULL,
@@ -63,6 +34,36 @@ CREATE TABLE IF NOT EXISTS departamentos (
     KEY ix_departamentos_sala (sala_id),
     UNIQUE KEY uq_departamentos_secretario (secretario_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+SET @secretario_coluna_existe = (
+    SELECT COUNT(*) FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'departamentos'
+      AND COLUMN_NAME = 'secretario_id'
+);
+SET @sql_secretario_coluna = IF(
+    @secretario_coluna_existe = 0,
+    'ALTER TABLE departamentos ADD COLUMN secretario_id INT NULL',
+    'ALTER TABLE departamentos MODIFY COLUMN secretario_id INT NULL'
+);
+PREPARE stmt_secretario_coluna FROM @sql_secretario_coluna;
+EXECUTE stmt_secretario_coluna;
+DEALLOCATE PREPARE stmt_secretario_coluna;
+
+SET @indice_secretario_existe = (
+    SELECT COUNT(*) FROM information_schema.STATISTICS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'departamentos'
+      AND INDEX_NAME = 'uq_departamentos_secretario'
+);
+SET @sql_indice_secretario = IF(
+    @indice_secretario_existe = 0,
+    'ALTER TABLE departamentos ADD UNIQUE KEY uq_departamentos_secretario (secretario_id)',
+    'SELECT 1'
+);
+PREPARE stmt_indice_secretario FROM @sql_indice_secretario;
+EXECUTE stmt_indice_secretario;
+DEALLOCATE PREPARE stmt_indice_secretario;
 
 CREATE TABLE IF NOT EXISTS cursos (
     id INT NOT NULL,
@@ -172,12 +173,11 @@ BEFORE INSERT ON departamentos
 FOR EACH ROW
 BEGIN
     DECLARE v_perfil VARCHAR(20);
-    IF NEW.secretario_id IS NULL THEN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'O departamento deve ter um secretario.';
-    END IF;
-    SELECT perfil INTO v_perfil FROM usuarios WHERE id = NEW.secretario_id;
-    IF v_perfil IS NULL OR v_perfil <> 'SECRETARIO' THEN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'O secretario deve ter o perfil SECRETARIO.';
+    IF NEW.secretario_id IS NOT NULL THEN
+        SELECT perfil INTO v_perfil FROM usuarios WHERE id = NEW.secretario_id;
+        IF v_perfil IS NULL OR v_perfil <> 'SECRETARIO' THEN
+            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'O secretario deve ter o perfil SECRETARIO.';
+        END IF;
     END IF;
 END$$
 
@@ -186,12 +186,11 @@ BEFORE UPDATE ON departamentos
 FOR EACH ROW
 BEGIN
     DECLARE v_perfil VARCHAR(20);
-    IF NEW.secretario_id IS NULL THEN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'O departamento deve ter um secretario.';
-    END IF;
-    SELECT perfil INTO v_perfil FROM usuarios WHERE id = NEW.secretario_id;
-    IF v_perfil IS NULL OR v_perfil <> 'SECRETARIO' THEN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'O secretario deve ter o perfil SECRETARIO.';
+    IF NEW.secretario_id IS NOT NULL THEN
+        SELECT perfil INTO v_perfil FROM usuarios WHERE id = NEW.secretario_id;
+        IF v_perfil IS NULL OR v_perfil <> 'SECRETARIO' THEN
+            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'O secretario deve ter o perfil SECRETARIO.';
+        END IF;
     END IF;
 END$$
 
