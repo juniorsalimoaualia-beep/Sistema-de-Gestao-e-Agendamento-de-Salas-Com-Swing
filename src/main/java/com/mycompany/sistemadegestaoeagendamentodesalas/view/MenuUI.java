@@ -10,6 +10,8 @@ import java.awt.GridLayout;
 import java.awt.Insets;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -26,8 +28,14 @@ public class MenuUI extends JFrame {
 
 	/** Configura a janela principal e apresenta a escolha de perfil. */
 	public MenuUI() {
-		super("SGSAS | GestÃ£o de salas");
-		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		super("SGSAS | Gestão de salas");
+		setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+		addWindowListener(new WindowAdapter() {
+			@Override
+			public void windowClosing(WindowEvent event) {
+				confirmarSaida();
+			}
+		});
 		setMinimumSize(new Dimension(760, 560));
 		setLocationRelativeTo(null);
 		content.setBackground(PaletaCores.FUNDO);
@@ -37,7 +45,7 @@ public class MenuUI extends JFrame {
 
 	/** Mostra os cartoes para escolher o perfil de acesso. */
 	private void mostrarPerfis() {
-		setTitle("SGSAS | GestÃ£o de salas");
+		setTitle("SGSAS | Gestão de salas");
 		JPanel page = new JPanel(new BorderLayout(0, 24));
 		page.setBackground(PaletaCores.FUNDO);
 		page.setBorder(BorderFactory.createEmptyBorder(38, 48, 30, 48));
@@ -162,6 +170,7 @@ public class MenuUI extends JFrame {
 		});
 		voltar.addActionListener(event -> mostrarPerfis());
 		mostrar(form);
+		getRootPane().setDefaultButton(entrar);
 	}
 
 	/** Apresenta o formulario para criar a conta inicial de administrador. */
@@ -214,6 +223,7 @@ public class MenuUI extends JFrame {
 		});
 		voltar.addActionListener(event -> mostrarLogin());
 		mostrar(form);
+		getRootPane().setDefaultButton(criar);
 	}
 
 	/** Cria um painel de formulario com titulo e descricao. */
@@ -252,7 +262,7 @@ public class MenuUI extends JFrame {
 		constraints.fill = GridBagConstraints.HORIZONTAL;
 		input.setPreferredSize(new Dimension(250, 34));
 		panel.add(input, constraints);
-	}
+	} 
 
 	/** Cria um botao principal com o estilo da aplicacao. */
 	private JButton botao(String texto) {
@@ -265,10 +275,20 @@ public class MenuUI extends JFrame {
 
 	/** Substitui o conteudo visivel da janela pela pagina indicada. */
 	private void mostrar(JPanel panel) {
+		getRootPane().setDefaultButton(null);
 		content.removeAll();
 		content.add(panel, BorderLayout.CENTER);
 		content.revalidate();
 		content.repaint();
+	}
+
+	private void confirmarSaida() {
+		int resposta = JOptionPane.showConfirmDialog(this,
+				"Tem a certeza de que deseja sair da aplicacao?",
+				"Confirmar saida", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+		if (resposta == JOptionPane.YES_OPTION) {
+			dispose();
+		}
 	}
 
 	/** Cria e apresenta o painel correspondente ao perfil selecionado. */
