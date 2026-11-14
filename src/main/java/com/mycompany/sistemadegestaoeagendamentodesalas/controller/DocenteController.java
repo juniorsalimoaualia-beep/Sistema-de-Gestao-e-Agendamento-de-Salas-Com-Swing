@@ -45,14 +45,6 @@ public class DocenteController implements UsuarioController<Docente> {
     }
 
     public boolean deletarDocente(int id) {
-        List<Docente> lista = dao.listaDocente();
-        for (int i = 0; i < lista.size(); i++) {
-            if (lista.get(i).getId() == id) {
-                lista.remove(i);
-                dao.atualizarTodos(lista);
-                return true;
-            }
-        }
-        return false;
+        return dao.removerPorId(id);
     }
 }
