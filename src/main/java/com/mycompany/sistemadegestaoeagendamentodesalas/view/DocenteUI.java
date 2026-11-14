@@ -91,25 +91,67 @@ public class DocenteUI extends PerfilDashboardUI {
 		JPanel panel = criarPainelTabela("Reservas", tabela);
 		JButton atualizar = new JButton("Atualizar");
 		JButton solicitar = new JButton("Solicitar reserva");
-		panel.add(criarAcoes(atualizar, solicitar), BorderLayout.SOUTH);
-		atualizar.addActionListener(event -> carregarReservas());
+		JButton cancelar = new JButton("Cancelar reserva selecionada");
+		cancelar.setEnabled(false);
+		panel.add(criarAcoes(atualizar, solicitar, cancelar), BorderLayout.SOUTH);
+		mostrarAcoesAoSelecionar(tabela, cancelar);
+		tabela.getSelectionModel().addListSelectionListener(event -> {
+			if (!event.getValueIsAdjusting()) {
+				cancelar.setEnabled(reservaPodeSerCancelada(tabela));
+			}
+		});
+		atualizar.addActionListener(event -> carregarReservas(atualizar));
 		solicitar.addActionListener(event -> solicitarReserva());
-		carregarReservas();
+		cancelar.addActionListener(event -> cancelarReservaSelecionada(tabela, cancelar));
+		carregarReservas(atualizar);
+		panel.putClientProperty("reload", (Runnable) () -> carregarReservas(atualizar));
 		adicionarPainel("Reservas", panel);
 	}
 
 	/** Carrega da base de dados as reservas pertencentes ao docente. */
-	private void carregarReservas() {
-		reservasModel.setRowCount(0);
-		for (Reserva reserva : reservaController.listar()) {
-			if (reserva.getDocenteId() == null || reserva.getDocenteId().getId() != docenteId) continue;
-			reservasModel.addRow(new Object[]{reserva.getId(),
-					reserva.getSalaId() == null ? "-" : reserva.getSalaId().getNome(),
-					reserva.getDocenteId().getNomeCompleto(),
-					reserva.getDisciplina() == null ? "-" : reserva.getDisciplina().getNome(),
-					reserva.getData(), reserva.getHoraInicio(), reserva.getHoraFim(),
-					reserva.getTipoReserva(), reserva.getEstadoReserva()});
+	private void carregarReservas(JButton atualizar) {
+		executarAtualizacao(atualizar, reservaController::listar, reservas -> {
+			reservasModel.setRowCount(0);
+			for (Reserva reserva : reservas) {
+				if (reserva.getDocenteId() == null || reserva.getDocenteId().getId() != docenteId) continue;
+				reservasModel.addRow(new Object[]{reserva.getId(),
+						reserva.getSalaId() == null ? "-" : reserva.getSalaId().getNome(),
+						reserva.getDocenteId().getNomeCompleto(),
+						reserva.getDisciplina() == null ? "-" : reserva.getDisciplina().getNome(),
+						reserva.getData(), reserva.getHoraInicio(), reserva.getHoraFim(),
+						reserva.getTipoReserva(), reserva.getEstadoReserva()});
+			}
+		});
+	}
+
+	/** Indica se a reserva selecionada pode ser cancelada. */
+	private boolean reservaPodeSerCancelada(JTable tabela) {
+		int linha = tabela.getSelectedRow();
+		if (linha < 0) return false;
+		Object estado = tabela.getValueAt(linha, 8);
+		return "PENDENTE".equals(estado) || "CONFIRMADA".equals(estado);
+	}
+
+	/** Confirma e executa o cancelamento da reserva selecionada. */
+	private void cancelarReservaSelecionada(JTable tabela, JButton cancelar) {
+		int linha = tabela.getSelectedRow();
+		if (linha < 0 || !reservaPodeSerCancelada(tabela)) {
+			cancelar.setEnabled(false);
+			JOptionPane.showMessageDialog(this, "Selecione uma reserva pendente ou confirmada.",
+					"Reserva indisponivel", JOptionPane.WARNING_MESSAGE);
+			return;
 		}
+		int resposta = JOptionPane.showConfirmDialog(this,
+				"Tem a certeza de que deseja cancelar esta reserva?", "Confirmar cancelamento",
+				JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+		if (resposta != JOptionPane.YES_OPTION) return;
+		int id = Integer.parseInt(tabela.getValueAt(linha, 0).toString());
+		executarOperacao("A cancelar reserva...", () -> {
+			if (!reservaController.cancelarDoDocente(id, docenteId)) {
+				throw new IllegalStateException("Nao foi possivel cancelar a reserva.");
+			}
+		}, "Reserva cancelada.", () -> cancelar.setEnabled(true));
+		cancelar.setEnabled(false);
 	}
 
 	/** Recolhe dados e envia ou demonstra um pedido de reserva. */
@@ -213,15 +255,15 @@ public class DocenteUI extends PerfilDashboardUI {
 			if (docente == null) {
 				throw new IllegalStateException("Nao foi possivel localizar a conta do docente.");
 			}
-			Reserva reserva = new Reserva(reservaController.gerarProximoId(), salaSelecionada,
-					docente, disciplinaEscolhida, null, dia, horaInicio, horaFim,
-					tipoSelecionado, diaSemana);
-			if (!reservaController.salvar(reserva)) {
-				throw new IllegalArgumentException("A sala deixou de estar disponivel ou existe conflito.");
-			}
-			carregarReservas();
-			mostrarInformacao("Pedido de reserva enviado ao secretario do departamento.");
-			return true;
+			return executarOperacao("A enviar pedido de reserva...", () -> {
+				Reserva reserva = new Reserva(reservaController.gerarProximoId(), salaSelecionada,
+						docente, disciplinaEscolhida, null, dia, horaInicio, horaFim,
+						tipoSelecionado, diaSemana);
+				if (!reservaController.salvar(reserva)) {
+					throw new IllegalArgumentException(
+							"A sala deixou de estar disponivel ou existe conflito.");
+				}
+			}, "Pedido de reserva enviado ao secretario do departamento.");
 		});
 	}
 
