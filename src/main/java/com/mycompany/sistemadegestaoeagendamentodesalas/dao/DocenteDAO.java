@@ -104,6 +104,43 @@ public class DocenteDAO {
         } catch (SQLException e) { System.out.println("Erro ao alterar senha: " + e.getMessage()); return false; }
     }
 
+    public boolean removerPorId(int id) {
+        try (Connection connection = ConexaoSql.conectar()) {
+            connection.setAutoCommit(false);
+            try (PreparedStatement verificar = connection.prepareStatement(
+                    "SELECT COUNT(*) FROM reservas WHERE docente_id = ?")) {
+                verificar.setInt(1, id);
+                try (ResultSet resultado = verificar.executeQuery()) {
+                    if (resultado.next() && resultado.getInt(1) > 0) {
+                        connection.rollback();
+                        throw new IllegalStateException("Nao e possivel remover o docente porque existem "
+                                + "reservas associadas a ele.");
+                    }
+                }
+            }
+            try (PreparedStatement desassociar = connection.prepareStatement(
+                    "UPDATE disciplinas SET docente_id = NULL WHERE docente_id = ?");
+                 PreparedStatement remover = connection.prepareStatement(
+                         "DELETE FROM usuarios WHERE id = ? AND perfil = 'DOCENTE'")) {
+                desassociar.setInt(1, id);
+                desassociar.executeUpdate();
+                remover.setInt(1, id);
+                boolean removido = remover.executeUpdate() == 1;
+                if (!removido) {
+                    connection.rollback();
+                    return false;
+                }
+                connection.commit();
+                return true;
+            } catch (SQLException e) {
+                connection.rollback();
+                throw e;
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Erro ao remover docente.", e);
+        }
+    }
+
     public void atualizarTodos(List<Docente> lista) {
         String sql = "INSERT INTO usuarios(id, perfil, nome, apelido, nivel_academico, celular, email, senha_hash) "
                 + "VALUES(?, 'DOCENTE', ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE "
