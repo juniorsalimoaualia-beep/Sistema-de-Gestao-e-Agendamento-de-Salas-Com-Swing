@@ -15,8 +15,8 @@ public class DepartamentoDAO {
     private final SecretarioDAO secretarioDAO = new SecretarioDAO();
 
     public void salvar(Departamento dp){
-        if (dp == null || dp.getSecretario() == null || dp.getSecretario().getId() <= 0) {
-            throw new IllegalArgumentException("Associe um secretario ao departamento.");
+        if (dp == null) {
+            throw new IllegalArgumentException("Departamento invalido.");
         }
         String sql = "INSERT INTO departamentos(id, nome, curso_id, sala_id, secretario_id) "
                 + "VALUES(?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE nome = VALUES(nome), "
@@ -29,7 +29,8 @@ public class DepartamentoDAO {
             else statement.setInt(3, dp.getCurso().getId());
             if (dp.getSala() == null || dp.getSala().getId() == 0) statement.setNull(4, java.sql.Types.INTEGER);
             else statement.setInt(4, dp.getSala().getId());
-            statement.setInt(5, dp.getSecretario().getId());
+            if (dp.getSecretario() == null) statement.setNull(5, java.sql.Types.INTEGER);
+            else statement.setInt(5, dp.getSecretario().getId());
             statement.executeUpdate();
         } catch (SQLException e) {
             throw new IllegalStateException("Erro ao salvar departamento.", e);
@@ -76,19 +77,27 @@ public class DepartamentoDAO {
         } catch (SQLException e) {
             if (e.getMessage() != null && e.getMessage().toLowerCase().contains("secretario_id")) {
                 throw new IllegalStateException("A base de dados ainda nao tem a coluna do secretario "
-                        + "por departamento. Execute database/migrations/004_horario_sala_secretario_departamento.sql.", e);
+                        + "por departamento. Execute database/sgsas.sql.", e);
             }
             throw new IllegalStateException("Erro ao procurar departamento do secretario.", e);
         }
     }
 
-    public boolean atribuirSecretario(int departamentoId, int secretarioId) {
+    public boolean atribuirSecretario(int departamentoId, Integer secretarioId) {
         String sql = "UPDATE departamentos SET secretario_id = ? WHERE id = ?";
         try (Connection connection = ConexaoSql.conectar();
              PreparedStatement statement = connection.prepareStatement(sql)) {
-            statement.setInt(1, secretarioId);
+            if (secretarioId == null) statement.setNull(1, java.sql.Types.INTEGER);
+            else statement.setInt(1, secretarioId);
             statement.setInt(2, departamentoId);
-            return statement.executeUpdate() == 1;
+            if (statement.executeUpdate() > 0) return true;
+            try (PreparedStatement existe = connection.prepareStatement(
+                    "SELECT 1 FROM departamentos WHERE id = ?")) {
+                existe.setInt(1, departamentoId);
+                try (ResultSet resultado = existe.executeQuery()) {
+                    return resultado.next();
+                }
+            }
         } catch (SQLException e) {
             throw new IllegalStateException("Nao foi possivel atribuir o secretario ao departamento.", e);
         }
