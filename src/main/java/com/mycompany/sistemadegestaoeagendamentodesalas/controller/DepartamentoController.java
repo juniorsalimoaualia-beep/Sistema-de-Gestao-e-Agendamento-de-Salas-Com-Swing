@@ -23,7 +23,7 @@ public class DepartamentoController implements Controller<Departamento> {
         return dao.buscarPorEmailSecretario(email);
     }
 
-    public boolean atribuirSecretario(int departamentoId, int secretarioId) {
+    public boolean atribuirSecretario(int departamentoId, Integer secretarioId) {
         return dao.atribuirSecretario(departamentoId, secretarioId);
     }
 
