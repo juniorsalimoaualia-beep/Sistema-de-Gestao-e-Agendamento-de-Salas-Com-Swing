@@ -54,17 +54,17 @@ public class SecretarioUI extends PerfilDashboardUI {
 		JButton atualizar = new JButton("Atualizar");
 		JButton adicionar = new JButton("Adicionar");
 		panel.add(criarAcoes(atualizar, adicionar), BorderLayout.SOUTH);
-		Runnable reload = () -> {
+		Runnable reload = () -> executarAtualizacao(atualizar, salaController::listar, salas -> {
 			model.setRowCount(0);
 			if (departamento != null) {
-				for (Sala sala : salaController.listar()) {
+				for (Sala sala : salas) {
 					if (sala.getDepartamento() != null
 							&& sala.getDepartamento().getId() == departamento.getId()) {
 						model.addRow(new Object[]{sala.getId(), sala.getNome(), sala.getEstado()});
 					}
 				}
 			}
-		};
+		});
 		atualizar.addActionListener(event -> reload.run());
 		adicionar.addActionListener(event -> criarSala());
 		panel.putClientProperty("reload", reload);
@@ -83,10 +83,11 @@ public class SecretarioUI extends PerfilDashboardUI {
 		JButton recusar = new JButton("Recusar");
 		JButton cancelar = new JButton("Cancelar");
 		panel.add(criarAcoes(atualizar, confirmar, recusar, cancelar), java.awt.BorderLayout.SOUTH);
-		Runnable reload = () -> {
+		mostrarAcoesAoSelecionar(table, confirmar, recusar, cancelar);
+		Runnable reload = () -> executarAtualizacao(atualizar, reservaController::listar, reservas -> {
 			model.setRowCount(0);
 			if (departamento == null) return;
-			for (Reserva reserva : reservaController.listar()) {
+			for (Reserva reserva : reservas) {
 				if (!pertenceAoDepartamento(reserva.getSalaId())) {
 					continue;
 				}
@@ -97,11 +98,11 @@ public class SecretarioUI extends PerfilDashboardUI {
 						reserva.getData(), reserva.getHoraInicio(), reserva.getHoraFim(),
 						reserva.getTipoReserva(), reserva.getEstadoReserva()});
 			}
-		};
+		});
 		atualizar.addActionListener(event -> reload.run());
-		confirmar.addActionListener(event -> atualizarEstadoReserva(table, reload, "confirmar"));
-		recusar.addActionListener(event -> atualizarEstadoReserva(table, reload, "recusar"));
-		cancelar.addActionListener(event -> atualizarEstadoReserva(table, reload, "cancelar"));
+		confirmar.addActionListener(event -> atualizarEstadoReserva(table, "confirmar"));
+		recusar.addActionListener(event -> atualizarEstadoReserva(table, "recusar"));
+		cancelar.addActionListener(event -> atualizarEstadoReserva(table, "cancelar"));
 		panel.putClientProperty("reload", reload);
 		adicionarPainel("Reservas", panel);
 	}
@@ -115,10 +116,10 @@ public class SecretarioUI extends PerfilDashboardUI {
 		JButton atualizar = new JButton("Atualizar");
 		JButton adicionar = new JButton("Adicionar");
 		panel.add(criarAcoes(atualizar, adicionar), BorderLayout.SOUTH);
-		Runnable reload = () -> {
+		Runnable reload = () -> executarAtualizacao(atualizar, horarioController::listar, horarios -> {
 			model.setRowCount(0);
 			if (departamento != null) {
-				for (Horario horario : horarioController.listar()) {
+				for (Horario horario : horarios) {
 					if (pertenceAoDepartamento(horario.getCurso())) {
 						model.addRow(new Object[]{horario.getId(), horario.getDiaSemana(),
 								horario.getHoraInicio(), horario.getHoraFim(), horario.getNomeCurso(),
@@ -127,7 +128,7 @@ public class SecretarioUI extends PerfilDashboardUI {
 					}
 				}
 			}
-		};
+		});
 		atualizar.addActionListener(event -> reload.run());
 		adicionar.addActionListener(event -> criarHorario());
 		panel.putClientProperty("reload", reload);
@@ -191,9 +192,13 @@ public class SecretarioUI extends PerfilDashboardUI {
 			if (!horaFim.isAfter(horaInicio)) {
 				throw new IllegalArgumentException("A hora final deve ser posterior a hora inicial.");
 			}
+			Curso cursoSelecionado = valorSelecionado(curso);
+			Disciplina disciplinaSelecionada = valorSelecionado(disciplina);
+			Sala salaSelecionada = valorSelecionado(sala);
+			DiaSemana diaSelecionado = (DiaSemana) dia.getSelectedItem();
 			return executarOperacao("A guardar horario...", () -> horarioController.salvar(new Horario(
-					horarioController.gerarProximoId(), valorSelecionado(curso),
-					valorSelecionado(disciplina), valorSelecionado(sala), (DiaSemana) dia.getSelectedItem(),
+					horarioController.gerarProximoId(), cursoSelecionado,
+					disciplinaSelecionada, salaSelecionada, diaSelecionado,
 					horaInicio, horaFim)), "Horario registado.");
 		});
 	}
@@ -211,8 +216,9 @@ public class SecretarioUI extends PerfilDashboardUI {
 		formulario.add(nome);
 		mostrarFormulario("Nova sala", formulario, () -> {
 			Validacao.validarTextoObrigatorio(nome.getText(), "nome da sala", 100);
+			String nomeSala = nome.getText().trim();
 			return executarOperacao("A guardar sala...", () -> {
-				Sala sala = new Sala(salaController.gerarProximoId(), nome.getText().trim());
+				Sala sala = new Sala(salaController.gerarProximoId(), nomeSala);
 				sala.setDepartamento(departamento);
 				salaController.salvar(sala);
 			}, "Sala registada.");
@@ -245,7 +251,7 @@ public class SecretarioUI extends PerfilDashboardUI {
 	}
 
 	/** Confirma ou recusa a reserva selecionada e atualiza a tabela. */
-	private void atualizarEstadoReserva(JTable table, Runnable reload, String operacao) {
+	private void atualizarEstadoReserva(JTable table, String operacao) {
 		int row = table.getSelectedRow();
 		if (row < 0) {
 			JOptionPane.showMessageDialog(this, "Selecione uma reserva primeiro.",
@@ -253,25 +259,23 @@ public class SecretarioUI extends PerfilDashboardUI {
 			return;
 		}
 		int id = Integer.parseInt(table.getValueAt(row, 0).toString());
-		boolean atualizado;
-		switch (operacao) {
-			case "confirmar":
-				atualizado = reservaController.confirmar(id);
-				break;
-			case "recusar":
-				atualizado = reservaController.recusar(id);
-				break;
-			default:
-				atualizado = reservaController.cancelar(id);
-				break;
-		}
-		if (atualizado) {
-			JOptionPane.showMessageDialog(this, "Reserva " + operacao + " com sucesso.");
-			reload.run();
-		} else {
-			JOptionPane.showMessageDialog(this, "Nao foi possivel " + operacao
-					+ " a reserva. Verifique o estado atual e a disponibilidade da sala.",
-					"Operacao nao realizada", JOptionPane.WARNING_MESSAGE);
-		}
+		executarOperacao("A atualizar reserva...", () -> {
+			boolean atualizado;
+			switch (operacao) {
+				case "confirmar":
+					atualizado = reservaController.confirmar(id);
+					break;
+				case "recusar":
+					atualizado = reservaController.recusar(id);
+					break;
+				default:
+					atualizado = reservaController.cancelar(id);
+					break;
+			}
+			if (!atualizado) {
+				throw new IllegalStateException("Nao foi possivel " + operacao
+						+ " a reserva. Verifique o estado atual e a disponibilidade da sala.");
+			}
+		}, "Reserva " + operacao + " com sucesso.");
 	}
 }
