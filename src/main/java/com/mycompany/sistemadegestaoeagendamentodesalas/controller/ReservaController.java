@@ -45,6 +45,20 @@ public class ReservaController implements Controller<Reserva> {
         return gestorDAO.cancelarReserva(id);
     }
 
+    public boolean cancelarDoDocente(int reservaId, int docenteId) {
+        Reserva reserva = buscarPorId(reservaId);
+        if (reserva == null) {
+            return false;
+        }
+        try {
+            com.mycompany.sistemadegestaoeagendamentodesalas.model.Docente d = reserva.getDocenteId();
+            if (d == null || d.getId() != docenteId) return false;
+        } catch (Exception e) {
+            return false;
+        }
+        return gestorDAO.cancelarReserva(reservaId);
+    }
+
     public String estadoReserva(int id) {
         Reserva reserva = buscarPorId(id);
         if (reserva == null) {
