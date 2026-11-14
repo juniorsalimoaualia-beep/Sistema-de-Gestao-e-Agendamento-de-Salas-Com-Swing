@@ -15,6 +15,14 @@ public class DisciplinaController implements Controller<Disciplina> {
         dao.salvar(disciplina);
     }
 
+    public boolean atribuirDocente(int disciplinaId, Integer docenteId) {
+        return dao.atribuirDocente(disciplinaId, docenteId);
+    }
+
+    public boolean remover(int disciplinaId) {
+        return dao.removerPorId(disciplinaId);
+    }
+
     public List<Disciplina> listar() {
         return dao.listaDisciplina();
     }
