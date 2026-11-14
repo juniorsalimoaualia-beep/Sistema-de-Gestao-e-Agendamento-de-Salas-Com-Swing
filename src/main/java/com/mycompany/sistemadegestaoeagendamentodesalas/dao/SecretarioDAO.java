@@ -91,6 +91,32 @@ public class SecretarioDAO {
         } catch (SQLException e) { System.out.println("Erro ao alterar senha: " + e.getMessage()); return false; }
     }
 
+    public boolean removerPorId(int id) {
+        try (Connection connection = ConexaoSql.conectar()) {
+            connection.setAutoCommit(false);
+            try (PreparedStatement desassociar = connection.prepareStatement(
+                    "UPDATE departamentos SET secretario_id = NULL WHERE secretario_id = ?");
+                 PreparedStatement remover = connection.prepareStatement(
+                         "DELETE FROM usuarios WHERE id = ? AND perfil = 'SECRETARIO'")) {
+                desassociar.setInt(1, id);
+                desassociar.executeUpdate();
+                remover.setInt(1, id);
+                boolean removido = remover.executeUpdate() == 1;
+                if (!removido) {
+                    connection.rollback();
+                    return false;
+                }
+                connection.commit();
+                return true;
+            } catch (SQLException e) {
+                connection.rollback();
+                throw e;
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Erro ao remover secretario.", e);
+        }
+    }
+
     public void atualizarTodos(List<Secretario> lista) {
         String sql = "INSERT INTO usuarios(id, perfil, nome, apelido, cargo, celular, email, senha_hash) "
                 + "VALUES(?, 'SECRETARIO', ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE "
