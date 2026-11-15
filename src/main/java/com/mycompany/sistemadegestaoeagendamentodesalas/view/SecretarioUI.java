@@ -68,6 +68,7 @@ public class SecretarioUI extends PerfilDashboardUI {
 		atualizar.addActionListener(event -> reload.run());
 		adicionar.addActionListener(event -> criarSala());
 		panel.putClientProperty("reload", reload);
+		atualizarPeriodicamenteQuandoVisivel(panel, reload, 60_000);
 		adicionarPainel("Salas", panel);
 	}
 
@@ -215,8 +216,7 @@ public class SecretarioUI extends PerfilDashboardUI {
 		formulario.add(new javax.swing.JLabel("Nome da sala"));
 		formulario.add(nome);
 		mostrarFormulario("Nova sala", formulario, () -> {
-			Validacao.validarTextoObrigatorio(nome.getText(), "nome da sala", 100);
-			String nomeSala = nome.getText().trim();
+			String nomeSala = Validacao.validarNomeSala(nome.getText());
 			return executarOperacao("A guardar sala...", () -> {
 				Sala sala = new Sala(salaController.gerarProximoId(), nomeSala);
 				sala.setDepartamento(departamento);
