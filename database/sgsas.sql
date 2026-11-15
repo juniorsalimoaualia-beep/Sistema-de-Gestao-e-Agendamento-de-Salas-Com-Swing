@@ -27,11 +27,9 @@ CREATE TABLE IF NOT EXISTS departamentos (
     id INT NOT NULL,
     nome VARCHAR(150) NOT NULL,
     curso_id INT NULL,
-    sala_id INT NULL,
     secretario_id INT NULL,
     PRIMARY KEY (id),
     KEY ix_departamentos_curso (curso_id),
-    KEY ix_departamentos_sala (sala_id),
     UNIQUE KEY uq_departamentos_secretario (secretario_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -96,6 +94,51 @@ CREATE TABLE IF NOT EXISTS salas (
     KEY ix_salas_reserva (reserva_id),
     KEY ix_salas_departamento (departamento_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+SET @sala_departamento_legacy_existe = (
+    SELECT COUNT(*) FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'departamentos'
+      AND COLUMN_NAME = 'sala_id'
+);
+SET @sql_migrar_salas_departamento = IF(
+    @sala_departamento_legacy_existe > 0,
+    'UPDATE salas s INNER JOIN departamentos d ON d.sala_id = s.id SET s.departamento_id = d.id WHERE s.departamento_id IS NULL',
+    'SELECT 1'
+);
+PREPARE stmt_migrar_salas_departamento FROM @sql_migrar_salas_departamento;
+EXECUTE stmt_migrar_salas_departamento;
+DEALLOCATE PREPARE stmt_migrar_salas_departamento;
+
+SET @indice_sala_departamento_existe = (
+    SELECT COUNT(*) FROM information_schema.STATISTICS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'departamentos'
+      AND INDEX_NAME = 'ix_departamentos_sala'
+);
+SET @sql_remover_indice_sala_departamento = IF(
+    @indice_sala_departamento_existe > 0,
+    'ALTER TABLE departamentos DROP INDEX ix_departamentos_sala',
+    'SELECT 1'
+);
+PREPARE stmt_remover_indice_sala_departamento FROM @sql_remover_indice_sala_departamento;
+EXECUTE stmt_remover_indice_sala_departamento;
+DEALLOCATE PREPARE stmt_remover_indice_sala_departamento;
+
+SET @sala_departamento_legacy_existe = (
+    SELECT COUNT(*) FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'departamentos'
+      AND COLUMN_NAME = 'sala_id'
+);
+SET @sql_remover_sala_departamento_legacy = IF(
+    @sala_departamento_legacy_existe > 0,
+    'ALTER TABLE departamentos DROP COLUMN sala_id',
+    'SELECT 1'
+);
+PREPARE stmt_remover_sala_departamento_legacy FROM @sql_remover_sala_departamento_legacy;
+EXECUTE stmt_remover_sala_departamento_legacy;
+DEALLOCATE PREPARE stmt_remover_sala_departamento_legacy;
 
 CREATE TABLE IF NOT EXISTS turmas (
     id INT NOT NULL AUTO_INCREMENT,
