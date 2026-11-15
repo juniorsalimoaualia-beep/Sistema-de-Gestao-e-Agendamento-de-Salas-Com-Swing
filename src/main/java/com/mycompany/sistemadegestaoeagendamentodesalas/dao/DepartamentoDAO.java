@@ -1,7 +1,6 @@
 package com.mycompany.sistemadegestaoeagendamentodesalas.dao;
 import com.mycompany.sistemadegestaoeagendamentodesalas.model.Departamento;
 import com.mycompany.sistemadegestaoeagendamentodesalas.model.Curso;
-import com.mycompany.sistemadegestaoeagendamentodesalas.model.Sala;
 import com.mycompany.sistemadegestaoeagendamentodesalas.model.Secretario;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -18,19 +17,17 @@ public class DepartamentoDAO {
         if (dp == null) {
             throw new IllegalArgumentException("Departamento invalido.");
         }
-        String sql = "INSERT INTO departamentos(id, nome, curso_id, sala_id, secretario_id) "
-                + "VALUES(?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE nome = VALUES(nome), "
-                + "curso_id = VALUES(curso_id), sala_id = VALUES(sala_id), secretario_id = VALUES(secretario_id)";
+        String sql = "INSERT INTO departamentos(id, nome, curso_id, secretario_id) "
+                + "VALUES(?, ?, ?, ?) ON DUPLICATE KEY UPDATE nome = VALUES(nome), "
+                + "curso_id = VALUES(curso_id), secretario_id = VALUES(secretario_id)";
         try (Connection connection = ConexaoSql.conectar();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setInt(1, dp.getId());
             statement.setString(2, dp.getNome());
-            if (dp.getCurso() == null || dp.getCurso().getId() == 0) statement.setNull(3, java.sql.Types.INTEGER);
+            if (dp.getCurso() == null || dp.getCurso().getId() <= 0) statement.setNull(3, java.sql.Types.INTEGER);
             else statement.setInt(3, dp.getCurso().getId());
-            if (dp.getSala() == null || dp.getSala().getId() == 0) statement.setNull(4, java.sql.Types.INTEGER);
-            else statement.setInt(4, dp.getSala().getId());
-            if (dp.getSecretario() == null) statement.setNull(5, java.sql.Types.INTEGER);
-            else statement.setInt(5, dp.getSecretario().getId());
+            if (dp.getSecretario() == null) statement.setNull(4, java.sql.Types.INTEGER);
+            else statement.setInt(4, dp.getSecretario().getId());
             statement.executeUpdate();
         } catch (SQLException e) {
             throw new IllegalStateException("Erro ao salvar departamento.", e);
