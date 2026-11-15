@@ -71,11 +71,11 @@ public class UsuarioUI extends JPanel {
 				BorderFactory.createLineBorder(PaletaCores.BORDA),
 				BorderFactory.createEmptyBorder(18, 22, 18, 22)));
 		passwordForm.add(rotulo("Senha actual"));
-		passwordForm.add(currentPasswordField);
+		passwordForm.add(PerfilDashboardUI.campoSenha(currentPasswordField));
 		passwordForm.add(rotulo("Nova senha"));
-		passwordForm.add(passwordField);
+		passwordForm.add(PerfilDashboardUI.campoSenha(passwordField));
 		passwordForm.add(rotulo("Confirmar senha"));
-		passwordForm.add(confirmPasswordField);
+		passwordForm.add(PerfilDashboardUI.campoSenha(confirmPasswordField));
 
 		JPanel passwordSection = new JPanel(new BorderLayout(0, 12));
 		passwordSection.setOpaque(false);
@@ -104,6 +104,7 @@ public class UsuarioUI extends JPanel {
 		add(notice, BorderLayout.SOUTH);
 
 		changePassword.addActionListener(event -> alterarSenha(changePassword));
+		PerfilDashboardUI.instalarNavegacaoEnter(passwordForm, changePassword);
 	}
 
 	/** Adiciona ao painel um par de rotulo e valor da conta. */
