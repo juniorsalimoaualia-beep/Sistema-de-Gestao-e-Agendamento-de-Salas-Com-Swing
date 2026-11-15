@@ -31,6 +31,7 @@ public class SalaDAO {
     }
 
     public List<Sala> listaSala(){
+        atualizarEstadoReservasExpiradas();
         List<Sala> lista=new ArrayList<>();
         String sql = "SELECT id, nome, estado, reserva_id, departamento_id FROM salas ORDER BY id";
         try (Connection connection = ConexaoSql.conectar();
@@ -44,6 +45,7 @@ public class SalaDAO {
     }
 
     public Sala buscarPorSala(String nome){
+        atualizarEstadoReservasExpiradas();
         String sql = "SELECT id, nome, estado, reserva_id, departamento_id FROM salas WHERE lower(nome) = lower(?) LIMIT 1";
         try (Connection connection = ConexaoSql.conectar();
              PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -53,6 +55,25 @@ public class SalaDAO {
             throw new IllegalStateException("Erro ao procurar sala.", e);
         }
         return null;
+    }
+
+    private void atualizarEstadoReservasExpiradas() {
+        String sql = "UPDATE salas s SET s.reserva_id = COALESCE(("
+                + "SELECT r.id FROM reservas r WHERE r.sala_id = s.id "
+                + "AND r.estado IN ('PENDENTE', 'CONFIRMADA') "
+                + "AND (r.data > CURRENT_DATE OR (r.data = CURRENT_DATE AND r.hora_fim > CURRENT_TIME)) "
+                + "ORDER BY r.data, r.hora_inicio, r.id LIMIT 1), -1), "
+                + "s.estado = CASE WHEN s.estado = 'MANUTENCAO' THEN s.estado "
+                + "WHEN EXISTS (SELECT 1 FROM reservas r WHERE r.sala_id = s.id "
+                + "AND r.estado IN ('PENDENTE', 'CONFIRMADA') "
+                + "AND (r.data > CURRENT_DATE OR (r.data = CURRENT_DATE AND r.hora_fim > CURRENT_TIME))) "
+                + "THEN 'RESERVADA' WHEN s.estado = 'RESERVADA' THEN 'LIVRE' ELSE s.estado END";
+        try (Connection connection = ConexaoSql.conectar();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.executeUpdate();
+        } catch (SQLException e) {
+            throw new IllegalStateException("Nao foi possivel atualizar o estado das salas.", e);
+        }
     }
 
     public Sala buscarPorId(int id) {
