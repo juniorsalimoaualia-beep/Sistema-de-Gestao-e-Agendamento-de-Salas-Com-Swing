@@ -10,16 +10,21 @@ import java.awt.GridLayout;
 import java.awt.Insets;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
+import javax.swing.AbstractAction;
+import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPasswordField;
 import javax.swing.JTextField;
+import javax.swing.KeyStroke;
 
 public class MenuUI extends JFrame {
 	private final AutenticacaoDAO autenticacaoDAO = new AutenticacaoDAO();
@@ -126,7 +131,7 @@ public class MenuUI extends JFrame {
 		JPasswordField senha = new JPasswordField(24);
 		JPanel form = criarFormulario("Iniciar sessao", "Acesso como " + nomePerfil(perfil));
 		adicionarCampo(form, 0, "E-mail", email);
-		adicionarCampo(form, 1, "Senha", senha);
+		adicionarCampo(form, 1, "Senha", PerfilDashboardUI.campoSenha(senha));
 		JButton entrar = botao("Entrar");
 		JButton voltar = botao("Voltar aos perfis");
 		JPanel actions = new JPanel(new GridLayout(1, 2, 8, 0));
@@ -134,7 +139,7 @@ public class MenuUI extends JFrame {
 		actions.add(entrar);
 		actions.add(voltar);
 		adicionarCampo(form, 2, "", actions);
-		if ("ADMIN".equals(perfil)) {
+		if ("ADMIN".equals(perfil) && apresentarCriacaoAdministrador()) {
 			JButton criarAdmin = new JButton("Criar o primeiro administrador");
 			adicionarCampo(form, 3, "", criarAdmin);
 			criarAdmin.addActionListener(event -> mostrarRegistoAdministrador());
@@ -169,8 +174,30 @@ public class MenuUI extends JFrame {
 			}
 		});
 		voltar.addActionListener(event -> mostrarPerfis());
+		PerfilDashboardUI.instalarNavegacaoEnter(form, entrar);
 		mostrar(form);
 		getRootPane().setDefaultButton(entrar);
+		instalarEscapeParaPerfis();
+	}
+
+	private boolean apresentarCriacaoAdministrador() {
+		try {
+			return !autenticacaoDAO.existeAdministrador();
+		} catch (RuntimeException e) {
+			mostrarErro("Nao foi possivel verificar se ja existe um administrador: " + mensagem(e));
+			return false;
+		}
+	}
+
+	private void instalarEscapeParaPerfis() {
+		getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW)
+				.put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "voltarAosPerfis");
+		getRootPane().getActionMap().put("voltarAosPerfis", new AbstractAction() {
+			@Override
+			public void actionPerformed(ActionEvent event) {
+				mostrarPerfis();
+			}
+		});
 	}
 
 	/** Apresenta o formulario para criar a conta inicial de administrador. */
@@ -180,8 +207,8 @@ public class MenuUI extends JFrame {
 		JPasswordField confirmar = new JPasswordField(24);
 		JPanel form = criarFormulario("Primeiro acesso", "Registe a conta inicial de administrador");
 		adicionarCampo(form, 0, "E-mail", email);
-		adicionarCampo(form, 1, "Senha", senha);
-		adicionarCampo(form, 2, "Confirmar senha", confirmar);
+		adicionarCampo(form, 1, "Senha", PerfilDashboardUI.campoSenha(senha));
+		adicionarCampo(form, 2, "Confirmar senha", PerfilDashboardUI.campoSenha(confirmar));
 		JButton criar = botao("Criar administrador");
 		JButton voltar = new JButton("Voltar ao login");
 		JPanel actions = new JPanel(new GridLayout(1, 2, 8, 0));
@@ -222,6 +249,7 @@ public class MenuUI extends JFrame {
 			}
 		});
 		voltar.addActionListener(event -> mostrarLogin());
+		PerfilDashboardUI.instalarNavegacaoEnter(form, criar);
 		mostrar(form);
 		getRootPane().setDefaultButton(criar);
 	}
@@ -276,6 +304,9 @@ public class MenuUI extends JFrame {
 	/** Substitui o conteudo visivel da janela pela pagina indicada. */
 	private void mostrar(JPanel panel) {
 		getRootPane().setDefaultButton(null);
+		getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW)
+				.remove(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0));
+		getRootPane().getActionMap().remove("voltarAosPerfis");
 		content.removeAll();
 		content.add(panel, BorderLayout.CENTER);
 		content.revalidate();
