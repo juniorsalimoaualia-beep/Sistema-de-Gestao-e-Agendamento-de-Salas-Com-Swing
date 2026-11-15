@@ -373,7 +373,9 @@ public class ReservaDAO {
 
     private void atualizarEstadoDaSala(Connection connection, int salaId) throws SQLException {
         String buscarReservaAtiva = "SELECT id FROM reservas WHERE sala_id = ? "
-                + "AND estado IN ('PENDENTE', 'CONFIRMADA') ORDER BY data, hora_inicio, id LIMIT 1";
+                + "AND estado IN ('PENDENTE', 'CONFIRMADA') "
+                + "AND (data > CURRENT_DATE OR (data = CURRENT_DATE AND hora_fim > CURRENT_TIME)) "
+                + "ORDER BY data, hora_inicio, id LIMIT 1";
         int reservaAtivaId = -1;
         try (PreparedStatement statement = connection.prepareStatement(buscarReservaAtiva)) {
             statement.setInt(1, salaId);
