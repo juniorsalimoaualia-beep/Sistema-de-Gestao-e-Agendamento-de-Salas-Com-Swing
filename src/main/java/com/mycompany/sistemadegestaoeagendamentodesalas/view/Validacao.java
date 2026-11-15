@@ -85,7 +85,7 @@ public class Validacao{
         return texto;
     }
 
-    /** Le um nome de sala composto por letras e numeros. */
+    /** Le um nome de sala composto por letras, numeros e separadores comuns. */
     public String validarSala(String msg) {
         String texto = null;
         do {
@@ -99,9 +99,8 @@ public class Validacao{
                     System.out.println("Erro: Campo nao deve ser vazio!");
                     continue;
                 }
-                // Validar: apenas letras e numeros, sem espacos ou simbolos
-                if (!texto.matches("^[a-zA-Z0-9]+$")) {
-                    System.out.println("Erro: Nome de sala deve conter apenas letras e numeros, sem espacos ou simbolos.");
+                if (!texto.matches("^[\\p{L}\\p{M}\\p{N} .,'()&/+#-]+$")) {
+                    System.out.println("Erro: Nome de sala contem caracteres invalidos.");
                     texto = null;
                     continue;
                 }
@@ -110,6 +109,17 @@ public class Validacao{
             }
         } while (texto == null || texto.isEmpty());
         return texto;
+    }
+
+    /** Valida um nome de sala sem exigir que contenha letras. */
+    public static String validarNomeSala(String valor) {
+        String nome = valor == null ? "" : valor.trim();
+        if (nome.isEmpty() || nome.length() > 100
+                || nome.codePoints().anyMatch(Character::isISOControl)
+                || !nome.matches("[\\p{L}\\p{M}\\p{N} .,'()&/+#-]+")) {
+            throw new IllegalArgumentException("Informe um nome de sala valido.");
+        }
+        return nome;
     }
 
     /** Le e valida um endereco de e-mail. */
