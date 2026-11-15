@@ -4,6 +4,7 @@ import com.mycompany.sistemadegestaoeagendamentodesalas.controller.Controller;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Container;
 import java.awt.Dialog;
 import java.awt.Font;
 import java.awt.FlowLayout;
@@ -12,7 +13,9 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
+import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.awt.event.HierarchyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.List;
@@ -31,12 +34,16 @@ import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
+import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JPasswordField;
 import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
 import javax.swing.JTabbedPane;
 import javax.swing.JTable;
+import javax.swing.Timer;
+import javax.swing.JTextField;
 import javax.swing.UIManager;
 import javax.swing.KeyStroke;
 import javax.swing.table.DefaultTableModel;
@@ -88,6 +95,18 @@ abstract class PerfilDashboardUI extends JPanel {
 		add(tabs, BorderLayout.CENTER);
 		tabs.setSelectedIndex(0);
 		tabs.addChangeListener(event -> atualizarSelecionado());
+		tabs.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW)
+				.put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "navegarComEscape");
+		tabs.getActionMap().put("navegarComEscape", new AbstractAction() {
+			@Override
+			public void actionPerformed(ActionEvent event) {
+				if (tabs.getSelectedIndex() > 0) {
+					tabs.setSelectedIndex(0);
+				} else if (confirmarTerminoSessao()) {
+					voltarMenu.run();
+				}
+			}
+		});
 	}
 
 	/** Adiciona uma aba com tabela carregada a partir de um controlador. */
@@ -99,6 +118,21 @@ abstract class PerfilDashboardUI extends JPanel {
 	/** Regista um painel personalizado como nova aba. */
 	protected final void adicionarPainel(String titulo, JPanel painel) {
 		tabs.addTab(titulo, painel);
+	}
+
+	/** Atualiza periodicamente um painel apenas enquanto estiver visivel. */
+	protected final void atualizarPeriodicamenteQuandoVisivel(
+			JPanel painel, Runnable atualizar, int intervaloMs) {
+		Timer timer = new Timer(intervaloMs, event -> {
+			if (painel.isShowing()) atualizar.run();
+		});
+		timer.setInitialDelay(intervaloMs);
+		painel.addHierarchyListener(event -> {
+			if ((event.getChangeFlags() & HierarchyEvent.DISPLAYABILITY_CHANGED) != 0) {
+				if (painel.isDisplayable()) timer.start();
+				else timer.stop();
+			}
+		});
 	}
 
 	/** Cria um modelo de tabela cujas celulas nao podem ser editadas. */
@@ -259,6 +293,7 @@ abstract class PerfilDashboardUI extends JPanel {
 		formularioAtivo = dialogo;
 		guardarFormularioAtivo = guardar;
 		cancelarFormularioAtivo = cancelar;
+		instalarNavegacaoEnter(formulario, guardar);
 		guardar.addActionListener(event -> {
 			try {
 				if (confirmar.getAsBoolean()) {
@@ -301,6 +336,84 @@ abstract class PerfilDashboardUI extends JPanel {
 	protected final void restaurarFormularioAtual() {
 		if (guardarFormularioAtivo != null) guardarFormularioAtivo.setEnabled(true);
 		if (cancelarFormularioAtivo != null) cancelarFormularioAtivo.setEnabled(true);
+	}
+
+	/** Mostra ou oculta a senha sem alterar o valor introduzido. */
+	protected static JPanel campoSenha(JPasswordField campo) {
+		JPanel painel = new JPanel(new BorderLayout(6, 0));
+		painel.setOpaque(false);
+		JButton mostrar = new JButton("Ver");
+		char caractereOriginal = campo.getEchoChar();
+		mostrar.setFont(new Font("Segoe UI", Font.BOLD, 12));
+		mostrar.setForeground(PaletaCores.PRIMARIA);
+		mostrar.setBackground(PaletaCores.SUPERFICIE);
+		mostrar.setOpaque(true);
+		mostrar.setFocusPainted(false);
+		mostrar.setBorder(BorderFactory.createCompoundBorder(
+				BorderFactory.createLineBorder(PaletaCores.BORDA),
+				BorderFactory.createEmptyBorder(5, 10, 5, 10)));
+		mostrar.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.HAND_CURSOR));
+		mostrar.setToolTipText("Mostrar senha");
+		mostrar.setFocusable(false);
+		mostrar.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseEntered(MouseEvent event) {
+				mostrar.setBackground(new Color(235, 245, 245));
+			}
+
+			@Override
+			public void mouseExited(MouseEvent event) {
+				mostrar.setBackground(PaletaCores.SUPERFICIE);
+			}
+		});
+		mostrar.addActionListener(event -> {
+			boolean visivel = campo.getEchoChar() != 0;
+			campo.setEchoChar(visivel ? (char) 0 : caractereOriginal);
+			mostrar.setText(visivel ? "Ocultar" : "Ver");
+			mostrar.setToolTipText(visivel ? "Ocultar senha" : "Mostrar senha");
+		});
+		painel.add(campo, BorderLayout.CENTER);
+		painel.add(mostrar, BorderLayout.EAST);
+		return painel;
+	}
+
+	/** Faz Enter avancar pelos campos e submeter o formulario no ultimo campo. */
+	protected static void instalarNavegacaoEnter(Component formulario, JButton acaoFinal) {
+		List<Component> campos = new java.util.ArrayList<>();
+		recolherCampos(formulario, campos);
+		for (int i = 0; i < campos.size(); i++) {
+			Component campo = campos.get(i);
+			final Component proximo = i + 1 < campos.size() ? campos.get(i + 1) : null;
+			campo.addKeyListener(new KeyAdapter() {
+				@Override
+				public void keyPressed(KeyEvent event) {
+					if (event.getKeyCode() != KeyEvent.VK_ENTER
+							|| campo instanceof JComboBox<?> combo && combo.isPopupVisible()) {
+						return;
+					}
+					event.consume();
+					if (proximo != null) {
+						proximo.requestFocusInWindow();
+					} else if (acaoFinal.isEnabled()) {
+						acaoFinal.doClick();
+					}
+				}
+			});
+		}
+	}
+
+	private static void recolherCampos(Component componente, List<Component> campos) {
+		if (componente.isEnabled() && componente.isFocusable()
+				&& (componente instanceof JTextField
+						|| componente instanceof JComboBox<?>
+						|| componente instanceof JList<?>)) {
+			campos.add(componente);
+		}
+		if (componente instanceof Container contentor) {
+			for (Component filho : contentor.getComponents()) {
+				recolherCampos(filho, campos);
+			}
+		}
 	}
 
 	/** Cria uma caixa de selecao tipada a partir de uma lista de objetos. */
