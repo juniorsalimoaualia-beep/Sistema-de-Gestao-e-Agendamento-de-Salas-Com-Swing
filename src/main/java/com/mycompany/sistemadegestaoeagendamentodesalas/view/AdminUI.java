@@ -116,6 +116,7 @@ public class AdminUI extends PerfilDashboardUI {
 			if (!atualizandoFiltro[0]) reload.run();
 		});
 		panel.putClientProperty("reload", reload);
+		atualizarPeriodicamenteQuandoVisivel(panel, reload, 60_000);
 		adicionarPainel("Salas", panel);
 	}
 
@@ -129,7 +130,7 @@ public class AdminUI extends PerfilDashboardUI {
 
 	/** Monta a tabela de departamentos e as acoes de atribuicao de secretario. */
 	private void adicionarDepartamentos() {
-		DefaultTableModel model = modeloTabela(new String[]{"ID", "Nome", "Secretario"});
+		DefaultTableModel model = modeloTabela(new String[]{"ID", "Nome", "Salas", "Secretario"});
 		JTable table = new JTable(model);
 		JPanel panel = criarPainelTabela("Departamentos e secretarios", table);
 		JButton atualizar = new JButton("Atualizar");
@@ -137,14 +138,25 @@ public class AdminUI extends PerfilDashboardUI {
 		JButton atribuir = new JButton("Atribuir secretario");
 		panel.add(criarAcoes(atualizar, adicionar, atribuir), BorderLayout.SOUTH);
 		mostrarAcoesAoSelecionar(table, atribuir);
-		Runnable reload = () -> executarAtualizacao(atualizar, departamentoController::listar, departamentos -> {
-			model.setRowCount(0);
-			for (Departamento departamento : departamentos) {
-				model.addRow(new Object[]{departamento.getId(), departamento.getNome(),
-						departamento.getSecretario() == null ? "Por atribuir"
-								: departamento.getSecretario().getNomeCompleto()});
-			}
-		});
+		Runnable reload = () -> executarAtualizacao(atualizar,
+				() -> new java.util.AbstractMap.SimpleEntry<>(
+						departamentoController.listar(), salaController.listar()),
+				dados -> {
+					model.setRowCount(0);
+					for (Departamento departamento : dados.getKey()) {
+						List<String> nomesSalas = new ArrayList<>();
+						for (Sala sala : dados.getValue()) {
+							if (sala.getDepartamento() != null
+									&& sala.getDepartamento().getId() == departamento.getId()) {
+								nomesSalas.add(sala.getNome());
+							}
+						}
+						model.addRow(new Object[]{departamento.getId(), departamento.getNome(),
+								nomesSalas.isEmpty() ? "Sem salas" : String.join(", ", nomesSalas),
+								departamento.getSecretario() == null ? "Por atribuir"
+										: departamento.getSecretario().getNomeCompleto()});
+					}
+				});
 		atualizar.addActionListener(event -> reload.run());
 		adicionar.addActionListener(event -> criarDepartamento());
 		atribuir.addActionListener(event -> atribuirSecretario(table));
@@ -178,9 +190,11 @@ public class AdminUI extends PerfilDashboardUI {
 		JButton atualizar = new JButton("Atualizar");
 		JButton adicionar = new JButton("Adicionar");
 		JButton associarDocente = new JButton("Associar docente");
+		JButton removerDocente = new JButton("Remover docente");
 		JButton remover = new JButton("Remover");
-		panel.add(criarAcoes(atualizar, adicionar, associarDocente, remover), BorderLayout.SOUTH);
-		mostrarAcoesAoSelecionar(table, associarDocente, remover);
+		panel.add(criarAcoes(atualizar, adicionar, associarDocente, removerDocente, remover),
+				BorderLayout.SOUTH);
+		mostrarAcoesAoSelecionar(table, associarDocente, removerDocente, remover);
 		Runnable reload = () -> {
 			executarAtualizacao(atualizar,
 					() -> new java.util.AbstractMap.SimpleEntry<>(
@@ -219,6 +233,7 @@ public class AdminUI extends PerfilDashboardUI {
 		atualizar.addActionListener(event -> reload.run());
 		adicionar.addActionListener(event -> criarDisciplina());
 		associarDocente.addActionListener(event -> associarDocente(table));
+		removerDocente.addActionListener(event -> removerDocente(table));
 		remover.addActionListener(event -> removerSelecionado(
 				table, "disciplina", disciplinaController::remover));
 		filtroDocente.addActionListener(event -> {
@@ -342,7 +357,12 @@ public class AdminUI extends PerfilDashboardUI {
 			return;
 		}
 		mostrarFormulario("Nova sala", formulario("Nome", nome, "Departamento", departamento), () -> {
-			if (!validarTextoObrigatorio(nome, "Informe o nome da sala.", 100)) return false;
+			try {
+				Validacao.validarNomeSala(nome.getText());
+			} catch (IllegalArgumentException e) {
+				mostrarErro("Informe um nome de sala valido.");
+				return false;
+			}
 			Departamento departamentoSelecionado = valorSelecionado(departamento);
 			if (departamentoSelecionado == null) {
 				mostrarErro("Selecione o departamento responsavel pela sala.");
@@ -380,24 +400,22 @@ public class AdminUI extends PerfilDashboardUI {
 		});
 	}
 
-	/** Recolhe os dados e cria um departamento, com secretario opcional. */
+	/** Cria um departamento sem exigir salas ou secretario. */
 	private void criarDepartamento() {
 		JTextField nome = new JTextField(20);
 		Validacao.filtrarTexto(nome, 150);
 		JComboBox<Opcao<Curso>> curso = opcoes(cursoController.listar(), Curso::getNome, "Sem curso");
-		JComboBox<Opcao<Sala>> sala = opcoes(salaController.listar(), Sala::getNome, "Sem sala");
 		JComboBox<Opcao<Secretario>> secretario = opcoes(secretariosDisponiveis(null),
 				Secretario::getNomeCompleto, "Sem secretario");
 		mostrarFormulario("Novo departamento", formulario("Nome", nome, "Curso", curso,
-				"Sala", sala, "Secretario responsavel", secretario), () -> {
+				"Secretario responsavel (opcional)", secretario), () -> {
 			if (!validarTextoObrigatorio(nome, "Informe o nome do departamento.", 150)) return false;
 			Secretario responsavel = valorSelecionado(secretario);
 			Curso cursoSelecionado = valorSelecionado(curso);
-			Sala salaSelecionada = valorSelecionado(sala);
 			String nomeDepartamento = nome.getText().trim();
 			return executarOperacao("A guardar departamento...", () -> departamentoController.salvar(
 					new Departamento(departamentoController.gerarProximoId(), nomeDepartamento,
-							cursoSelecionado, salaSelecionada, responsavel)),
+							cursoSelecionado, responsavel)),
 					"Departamento registado.");
 		});
 	}
@@ -487,6 +505,24 @@ public class AdminUI extends PerfilDashboardUI {
 		});
 	}
 
+	/** Remove o docente da disciplina selecionada sem remover a disciplina. */
+	private void removerDocente(JTable tabela) {
+		int linha = tabela.getSelectedRow();
+		if (linha < 0) return;
+		int linhaModelo = tabela.convertRowIndexToModel(linha);
+		if ("Sem docente".equals(tabela.getModel().getValueAt(linhaModelo, 2).toString())) {
+			mostrarInformacao("A disciplina selecionada ja nao tem docente associado.");
+			return;
+		}
+		int disciplinaId = Integer.parseInt(tabela.getModel()
+				.getValueAt(linhaModelo, 0).toString());
+		executarOperacao("A remover docente...", () -> {
+			if (!disciplinaController.atribuirDocente(disciplinaId, null)) {
+				throw new IllegalStateException("Nao foi possivel remover o docente da disciplina.");
+			}
+		}, "Docente removido da disciplina.");
+	}
+
 	/** Recolhe os dados e regista um novo docente. */
 	private void criarDocente() {
 		JTextField nome = new JTextField(20);
@@ -500,7 +536,7 @@ public class AdminUI extends PerfilDashboardUI {
 		Validacao.filtrarDigitos(celular, 9);
 		mostrarFormulario("Novo docente", formulario(
 				"Nome", nome, "Apelido", apelido, "Nivel academico", nivel,
-				"Celular", celular, "Senha", senha), () -> {
+				"Celular", celular, "Senha", campoSenha(senha)), () -> {
 			String email = emGen.gerarEmail(nome, apelido);
 			validarDadosUsuario(nome, apelido, celular, email, senha);
 			Validacao.validarTextoObrigatorio(nivel.getText(), "nivel academico", 100);
@@ -531,7 +567,7 @@ public class AdminUI extends PerfilDashboardUI {
 		Validacao.filtrarDigitos(celular, 9);
 		mostrarFormulario("Novo estudante", formulario(
 				"Nome", nome, "Apelido", apelido, "Curso", curso, "Ano", ano,
-				"Celular", celular, "Senha", senha), () -> {
+				"Celular", celular, "Senha", campoSenha(senha)), () -> {
 			String email = emGen.gerarEmail(nome, apelido);
 			validarDadosUsuario(nome, apelido, celular, email, senha);
 			Curso cursoSelecionado = valorSelecionado(curso);
@@ -569,7 +605,7 @@ public class AdminUI extends PerfilDashboardUI {
 		Validacao.filtrarDigitos(celular, 9);
 		mostrarFormulario("Novo secretario", formulario(
 				"Nome", nome, "Apelido", apelido, "Cargo", cargo,
-				"Celular", celular, "Senha", senha), () -> {
+				"Celular", celular, "Senha", campoSenha(senha)), () -> {
 			String email= emGen.gerarEmail(nome, apelido);
 			validarDadosUsuario(nome, apelido, celular, email, senha);
 			Validacao.validarTextoObrigatorio(cargo.getText(), "cargo", 100);
