@@ -30,8 +30,8 @@ public class HorarioDAO {
                 + "VALUES(?, ?, ?, ?, ?, ?, ?)";
         try (Connection connection = ConexaoSql.conectar();
              PreparedStatement statement = connection.prepareStatement(sql)) {
-            if (temHorarioSobreposto(connection, horario)) {
-                throw new IllegalArgumentException("O curso ja tem um horario sobreposto nesse dia.");
+            if (temConflito(connection, horario, 0)) {
+                throw new IllegalArgumentException("O horario entra em conflito com outra aula, sala ou docente.");
             }
             statement.setInt(1, horario.getId());
             if (horario.getCurso() == null || horario.getCurso().getId() == 0) statement.setNull(2, java.sql.Types.INTEGER);
@@ -46,6 +46,78 @@ public class HorarioDAO {
             statement.executeUpdate();
         } catch (SQLException e) {
             throw new IllegalStateException("Erro ao salvar horario.", e);
+        }
+    }
+
+    public boolean atualizar(Horario horario) {
+        validarHorario(horario);
+        String sql = "UPDATE horarios SET dia_semana = ?, hora_inicio = ?, hora_fim = ?, sala_id = ? "
+                + "WHERE id = ?";
+        try (Connection connection = ConexaoSql.conectar()) {
+            connection.setAutoCommit(false);
+            try (PreparedStatement existe = connection.prepareStatement(
+                    "SELECT 1 FROM horarios WHERE id = ? FOR UPDATE")) {
+                existe.setInt(1, horario.getId());
+                try (ResultSet resultado = existe.executeQuery()) {
+                    if (!resultado.next()) {
+                        connection.rollback();
+                        return false;
+                    }
+                }
+            }
+            if (temConflito(connection, horario, horario.getId())) {
+                connection.rollback();
+                throw new IllegalArgumentException(
+                        "O novo horario entra em conflito com outra aula, sala ou docente.");
+            }
+            try (PreparedStatement atualizar = connection.prepareStatement(sql)) {
+                atualizar.setString(1, horario.getDiaSemana().name());
+                atualizar.setString(2, horario.getHoraInicio().toString());
+                atualizar.setString(3, horario.getHoraFim().toString());
+                atualizar.setInt(4, horario.getSala().getId());
+                atualizar.setInt(5, horario.getId());
+                boolean atualizado = atualizar.executeUpdate() == 1;
+                connection.commit();
+                return atualizado;
+            } catch (SQLException e) {
+                connection.rollback();
+                throw e;
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Erro ao alterar horario.", e);
+        }
+    }
+
+    public boolean trocarHorarios(int primeiroId, int segundoId) {
+        if (primeiroId <= 0 || segundoId <= 0 || primeiroId == segundoId) {
+            throw new IllegalArgumentException("Selecione duas aulas diferentes para trocar.");
+        }
+        try (Connection connection = ConexaoSql.conectar()) {
+            connection.setAutoCommit(false);
+            Horario primeiro = buscarPorId(connection, primeiroId);
+            Horario segundo = buscarPorId(connection, segundoId);
+            if (primeiro == null || segundo == null) {
+                connection.rollback();
+                return false;
+            }
+
+            IntervaloTemporario temporario = encontrarIntervaloTemporario(connection, primeiro, segundo);
+            atualizarIntervalo(connection, primeiroId, temporario.inicio, temporario.fim, temporario.dia);
+            atualizarIntervalo(connection, segundoId, primeiro.getHoraInicio(), primeiro.getHoraFim(),
+                    primeiro.getDiaSemana());
+            atualizarIntervalo(connection, primeiroId, segundo.getHoraInicio(), segundo.getHoraFim(),
+                    segundo.getDiaSemana());
+
+            if (temConflito(connection, copiarIntervalo(primeiro, segundo), primeiroId)
+                    || temConflito(connection, copiarIntervalo(segundo, primeiro), segundoId)) {
+                connection.rollback();
+                throw new IllegalArgumentException(
+                        "A troca criaria conflito com outra aula, sala ou docente.");
+            }
+            connection.commit();
+            return true;
+        } catch (SQLException e) {
+            throw new IllegalStateException("Erro ao trocar os horarios das aulas.", e);
         }
     }
 
@@ -118,6 +190,7 @@ public class HorarioDAO {
         String nomeDisciplina = hr.getDisciplina() != null ? hr.getDisciplina().getNome() : "";
         return "Curso: " + nomeCurso
             + " | Disciplina: " + nomeDisciplina
+            + " | Ano: " + (hr.getDisciplina() == null ? "-" : hr.getDisciplina().getAno() + "º ano")
             + " | Dia: " + hr.getDiaSemana()
             + " | Sala: " + (hr.getSala() == null ? "Nao definida" : hr.getSala().getNome())
             + " | Inicio: " + hr.getHoraInicio()
@@ -133,17 +206,111 @@ public class HorarioDAO {
         }
     }
 
-    private boolean temHorarioSobreposto(Connection connection, Horario novo) throws SQLException {
-        String sql = "SELECT 1 FROM horarios WHERE curso_id = ? AND dia_semana = ? "
-                + "AND hora_inicio < ? AND hora_fim > ? LIMIT 1";
+    private boolean temConflito(Connection connection, Horario novo, int excluirId) throws SQLException {
+        String sql = "SELECT 1 FROM horarios h "
+                + "LEFT JOIN disciplinas disciplina_existente ON disciplina_existente.id = h.disciplina_id "
+                + "LEFT JOIN disciplinas disciplina_nova ON disciplina_nova.id = ? "
+                + "WHERE h.id <> ? AND h.dia_semana = ? AND h.hora_inicio < ? AND h.hora_fim > ? "
+                + "AND (h.curso_id = ? OR h.sala_id = ? OR "
+                + "(disciplina_nova.docente_id IS NOT NULL "
+                + "AND disciplina_nova.docente_id = disciplina_existente.docente_id)) LIMIT 1";
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
-            statement.setInt(1, novo.getCurso().getId());
-            statement.setString(2, novo.getDiaSemana().name());
-            statement.setString(3, novo.getHoraFim().toString());
-            statement.setString(4, novo.getHoraInicio().toString());
+            if (novo.getDisciplina() == null) statement.setNull(1, java.sql.Types.INTEGER);
+            else statement.setInt(1, novo.getDisciplina().getId());
+            statement.setInt(2, excluirId);
+            statement.setString(3, novo.getDiaSemana().name());
+            statement.setString(4, novo.getHoraFim().toString());
+            statement.setString(5, novo.getHoraInicio().toString());
+            statement.setInt(6, novo.getCurso().getId());
+            statement.setInt(7, novo.getSala().getId());
             try (ResultSet result = statement.executeQuery()) {
                 return result.next();
             }
+        }
+    }
+
+    private void validarHorario(Horario horario) {
+        if (horario == null || horario.getId() <= 0 || horario.getCurso() == null
+                || horario.getCurso().getId() <= 0 || horario.getSala() == null
+                || horario.getSala().getId() <= 0 || horario.getDiaSemana() == null
+                || horario.getHoraInicio() == null || horario.getHoraFim() == null
+                || !horario.getHoraFim().isAfter(horario.getHoraInicio())) {
+            throw new IllegalArgumentException("Aula, sala, dia e intervalo de horas validos sao obrigatorios.");
+        }
+    }
+
+    private Horario buscarPorId(Connection connection, int id) throws SQLException {
+        String sql = "SELECT id, curso_id, disciplina_id, sala_id, dia_semana, hora_inicio, hora_fim "
+                + "FROM horarios WHERE id = ? FOR UPDATE";
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, id);
+            try (ResultSet result = statement.executeQuery()) {
+                return result.next() ? lerHorario(result) : null;
+            }
+        }
+    }
+
+    private IntervaloTemporario encontrarIntervaloTemporario(Connection connection,
+            Horario primeiro, Horario segundo) throws SQLException {
+        boolean[][] ocupados = new boolean[DiaSemana.values().length][1440];
+        String sql = "SELECT dia_semana, hora_inicio, hora_fim FROM horarios "
+                + "WHERE curso_id = ? AND id NOT IN (?, ?)";
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, primeiro.getCurso().getId());
+            statement.setInt(2, primeiro.getId());
+            statement.setInt(3, segundo.getId());
+            try (ResultSet resultado = statement.executeQuery()) {
+                while (resultado.next()) {
+                    int dia = DiaSemana.valueOf(resultado.getString("dia_semana")).ordinal();
+                    LocalTime inicio = LocalTime.parse(resultado.getString("hora_inicio"));
+                    LocalTime fim = LocalTime.parse(resultado.getString("hora_fim"));
+                    int primeiroMinuto = inicio.getHour() * 60 + inicio.getMinute();
+                    int ultimoMinuto = fim.getHour() * 60 + fim.getMinute()
+                            + (fim.getSecond() > 0 || fim.getNano() > 0 ? 1 : 0);
+                    for (int minuto = primeiroMinuto; minuto < Math.min(1440, ultimoMinuto); minuto++) {
+                        ocupados[dia][minuto] = true;
+                    }
+                }
+            }
+        }
+        for (int dia = 0; dia < ocupados.length; dia++) {
+            for (int minuto = 0; minuto < 1439; minuto++) {
+                if (!ocupados[dia][minuto]) {
+                    return new IntervaloTemporario(DiaSemana.values()[dia],
+                            LocalTime.of(minuto / 60, minuto % 60),
+                            LocalTime.of((minuto + 1) / 60, (minuto + 1) % 60));
+                }
+            }
+        }
+        throw new IllegalArgumentException("Nao ha um intervalo livre para processar a troca.");
+    }
+
+    private void atualizarIntervalo(Connection connection, int id, LocalTime inicio,
+            LocalTime fim, DiaSemana dia) throws SQLException {
+        String sql = "UPDATE horarios SET dia_semana = ?, hora_inicio = ?, hora_fim = ? WHERE id = ?";
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, dia.name());
+            statement.setString(2, inicio.toString());
+            statement.setString(3, fim.toString());
+            statement.setInt(4, id);
+            statement.executeUpdate();
+        }
+    }
+
+    private Horario copiarIntervalo(Horario destino, Horario origem) {
+        return new Horario(destino.getId(), destino.getCurso(), destino.getDisciplina(),
+                destino.getSala(), origem.getDiaSemana(), origem.getHoraInicio(), origem.getHoraFim());
+    }
+
+    private static final class IntervaloTemporario {
+        private final DiaSemana dia;
+        private final LocalTime inicio;
+        private final LocalTime fim;
+
+        private IntervaloTemporario(DiaSemana dia, LocalTime inicio, LocalTime fim) {
+            this.dia = dia;
+            this.inicio = inicio;
+            this.fim = fim;
         }
     }
 }

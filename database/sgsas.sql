@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS usuarios (
     senha_hash VARCHAR(255) NOT NULL,
     PRIMARY KEY (id),
     UNIQUE KEY uq_usuarios_perfil_email (perfil, email),
+    UNIQUE KEY uq_usuarios_celular (celular),
     KEY ix_usuarios_curso (curso_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -30,7 +31,8 @@ CREATE TABLE IF NOT EXISTS departamentos (
     secretario_id INT NULL,
     PRIMARY KEY (id),
     KEY ix_departamentos_curso (curso_id),
-    UNIQUE KEY uq_departamentos_secretario (secretario_id)
+    UNIQUE KEY uq_departamentos_secretario (secretario_id),
+    UNIQUE KEY uq_departamentos_nome (nome)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 SET @secretario_coluna_existe = (
@@ -68,7 +70,7 @@ CREATE TABLE IF NOT EXISTS cursos (
     nome VARCHAR(150) NOT NULL,
     departamento_id INT NULL,
     PRIMARY KEY (id),
-    KEY ix_cursos_nome (nome),
+    UNIQUE KEY uq_cursos_nome (nome),
     KEY ix_cursos_departamento (departamento_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -77,11 +79,27 @@ CREATE TABLE IF NOT EXISTS disciplinas (
     nome VARCHAR(150) NOT NULL,
     docente_id INT NULL,
     curso_id INT NULL,
+    ano INT NOT NULL DEFAULT 1,
     PRIMARY KEY (id),
-    KEY ix_disciplinas_nome (nome),
+    UNIQUE KEY uq_disciplinas_nome (nome),
     KEY ix_disciplinas_docente (docente_id),
     KEY ix_disciplinas_curso (curso_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+SET @disciplina_ano_existe = (
+    SELECT COUNT(*) FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'disciplinas'
+      AND COLUMN_NAME = 'ano'
+);
+SET @sql_disciplina_ano = IF(
+    @disciplina_ano_existe = 0,
+    'ALTER TABLE disciplinas ADD COLUMN ano INT NOT NULL DEFAULT 1',
+    'SELECT 1'
+);
+PREPARE stmt_disciplina_ano FROM @sql_disciplina_ano;
+EXECUTE stmt_disciplina_ano;
+DEALLOCATE PREPARE stmt_disciplina_ano;
 
 CREATE TABLE IF NOT EXISTS salas (
     id INT NOT NULL,
@@ -90,10 +108,86 @@ CREATE TABLE IF NOT EXISTS salas (
     reserva_id INT NOT NULL DEFAULT -1,
     departamento_id INT NULL,
     PRIMARY KEY (id),
+    UNIQUE KEY uq_salas_departamento_nome (departamento_id, nome),
     KEY ix_salas_nome (nome),
     KEY ix_salas_reserva (reserva_id),
     KEY ix_salas_departamento (departamento_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+SET @indice_celular_existe = (
+    SELECT COUNT(*) FROM information_schema.STATISTICS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'usuarios'
+      AND INDEX_NAME = 'uq_usuarios_celular'
+);
+SET @sql_indice_celular = IF(
+    @indice_celular_existe = 0,
+    'ALTER TABLE usuarios ADD UNIQUE KEY uq_usuarios_celular (celular)',
+    'SELECT 1'
+);
+PREPARE stmt_indice_celular FROM @sql_indice_celular;
+EXECUTE stmt_indice_celular;
+DEALLOCATE PREPARE stmt_indice_celular;
+
+SET @indice_departamento_nome_existe = (
+    SELECT COUNT(*) FROM information_schema.STATISTICS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'departamentos'
+      AND INDEX_NAME = 'uq_departamentos_nome'
+);
+SET @sql_indice_departamento_nome = IF(
+    @indice_departamento_nome_existe = 0,
+    'ALTER TABLE departamentos ADD UNIQUE KEY uq_departamentos_nome (nome)',
+    'SELECT 1'
+);
+PREPARE stmt_indice_departamento_nome FROM @sql_indice_departamento_nome;
+EXECUTE stmt_indice_departamento_nome;
+DEALLOCATE PREPARE stmt_indice_departamento_nome;
+
+SET @indice_curso_nome_existe = (
+    SELECT COUNT(*) FROM information_schema.STATISTICS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'cursos'
+      AND INDEX_NAME = 'uq_cursos_nome'
+);
+SET @sql_indice_curso_nome = IF(
+    @indice_curso_nome_existe = 0,
+    'ALTER TABLE cursos ADD UNIQUE KEY uq_cursos_nome (nome)',
+    'SELECT 1'
+);
+PREPARE stmt_indice_curso_nome FROM @sql_indice_curso_nome;
+EXECUTE stmt_indice_curso_nome;
+DEALLOCATE PREPARE stmt_indice_curso_nome;
+
+SET @indice_disciplina_nome_existe = (
+    SELECT COUNT(*) FROM information_schema.STATISTICS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'disciplinas'
+      AND INDEX_NAME = 'uq_disciplinas_nome'
+);
+SET @sql_indice_disciplina_nome = IF(
+    @indice_disciplina_nome_existe = 0,
+    'ALTER TABLE disciplinas ADD UNIQUE KEY uq_disciplinas_nome (nome)',
+    'SELECT 1'
+);
+PREPARE stmt_indice_disciplina_nome FROM @sql_indice_disciplina_nome;
+EXECUTE stmt_indice_disciplina_nome;
+DEALLOCATE PREPARE stmt_indice_disciplina_nome;
+
+SET @indice_sala_departamento_existe = (
+    SELECT COUNT(*) FROM information_schema.STATISTICS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'salas'
+      AND INDEX_NAME = 'uq_salas_departamento_nome'
+);
+SET @sql_indice_sala_departamento = IF(
+    @indice_sala_departamento_existe = 0,
+    'ALTER TABLE salas ADD UNIQUE KEY uq_salas_departamento_nome (departamento_id, nome)',
+    'SELECT 1'
+);
+PREPARE stmt_indice_sala_departamento FROM @sql_indice_sala_departamento;
+EXECUTE stmt_indice_sala_departamento;
+DEALLOCATE PREPARE stmt_indice_sala_departamento;
 
 SET @sala_departamento_legacy_existe = (
     SELECT COUNT(*) FROM information_schema.COLUMNS

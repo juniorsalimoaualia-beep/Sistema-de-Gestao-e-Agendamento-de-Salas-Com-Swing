@@ -11,6 +11,14 @@ public class HorarioController implements Controller<Horario> {
         dao.salvar(horario);
     }
 
+    public boolean atualizar(Horario horario) {
+        return dao.atualizar(horario);
+    }
+
+    public boolean trocarHorarios(int primeiroId, int segundoId) {
+        return dao.trocarHorarios(primeiroId, segundoId);
+    }
+
     public List<Horario> listar() {
         return dao.listaHorario();
     }

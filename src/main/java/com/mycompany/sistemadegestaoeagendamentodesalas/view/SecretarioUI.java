@@ -110,30 +110,53 @@ public class SecretarioUI extends PerfilDashboardUI {
 
 	/** Apresenta horarios relacionados com o departamento do secretario. */
 	private void adicionarHorarios() {
-		DefaultTableModel model = modeloTabela(
-				new String[]{"ID", "Dia", "Inicio", "Fim", "Curso", "Disciplina", "Sala"});
-		JTable table = new JTable(model);
-		JPanel panel = criarPainelTabela("Horarios do departamento", table);
+		JPanel panel = new JPanel(new BorderLayout(0, 14));
+		panel.setBackground(PaletaCores.FUNDO);
+		panel.setBorder(javax.swing.BorderFactory.createEmptyBorder(22, 24, 24, 24));
+		javax.swing.JLabel titulo = new javax.swing.JLabel("Horarios por curso e ano");
+		titulo.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 20));
+		titulo.setForeground(PaletaCores.TEXTO);
+		panel.add(titulo, BorderLayout.NORTH);
+		JPanel grupos = new JPanel(new BorderLayout());
+		grupos.setOpaque(false);
+		panel.add(new JScrollPane(grupos), BorderLayout.CENTER);
 		JButton atualizar = new JButton("Atualizar");
 		JButton adicionar = new JButton("Adicionar");
-		panel.add(criarAcoes(atualizar, adicionar), BorderLayout.SOUTH);
-		Runnable reload = () -> executarAtualizacao(atualizar, horarioController::listar, horarios -> {
-			model.setRowCount(0);
-			if (departamento != null) {
-				for (Horario horario : horarios) {
-					if (pertenceAoDepartamento(horario.getCurso())) {
-						model.addRow(new Object[]{horario.getId(), horario.getDiaSemana(),
-								horario.getHoraInicio(), horario.getHoraFim(), horario.getNomeCurso(),
-								horario.getDisciplina() == null ? "-" : horario.getDisciplina().getNome(),
-								horario.getSala() == null ? "-" : horario.getSala().getNome()});
-					}
-				}
-			}
+		JButton[] acoesHorario = HorarioGestaoUI.criarBotoes(
+				this, horarioController, this::horariosDoDepartamento, this::salasDoDepartamento);
+		JPanel acoes = criarAcoes(atualizar, adicionar, acoesHorario[0], acoesHorario[1]);
+		HorarioGestaoUI.ajustarLarguras(acoesHorario);
+		panel.add(acoes, BorderLayout.SOUTH);
+		Runnable reload = () -> executarAtualizacao(atualizar, this::horariosDoDepartamento, horarios -> {
+			grupos.removeAll();
+			grupos.add(HorariosPorAnoUI.criar(horarios, true), BorderLayout.NORTH);
+			grupos.revalidate();
+			grupos.repaint();
 		});
 		atualizar.addActionListener(event -> reload.run());
 		adicionar.addActionListener(event -> criarHorario());
 		panel.putClientProperty("reload", reload);
 		adicionarPainel("Horarios", panel);
+	}
+
+	private java.util.List<Horario> horariosDoDepartamento() {
+		java.util.List<Horario> horarios = new java.util.ArrayList<>();
+		if (departamento != null) {
+			for (Horario horario : horarioController.listar()) {
+				if (pertenceAoDepartamento(horario.getCurso())) horarios.add(horario);
+			}
+		}
+		return horarios;
+	}
+
+	private java.util.List<Sala> salasDoDepartamento() {
+		java.util.List<Sala> salas = new java.util.ArrayList<>();
+		if (departamento != null) {
+			for (Sala sala : salaController.listar()) {
+				if (pertenceAoDepartamento(sala)) salas.add(sala);
+			}
+		}
+		return salas;
 	}
 
 	/** Regista um horario dentro do departamento do secretario. */
@@ -169,7 +192,7 @@ public class SecretarioUI extends PerfilDashboardUI {
 					"Sem salas", JOptionPane.INFORMATION_MESSAGE);
 			return;
 		}
-		JComboBox<DiaSemana> dia = new JComboBox<>(DiaSemana.values());
+		HorarioGestaoUI.SeletorDia dia = HorarioGestaoUI.criarSeletorDia(DiaSemana.SEGUNDA);
 		JTextField inicio = new JTextField("08:00", 16);
 		JTextField fim = new JTextField("09:00", 16);
 		Validacao.filtrarDataHora(inicio, false);
@@ -182,7 +205,7 @@ public class SecretarioUI extends PerfilDashboardUI {
 		formulario.add(new javax.swing.JLabel("Sala"));
 		formulario.add(sala);
 		formulario.add(new javax.swing.JLabel("Dia"));
-		formulario.add(dia);
+		formulario.add(dia.componente());
 		formulario.add(new javax.swing.JLabel("Hora de inicio (HH:MM)"));
 		formulario.add(inicio);
 		formulario.add(new javax.swing.JLabel("Hora de fim (HH:MM)"));
@@ -196,7 +219,7 @@ public class SecretarioUI extends PerfilDashboardUI {
 			Curso cursoSelecionado = valorSelecionado(curso);
 			Disciplina disciplinaSelecionada = valorSelecionado(disciplina);
 			Sala salaSelecionada = valorSelecionado(sala);
-			DiaSemana diaSelecionado = (DiaSemana) dia.getSelectedItem();
+			DiaSemana diaSelecionado = dia.diaSelecionado();
 			return executarOperacao("A guardar horario...", () -> horarioController.salvar(new Horario(
 					horarioController.gerarProximoId(), cursoSelecionado,
 					disciplinaSelecionada, salaSelecionada, diaSelecionado,

@@ -15,9 +15,7 @@ public class SalaDAO {
     private final DepartamentoDAO departamentoDAO = new DepartamentoDAO();
 
     public void salvar(Sala sala){
-        String sql = "INSERT INTO salas(id, nome, estado, reserva_id, departamento_id) VALUES(?, ?, ?, ?, ?) "
-                + "ON DUPLICATE KEY UPDATE nome = VALUES(nome), estado = VALUES(estado), "
-                + "reserva_id = VALUES(reserva_id), departamento_id = VALUES(departamento_id)";
+        String sql = "INSERT INTO salas(id, nome, estado, reserva_id, departamento_id) VALUES(?, ?, ?, ?, ?)";
         try (Connection connection = ConexaoSql.conectar();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setInt(1, sala.getId()); statement.setString(2, sala.getNome());
@@ -88,6 +86,59 @@ public class SalaDAO {
         return null;
     }
 
+    public boolean alterarDepartamento(int salaId, int departamentoId) {
+        String sql = "UPDATE salas SET departamento_id = ? WHERE id = ?";
+        try (Connection connection = ConexaoSql.conectar();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, departamentoId);
+            statement.setInt(2, salaId);
+            if (statement.executeUpdate() > 0) return true;
+            try (PreparedStatement existe = connection.prepareStatement(
+                    "SELECT 1 FROM salas WHERE id = ?")) {
+                existe.setInt(1, salaId);
+                try (ResultSet resultado = existe.executeQuery()) {
+                    return resultado.next();
+                }
+            }
+        } catch (SQLException e) {
+            if ("23000".equals(e.getSQLState())) {
+                throw new IllegalStateException("Ja existe uma sala com esse nome no departamento selecionado.", e);
+            }
+            throw new IllegalStateException("Nao foi possivel alterar o departamento da sala.", e);
+        }
+    }
+
+    public boolean removerPorId(int salaId) {
+        String referencias = "SELECT (SELECT COUNT(*) FROM horarios WHERE sala_id = ?) "
+                + "+ (SELECT COUNT(*) FROM reservas WHERE sala_id = ?)";
+        try (Connection connection = ConexaoSql.conectar()) {
+            connection.setAutoCommit(false);
+            try (PreparedStatement verificar = connection.prepareStatement(referencias)) {
+                verificar.setInt(1, salaId);
+                verificar.setInt(2, salaId);
+                try (ResultSet resultado = verificar.executeQuery()) {
+                    if (resultado.next() && resultado.getInt(1) > 0) {
+                        connection.rollback();
+                        throw new IllegalStateException("Nao e possivel eliminar a sala porque esta "
+                                + "associada a horarios ou reservas.");
+                    }
+                }
+            }
+            try (PreparedStatement remover = connection.prepareStatement(
+                    "DELETE FROM salas WHERE id = ?")) {
+                remover.setInt(1, salaId);
+                boolean removida = remover.executeUpdate() > 0;
+                connection.commit();
+                return removida;
+            } catch (SQLException e) {
+                connection.rollback();
+                throw e;
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Erro ao eliminar sala.", e);
+        }
+    }
+
     private Sala lerSala(ResultSet result) throws SQLException {
         Sala sala = new Sala(result.getInt("id"), result.getString("nome"));
         sala.setEstado(EstadoSala.valueOf(result.getString("estado")));
@@ -123,18 +174,18 @@ public class SalaDAO {
     }
 
     public void atualizarTodos(List<Sala> lista) {
-        String sql = "INSERT INTO salas(id, nome, estado, reserva_id, departamento_id) VALUES(?, ?, ?, ?, ?) "
-                + "ON DUPLICATE KEY UPDATE nome = VALUES(nome), estado = VALUES(estado), "
-                + "reserva_id = VALUES(reserva_id), departamento_id = VALUES(departamento_id)";
+        String sql = "UPDATE salas SET nome = ?, estado = ?, reserva_id = ?, departamento_id = ? WHERE id = ?";
         try (Connection connection = ConexaoSql.conectar();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             connection.setAutoCommit(false);
             try {
                 for (Sala sala : lista) {
-                    statement.setInt(1, sala.getId()); statement.setString(2, sala.getNome());
-                    statement.setString(3, sala.getEstado().name()); statement.setInt(4, sala.getReservaId());
-                    if (sala.getDepartamento() == null) statement.setNull(5, java.sql.Types.INTEGER);
-                    else statement.setInt(5, sala.getDepartamento().getId());
+                    statement.setString(1, sala.getNome());
+                    statement.setString(2, sala.getEstado().name());
+                    statement.setInt(3, sala.getReservaId());
+                    if (sala.getDepartamento() == null) statement.setNull(4, java.sql.Types.INTEGER);
+                    else statement.setInt(4, sala.getDepartamento().getId());
+                    statement.setInt(5, sala.getId());
                     statement.addBatch();
                 }
                 statement.executeBatch();

@@ -6,7 +6,6 @@ import com.mycompany.sistemadegestaoeagendamentodesalas.controller.HorarioContro
 import com.mycompany.sistemadegestaoeagendamentodesalas.controller.InscricaoController;
 import com.mycompany.sistemadegestaoeagendamentodesalas.controller.ReservaController;
 import com.mycompany.sistemadegestaoeagendamentodesalas.model.Curso;
-import com.mycompany.sistemadegestaoeagendamentodesalas.model.DiaSemana;
 import com.mycompany.sistemadegestaoeagendamentodesalas.model.Disciplina;
 import com.mycompany.sistemadegestaoeagendamentodesalas.model.Estudante;
 import com.mycompany.sistemadegestaoeagendamentodesalas.model.Horario;
@@ -18,7 +17,6 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.GridLayout;
-import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -39,6 +37,7 @@ import javax.swing.table.DefaultTableModel;
 
 public class EstudanteUI extends PerfilDashboardUI {
 	private static final String TODOS_CURSOS = "Todas as disciplinas permitidas";
+	private static final String TODOS_ANOS = "Todos os anos";
 	private static final int LIMITE_INSCRICOES = 7;
 
 	private final EstudanteController estudanteController = new EstudanteController();
@@ -78,53 +77,20 @@ public class EstudanteUI extends PerfilDashboardUI {
 				inscricoes.add(itemReal(inscricao.getDisciplina()));
 			}
 		}
+		inscricoes.sort(Comparator.comparingInt((DisciplinaItem item) -> item.ano)
+				.thenComparing(item -> item.nome, String.CASE_INSENSITIVE_ORDER));
 	}
 
 	/** Monta a grelha semanal com horarios e salas do curso do estudante. */
 	private void adicionarHorarios() {
 		String curso = estudante.getCursoNome();
 		List<Horario> horarios = horarioController.listarPorCurso(estudante.getCurso());
-		DefaultTableModel model = modeloTabela(new String[]{
-				"Horario", "SEGUNDA", "TERCA", "QUARTA", "QUINTA", "SEXTA", "SABADO"});
-		List<Horario> linhas = new ArrayList<>();
-		for (Horario horario : horarios) {
-			boolean jaExiste = false;
-			for (Horario linha : linhas) {
-				if (linha.getHoraInicio().equals(horario.getHoraInicio())
-						&& linha.getHoraFim().equals(horario.getHoraFim())) {
-					jaExiste = true;
-					break;
-				}
-			}
-			if (!jaExiste) linhas.add(horario);
-		}
-		linhas.sort(Comparator.comparing(Horario::getHoraInicio));
-		for (Horario linha : linhas) {
-			model.addRow(new Object[]{linha.getHoraInicio() + " - " + linha.getHoraFim(),
-					"", "", "", "", "", ""});
-		}
-		for (Horario horario : horarios) {
-			int linha = -1;
-			String faixa = horario.getHoraInicio() + " - " + horario.getHoraFim();
-			for (int i = 0; i < model.getRowCount(); i++) {
-				if (faixa.equals(model.getValueAt(i, 0))) {
-					linha = i;
-					break;
-				}
-			}
-			int coluna = horario.getDiaSemana().ordinal() + 1;
-			String disciplina = horario.getDisciplina() == null
-					? "Sem disciplina" : horario.getDisciplina().getNome();
-			String sala = horario.getSala() == null ? "Sala por definir" : horario.getSala().getNome();
-			String conteudo = disciplina + "\n" + horario.getHoraInicio() + " - "
-					+ horario.getHoraFim() + "  |  " + sala;
-			String existente = (String) model.getValueAt(linha, coluna);
-			model.setValueAt(existente.isEmpty() ? conteudo : existente + "\n\n" + conteudo, linha, coluna);
-		}
-		JTable table = new JTable(model);
-		table.setRowHeight(62);
-		table.getColumnModel().getColumn(0).setPreferredWidth(105);
-		adicionarPainel("Horarios", criarPainelTabela("Horario de " + curso, table));
+		JPanel painel = new JPanel(new BorderLayout(0, 14));
+		painel.setBackground(PaletaCores.FUNDO);
+		painel.setBorder(BorderFactory.createEmptyBorder(22, 24, 24, 24));
+		painel.add(criarTitulo("Horarios de " + curso + " por ano"), BorderLayout.NORTH);
+		painel.add(new JScrollPane(HorariosPorAnoUI.criar(horarios, false)), BorderLayout.CENTER);
+		adicionarPainel("Horarios", painel);
 	}
 
 	/** Apresenta cartoes apenas das disciplinas em que o estudante esta inscrito. */
@@ -147,7 +113,7 @@ public class EstudanteUI extends PerfilDashboardUI {
 		}
 		cartoesDisciplinas.removeAll();
 		for (DisciplinaItem disciplina : inscricoes) {
-			cartoesDisciplinas.add(criarCartao(disciplina.nome,
+			cartoesDisciplinas.add(criarCartao(rotuloAno(disciplina.ano) + " | " + disciplina.nome,
 					"Docente: " + disciplina.docente + "  |  Curso: " + disciplina.curso));
 		}
 		if (cartoesDisciplinas.getComponentCount() == 0) {
@@ -183,7 +149,7 @@ public class EstudanteUI extends PerfilDashboardUI {
 			listaInscricoes.add(vazio);
 		}
 		for (DisciplinaItem disciplina : inscricoes) {
-			listaInscricoes.add(criarCartao(disciplina.nome,
+			listaInscricoes.add(criarCartao(rotuloAno(disciplina.ano) + " | " + disciplina.nome,
 					"Docente: " + disciplina.docente + "  |  Curso: " + disciplina.curso));
 		}
 		listaInscricoes.revalidate();
@@ -201,20 +167,31 @@ public class EstudanteUI extends PerfilDashboardUI {
 			return;
 		}
 
-		JComboBox<String> filtro = new JComboBox<>(cursosDisponiveis(disponiveis));
+		JComboBox<String> filtroAno = new JComboBox<>(anosDisponiveis(disponiveis));
+		JComboBox<String> filtroCurso = new JComboBox<>(cursosDisponiveis(disponiveis));
 		JPanel listaCaixas = new JPanel(new GridLayout(0, 1, 0, 8));
 		Set<Integer> selecionadas = new HashSet<>();
-		atualizarCaixasDisciplinas(listaCaixas, disponiveis, filtro, selecionadas);
-		filtro.addActionListener(event ->
-				atualizarCaixasDisciplinas(listaCaixas, disponiveis, filtro, selecionadas));
+		atualizarCaixasDisciplinas(listaCaixas, disponiveis, filtroAno, filtroCurso, selecionadas);
+		filtroAno.addActionListener(event ->
+				atualizarCaixasDisciplinas(listaCaixas, disponiveis, filtroAno, filtroCurso, selecionadas));
+		filtroCurso.addActionListener(event ->
+				atualizarCaixasDisciplinas(listaCaixas, disponiveis, filtroAno, filtroCurso, selecionadas));
 
+		JPanel seletores = new JPanel(new GridLayout(0, 1, 0, 8));
+		seletores.setOpaque(false);
+		JPanel seletorAno = new JPanel(new BorderLayout(8, 0));
+		seletorAno.setOpaque(false);
+		seletorAno.add(new JLabel("Ano:"), BorderLayout.WEST);
+		seletorAno.add(filtroAno, BorderLayout.CENTER);
 		JPanel seletorCurso = new JPanel(new BorderLayout(8, 0));
 		seletorCurso.setOpaque(false);
-		seletorCurso.add(new JLabel("Filtrar:"), BorderLayout.WEST);
-		seletorCurso.add(filtro, BorderLayout.CENTER);
+		seletorCurso.add(new JLabel("Curso:"), BorderLayout.WEST);
+		seletorCurso.add(filtroCurso, BorderLayout.CENTER);
+		seletores.add(seletorAno);
+		seletores.add(seletorCurso);
 		JPanel conteudo = new JPanel(new BorderLayout(0, 12));
 		conteudo.setPreferredSize(new Dimension(460, 300));
-		conteudo.add(seletorCurso, BorderLayout.NORTH);
+		conteudo.add(seletores, BorderLayout.NORTH);
 		conteudo.add(new JScrollPane(listaCaixas), BorderLayout.CENTER);
 		mostrarFormulario("Nova inscricao", conteudo, () -> {
 			if (selecionadas.isEmpty()) {
@@ -240,7 +217,7 @@ public class EstudanteUI extends PerfilDashboardUI {
 				for (DisciplinaItem disciplina : disciplinasSelecionadas) {
 					try {
 						if (!inscricaoController.salvar(new Inscricao(0, estudante,
-								new Disciplina(disciplina.id, disciplina.nome, null)))) {
+								new Disciplina(disciplina.id, disciplina.nome, null, null, disciplina.ano)))) {
 							break;
 						}
 					} catch (RuntimeException exception) {
@@ -260,7 +237,8 @@ public class EstudanteUI extends PerfilDashboardUI {
 				if (resultado.adicionadas > 0) {
 					selecionadas.removeAll(resultado.idsAdicionados);
 					disponiveis.removeIf(disciplina -> resultado.idsAdicionados.contains(disciplina.id));
-					atualizarCaixasDisciplinas(listaCaixas, disponiveis, filtro, selecionadas);
+					atualizarCaixasDisciplinas(
+							listaCaixas, disponiveis, filtroAno, filtroCurso, selecionadas);
 				}
 				if (resultado.falha != null || resultado.adicionadas != resultado.totalSelecionadas) {
 					restaurarFormularioAtual();
@@ -286,12 +264,18 @@ public class EstudanteUI extends PerfilDashboardUI {
 
 	/** Atualiza as caixas de selecao conforme o filtro escolhido. */
 	private void atualizarCaixasDisciplinas(JPanel painel, List<DisciplinaItem> disciplinas,
-			JComboBox<String> filtro, Set<Integer> selecionadas) {
+			JComboBox<String> filtroAno, JComboBox<String> filtroCurso, Set<Integer> selecionadas) {
 		painel.removeAll();
-		String selecionado = (String) filtro.getSelectedItem();
+		String anoSelecionado = (String) filtroAno.getSelectedItem();
+		Integer ano = obterAnoSelecionado(anoSelecionado);
+		String cursoSelecionado = (String) filtroCurso.getSelectedItem();
 		for (DisciplinaItem disciplina : disciplinas) {
-			if (TODOS_CURSOS.equals(selecionado) || disciplina.curso.equals(selecionado)) {
-				JCheckBox caixa = new JCheckBox(disciplina.nome + "  |  " + disciplina.docente);
+			boolean coincideAno = ano == null || disciplina.ano == ano;
+			boolean coincideCurso = TODOS_CURSOS.equals(cursoSelecionado)
+					|| disciplina.curso.equals(cursoSelecionado);
+			if (coincideAno && coincideCurso) {
+				JCheckBox caixa = new JCheckBox(rotuloAno(disciplina.ano) + "  |  "
+						+ disciplina.nome + "  |  " + disciplina.docente);
 				caixa.setOpaque(true);
 				caixa.setBackground(Color.WHITE);
 				caixa.setBorder(BorderFactory.createCompoundBorder(
@@ -320,6 +304,27 @@ public class EstudanteUI extends PerfilDashboardUI {
 			cursos.add(disciplina.curso);
 		}
 		return cursos.toArray(new String[0]);
+	}
+
+	/** Cria opcoes de ano ordenadas para filtrar disciplinas. */
+	private String[] anosDisponiveis(List<DisciplinaItem> disciplinas) {
+		Set<Integer> anos = new java.util.TreeSet<>();
+		for (DisciplinaItem disciplina : disciplinas) anos.add(disciplina.ano);
+		List<String> opcoes = new ArrayList<>();
+		opcoes.add(TODOS_ANOS);
+		for (Integer ano : anos) opcoes.add(rotuloAno(ano));
+		return opcoes.toArray(new String[0]);
+	}
+
+	private String rotuloAno(int ano) {
+		return ano + "º ano";
+	}
+
+	private Integer obterAnoSelecionado(String opcao) {
+		if (opcao == null || TODOS_ANOS.equals(opcao)) return null;
+		int separador = opcao.indexOf('º');
+		if (separador <= 0) throw new IllegalArgumentException("O ano selecionado e invalido.");
+		return Integer.valueOf(opcao.substring(0, separador));
 	}
 
 	/** Retorna disciplinas do curso do estudante e disciplinas gerais. */
@@ -352,7 +357,8 @@ public class EstudanteUI extends PerfilDashboardUI {
 				? "Geral" : disciplina.getCurso().getNome();
 		String docente = disciplina.getDocente() == null
 				? "Sem docente" : disciplina.getDocente().getNomeCompleto();
-		return new DisciplinaItem(disciplina.getId(), disciplina.getNome(), docente, curso);
+		return new DisciplinaItem(disciplina.getId(), disciplina.getNome(), docente, curso,
+				disciplina.getAno());
 	}
 
 	/** Apresenta os eventos e as reservas associados ao curso do estudante. */
@@ -424,13 +430,15 @@ public class EstudanteUI extends PerfilDashboardUI {
 		private final String nome;
 		private final String docente;
 		private final String curso;
+		private final int ano;
 
 		/** Armazena os dados de disciplina usados nos cartoes e selecoes. */
-		private DisciplinaItem(int id, String nome, String docente, String curso) {
+		private DisciplinaItem(int id, String nome, String docente, String curso, int ano) {
 			this.id = id;
 			this.nome = nome;
 			this.docente = docente;
 			this.curso = curso;
+			this.ano = ano;
 		}
 	}
 

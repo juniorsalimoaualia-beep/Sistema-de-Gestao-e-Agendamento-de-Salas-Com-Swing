@@ -23,6 +23,14 @@ public class SalaController implements Controller<Sala> {
         return dao.buscarPorId(id);
     }
 
+    public boolean alterarDepartamento(int salaId, int departamentoId) {
+        return dao.alterarDepartamento(salaId, departamentoId);
+    }
+
+    public boolean remover(int salaId) {
+        return dao.removerPorId(salaId);
+    }
+
     public int gerarProximoId() {
         return dao.gerarProximoId();
     }

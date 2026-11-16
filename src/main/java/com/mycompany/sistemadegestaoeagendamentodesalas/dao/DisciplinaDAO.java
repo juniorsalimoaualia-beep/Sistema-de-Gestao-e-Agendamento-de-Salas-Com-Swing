@@ -16,9 +16,7 @@ public class DisciplinaDAO {
     private CursoDAO cursoDAO = new CursoDAO();
 
     public void salvar(Disciplina ds){
-        String sql = "INSERT INTO disciplinas(id, nome, docente_id, curso_id) VALUES(?, ?, ?, ?) "
-                + "ON DUPLICATE KEY UPDATE nome = VALUES(nome), docente_id = VALUES(docente_id), "
-                + "curso_id = VALUES(curso_id)";
+        String sql = "INSERT INTO disciplinas(id, nome, docente_id, curso_id, ano) VALUES(?, ?, ?, ?, ?)";
         try (Connection connection = ConexaoSql.conectar();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setInt(1, ds.getId());
@@ -27,6 +25,7 @@ public class DisciplinaDAO {
             else statement.setInt(3, ds.getDocente().getId());
             if (ds.getCurso() == null || ds.getCurso().getId() == 0) statement.setNull(4, java.sql.Types.INTEGER);
             else statement.setInt(4, ds.getCurso().getId());
+            statement.setInt(5, ds.getAno());
             statement.executeUpdate();
         } catch (SQLException e) {
             throw new IllegalStateException("Erro ao salvar disciplina.", e);
@@ -88,7 +87,7 @@ public class DisciplinaDAO {
 
     public List<Disciplina> listaDisciplina(){
         List<Disciplina> lista= new ArrayList<>();
-        String sql = "SELECT id, nome, docente_id, curso_id FROM disciplinas ORDER BY id";
+        String sql = "SELECT id, nome, docente_id, curso_id, ano FROM disciplinas ORDER BY ano, nome, id";
         try (Connection connection = ConexaoSql.conectar();
              PreparedStatement statement = connection.prepareStatement(sql);
              ResultSet result = statement.executeQuery()) {
@@ -103,7 +102,7 @@ public class DisciplinaDAO {
         Docente docente = docenteDAO.buscarPorDocente(result.getInt("docente_id"));
         Curso curso = cursoDAO.buscarCursoPorId(result.getInt("curso_id"));
         return new Disciplina(result.getInt("id"), result.getString("nome"), docente,
-                curso == null ? new Curso(0, "") : curso);
+                curso == null ? new Curso(0, "") : curso, result.getInt("ano"));
     }
 
     public List<Disciplina> listarPorDocente(Docente docente) {
@@ -117,7 +116,8 @@ public class DisciplinaDAO {
 
     private List<Disciplina> listarComFiltro(String coluna, int valor) {
         List<Disciplina> lista = new ArrayList<>();
-        String sql = "SELECT id, nome, docente_id, curso_id FROM disciplinas WHERE " + coluna + " = ? ORDER BY id";
+        String sql = "SELECT id, nome, docente_id, curso_id, ano FROM disciplinas WHERE "
+                + coluna + " = ? ORDER BY ano, nome, id";
         try (Connection connection = ConexaoSql.conectar();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setInt(1, valor);
@@ -131,7 +131,7 @@ public class DisciplinaDAO {
     }
 
     public Disciplina buscarPorId(int id){
-        String sql = "SELECT id, nome, docente_id, curso_id FROM disciplinas WHERE id = ?";
+        String sql = "SELECT id, nome, docente_id, curso_id, ano FROM disciplinas WHERE id = ?";
         try (Connection connection = ConexaoSql.conectar();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setInt(1, id);
@@ -156,7 +156,7 @@ public class DisciplinaDAO {
 
     public Disciplina buscarPorNome(String nome) {
         if (nome == null) return null;
-        String sql = "SELECT id, nome, docente_id, curso_id FROM disciplinas WHERE lower(nome) = lower(?) LIMIT 1";
+        String sql = "SELECT id, nome, docente_id, curso_id, ano FROM disciplinas WHERE lower(nome) = lower(?) LIMIT 1";
         try (Connection connection = ConexaoSql.conectar();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setString(1, nome.trim());
@@ -170,23 +170,22 @@ public class DisciplinaDAO {
     }
 
     public void atualizarTodos(List<Disciplina> lista) {
-        String sql = "INSERT INTO disciplinas(id, nome, docente_id, curso_id) VALUES(?, ?, ?, ?) "
-                + "ON DUPLICATE KEY UPDATE nome = VALUES(nome), docente_id = VALUES(docente_id), "
-                + "curso_id = VALUES(curso_id)";
+        String sql = "UPDATE disciplinas SET nome = ?, docente_id = ?, curso_id = ?, ano = ? WHERE id = ?";
         try (Connection connection = ConexaoSql.conectar();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             connection.setAutoCommit(false);
             try {
                 for (Disciplina disciplina : lista) {
-                    statement.setInt(1, disciplina.getId());
-                    statement.setString(2, disciplina.getNome());
-                    if (disciplina.getDocente() == null) statement.setNull(3, java.sql.Types.INTEGER);
-                    else statement.setInt(3, disciplina.getDocente().getId());
+                    statement.setString(1, disciplina.getNome());
+                    if (disciplina.getDocente() == null) statement.setNull(2, java.sql.Types.INTEGER);
+                    else statement.setInt(2, disciplina.getDocente().getId());
                     if (disciplina.getCurso() == null || disciplina.getCurso().getId() == 0) {
-                        statement.setNull(4, java.sql.Types.INTEGER);
+                        statement.setNull(3, java.sql.Types.INTEGER);
                     } else {
-                        statement.setInt(4, disciplina.getCurso().getId());
+                        statement.setInt(3, disciplina.getCurso().getId());
                     }
+                    statement.setInt(4, disciplina.getAno());
+                    statement.setInt(5, disciplina.getId());
                     statement.addBatch();
                 }
                 statement.executeBatch();

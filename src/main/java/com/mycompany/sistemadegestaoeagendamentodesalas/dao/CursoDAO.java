@@ -18,8 +18,7 @@ public class CursoDAO {
     }
 
     public void salvar(Curso cr){
-        String sql = "INSERT INTO cursos(id, nome, departamento_id) VALUES(?, ?, ?) "
-                + "ON DUPLICATE KEY UPDATE nome = VALUES(nome), departamento_id = VALUES(departamento_id)";
+        String sql = "INSERT INTO cursos(id, nome, departamento_id) VALUES(?, ?, ?)";
         try (Connection connection = ConexaoSql.conectar();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setInt(1, cr.getId());
@@ -104,17 +103,16 @@ public class CursoDAO {
     }
 
     public void atualizarTodos(List<Curso> lista) {
-        String sql = "INSERT INTO cursos(id, nome, departamento_id) VALUES(?, ?, ?) "
-                + "ON DUPLICATE KEY UPDATE nome = VALUES(nome), departamento_id = VALUES(departamento_id)";
+        String sql = "UPDATE cursos SET nome = ?, departamento_id = ? WHERE id = ?";
         try (Connection connection = ConexaoSql.conectar();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             connection.setAutoCommit(false);
             try {
                 for (Curso curso : lista) {
-                    statement.setInt(1, curso.getId());
-                    statement.setString(2, curso.getNome());
-                    if (curso.getDepartamento() == null) statement.setNull(3, java.sql.Types.INTEGER);
-                    else statement.setInt(3, curso.getDepartamento().getId());
+                    statement.setString(1, curso.getNome());
+                    if (curso.getDepartamento() == null) statement.setNull(2, java.sql.Types.INTEGER);
+                    else statement.setInt(2, curso.getDepartamento().getId());
+                    statement.setInt(3, curso.getId());
                     statement.addBatch();
                 }
                 statement.executeBatch();

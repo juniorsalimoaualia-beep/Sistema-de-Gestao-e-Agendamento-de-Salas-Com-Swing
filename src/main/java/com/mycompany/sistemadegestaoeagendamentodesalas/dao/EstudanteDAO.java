@@ -111,21 +111,11 @@ public class EstudanteDAO {
         if (novo == null) {
             return false;
         }
-        String sql = "SELECT 1 FROM usuarios WHERE perfil = 'ESTUDANTE' AND "
-                + "(LOWER(email) = LOWER(?) OR (LOWER(CONCAT(nome, ' ', apelido)) = LOWER(?) "
-                + "AND ((curso_id IS NULL AND ? IS NULL) OR curso_id = ?) AND ano = ?)) LIMIT 1";
+        String sql = "SELECT 1 FROM usuarios WHERE perfil = 'ESTUDANTE' "
+                + "AND LOWER(email) = LOWER(?) LIMIT 1";
         try (Connection connection = ConexaoSql.conectar();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setString(1, novo.getEmail());
-            statement.setString(2, novo.getNomeCompleto());
-            if (novo.getCurso() == null) {
-                statement.setNull(3, java.sql.Types.INTEGER);
-                statement.setNull(4, java.sql.Types.INTEGER);
-            } else {
-                statement.setInt(3, novo.getCurso().getId());
-                statement.setInt(4, novo.getCurso().getId());
-            }
-            statement.setInt(5, novo.getAno());
             try (ResultSet result = statement.executeQuery()) { return result.next(); }
         } catch (SQLException e) {
             throw new IllegalStateException("Erro ao verificar se o estudante ja existe.", e);

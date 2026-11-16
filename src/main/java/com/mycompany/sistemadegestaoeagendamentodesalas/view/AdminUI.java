@@ -30,12 +30,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 import javax.swing.DefaultListModel;
+import javax.swing.ButtonGroup;
 import javax.swing.JComboBox;
 import javax.swing.JButton;
 import javax.swing.JList;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
@@ -91,7 +93,10 @@ public class AdminUI extends PerfilDashboardUI {
 		JPanel panel = painelComFiltro("Salas", "Departamento:", filtro, table);
 		JButton atualizar = new JButton("Atualizar");
 		JButton adicionar = new JButton("Adicionar");
-		panel.add(criarAcoes(atualizar, adicionar), BorderLayout.SOUTH);
+		JButton alterarDepartamento = new JButton("Alterar departamento");
+		JButton eliminar = new JButton("Eliminar sala");
+		panel.add(criarAcoes(atualizar, adicionar, alterarDepartamento, eliminar), BorderLayout.SOUTH);
+		mostrarAcoesAoSelecionar(table, alterarDepartamento, eliminar);
 		Runnable reload = () -> {
 			executarAtualizacao(atualizar,
 					() -> new java.util.AbstractMap.SimpleEntry<>(
@@ -112,6 +117,8 @@ public class AdminUI extends PerfilDashboardUI {
 		};
 		atualizar.addActionListener(event -> reload.run());
 		adicionar.addActionListener(event -> criarSala());
+		alterarDepartamento.addActionListener(event -> alterarDepartamentoSala(table));
+		eliminar.addActionListener(event -> eliminarSala(table));
 		filtro.addActionListener(event -> {
 			if (!atualizandoFiltro[0]) reload.run();
 		});
@@ -166,7 +173,8 @@ public class AdminUI extends PerfilDashboardUI {
 
 	/** Monta filtros para consultar disciplinas por docente e disciplina. */
 	private void adicionarDisciplinas() {
-		DefaultTableModel model = modeloTabela(new String[]{"ID", "Disciplina", "Docente", "Tipo / Curso"});
+		DefaultTableModel model = modeloTabela(
+				new String[]{"ID", "Disciplina", "Docente", "Tipo / Curso", "Ano"});
 		JTable table = new JTable(model);
 		JComboBox<String> filtroDocente = new JComboBox<>();
 		filtroDocente.addItem("Todos os docentes");
@@ -225,7 +233,7 @@ public class AdminUI extends PerfilDashboardUI {
 									|| disciplinaSelecionada.equals(disciplina.getNome());
 							if (coincideDocente && coincideDisciplina) {
 								model.addRow(new Object[]{disciplina.getId(), disciplina.getNome(),
-										docente, nomeCurso});
+										docente, nomeCurso, disciplina.getAno() + "º ano"});
 							}
 						}
 					});
@@ -298,16 +306,46 @@ public class AdminUI extends PerfilDashboardUI {
 
 	/** Monta a tabela de horarios com filtro por curso. */
 	private void adicionarHorarios() {
-		DefaultTableModel model = modeloTabela(
-				new String[]{"ID", "Dia", "Inicio", "Fim", "Curso", "Disciplina", "Sala"});
-		JTable table = new JTable(model);
 		JComboBox<Opcao<Curso>> filtroCurso = opcoes(cursoController.listar(),
 				Curso::getNome, "Todos os cursos");
 		boolean[] atualizandoFiltro = {false};
-		JPanel panel = painelComFiltro("Horarios", "Curso:", filtroCurso, table);
+		JPanel filtros = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
+		filtros.setOpaque(false);
+		filtros.add(new JLabel("Curso:"));
+		filtros.add(filtroCurso);
+		JPanel panel = new JPanel(new BorderLayout(0, 14));
+		panel.setBackground(PaletaCores.FUNDO);
+		panel.setBorder(javax.swing.BorderFactory.createEmptyBorder(22, 24, 24, 24));
+		JLabel titulo = new JLabel("Horarios por curso e ano");
+		titulo.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 20));
+		titulo.setForeground(PaletaCores.TEXTO);
+		JPanel cabecalho = new JPanel(new BorderLayout(0, 10));
+		cabecalho.setOpaque(false);
+		cabecalho.add(titulo, BorderLayout.NORTH);
+		cabecalho.add(filtros, BorderLayout.CENTER);
+		panel.add(cabecalho, BorderLayout.NORTH);
+		JPanel grupos = new JPanel(new BorderLayout());
+		grupos.setOpaque(false);
+		panel.add(new JScrollPane(grupos), BorderLayout.CENTER);
 		JButton atualizar = new JButton("Atualizar");
 		JButton adicionar = new JButton("Adicionar");
-		panel.add(criarAcoes(atualizar, adicionar), BorderLayout.SOUTH);
+		JButton[] acoesHorario = HorarioGestaoUI.criarBotoes(
+				this, horarioController, () -> {
+					Curso cursoSelecionado = valorSelecionado(filtroCurso);
+					List<Horario> horarios = horarioController.listar();
+					if (cursoSelecionado == null) return horarios;
+					List<Horario> filtrados = new ArrayList<>();
+					for (Horario horario : horarios) {
+						if (horario.getCurso() != null
+								&& horario.getCurso().getId() == cursoSelecionado.getId()) {
+							filtrados.add(horario);
+						}
+					}
+					return filtrados;
+				}, salaController::listar);
+		JPanel acoes = criarAcoes(atualizar, adicionar, acoesHorario[0], acoesHorario[1]);
+		HorarioGestaoUI.ajustarLarguras(acoesHorario);
+		panel.add(acoes, BorderLayout.SOUTH);
 		Runnable reload = () -> {
 			executarAtualizacao(atualizar,
 					() -> new java.util.AbstractMap.SimpleEntry<>(
@@ -316,16 +354,18 @@ public class AdminUI extends PerfilDashboardUI {
 						atualizarOpcoes(filtroCurso, dados.getKey(), Curso::getNome,
 								"Todos os cursos", atualizandoFiltro);
 						Curso cursoSelecionado = valorSelecionado(filtroCurso);
-						model.setRowCount(0);
+						List<Horario> filtrados = new ArrayList<>();
 						for (Horario horario : dados.getValue()) {
 							if (cursoSelecionado == null || horario.getCurso() != null
 									&& horario.getCurso().getId() == cursoSelecionado.getId()) {
-								model.addRow(new Object[]{horario.getId(), horario.getDiaSemana(),
-										horario.getHoraInicio(), horario.getHoraFim(), horario.getNomeCurso(),
-										horario.getDisciplina() == null ? "-" : horario.getDisciplina().getNome(),
-										horario.getSala() == null ? "Por definir" : horario.getSala().getNome()});
+								filtrados.add(horario);
 							}
 						}
+						grupos.removeAll();
+						grupos.add(HorariosPorAnoUI.criar(filtrados, cursoSelecionado == null),
+								BorderLayout.NORTH);
+						grupos.revalidate();
+						grupos.repaint();
 					});
 		};
 		atualizar.addActionListener(event -> reload.run());
@@ -339,10 +379,11 @@ public class AdminUI extends PerfilDashboardUI {
 
 	/** Apresenta as inscricoes registadas no sistema. */
 	private void adicionarInscricoes() {
-		adicionarTabela("Inscricoes", new String[]{"ID", "Estudante", "Disciplina"}, inscricaoController,
+		adicionarTabela("Inscricoes", new String[]{"ID", "Estudante", "Disciplina", "Ano"}, inscricaoController,
 				inscricao -> new Object[]{inscricao.getId(),
 						inscricao.getEstudante() == null ? "-" : inscricao.getEstudante().getNomeCompleto(),
-						inscricao.getDisciplina() == null ? "-" : inscricao.getDisciplina().getNome()}, null);
+						inscricao.getDisciplina() == null ? "-" : inscricao.getDisciplina().getNome(),
+						inscricao.getDisciplina() == null ? "-" : inscricao.getDisciplina().getAno() + "º ano"}, null);
 	}
 
 	/** Recolhe os dados e regista uma sala num departamento. */
@@ -373,6 +414,56 @@ public class AdminUI extends PerfilDashboardUI {
 					new Sala(salaController.gerarProximoId(), nomeSala, departamentoSelecionado)),
 					"Sala registada.");
 		});
+	}
+
+	/** Move a sala selecionada para outro departamento. */
+	private void alterarDepartamentoSala(JTable tabela) {
+		int linha = tabela.getSelectedRow();
+		if (linha < 0) {
+			mostrarErro("Selecione uma sala primeiro.");
+			return;
+		}
+		int linhaModelo = tabela.convertRowIndexToModel(linha);
+		int salaId = Integer.parseInt(tabela.getModel().getValueAt(linhaModelo, 0).toString());
+		JComboBox<Opcao<Departamento>> departamento = opcoes(departamentoController.listar(),
+				Departamento::getNome, null);
+		if (departamento.getItemCount() == 0) {
+			mostrarErro("Registe um departamento antes de alterar a sala.");
+			return;
+		}
+		mostrarFormulario("Alterar departamento da sala",
+				formulario("Novo departamento", departamento), () -> {
+			Departamento selecionado = valorSelecionado(departamento);
+			if (selecionado == null) {
+				throw new IllegalArgumentException("Selecione o novo departamento da sala.");
+			}
+			return executarOperacao("A alterar departamento da sala...", () -> {
+				if (!salaController.alterarDepartamento(salaId, selecionado.getId())) {
+					throw new IllegalStateException("A sala selecionada ja nao existe.");
+				}
+			}, "Departamento da sala alterado.");
+		});
+	}
+
+	/** Remove a sala selecionada quando nao existem horarios ou reservas associados. */
+	private void eliminarSala(JTable tabela) {
+		int linha = tabela.getSelectedRow();
+		if (linha < 0) {
+			mostrarErro("Selecione uma sala primeiro.");
+			return;
+		}
+		int linhaModelo = tabela.convertRowIndexToModel(linha);
+		int salaId = Integer.parseInt(tabela.getModel().getValueAt(linhaModelo, 0).toString());
+		String nomeSala = tabela.getModel().getValueAt(linhaModelo, 1).toString();
+		int confirmacao = JOptionPane.showConfirmDialog(this,
+				"Tem a certeza de que deseja eliminar a sala \"" + nomeSala + "\"?",
+				"Confirmar eliminacao", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+		if (confirmacao != JOptionPane.YES_OPTION) return;
+		executarOperacao("A eliminar sala...", () -> {
+			if (!salaController.remover(salaId)) {
+				throw new IllegalStateException("A sala selecionada ja nao existe.");
+			}
+		}, "Sala eliminada.");
 	}
 
 	/** Recolhe os dados e regista um curso num departamento. */
@@ -465,19 +556,22 @@ public class AdminUI extends PerfilDashboardUI {
 	private void criarDisciplina() {
 		JTextField nome = new JTextField(20);
 		Validacao.filtrarTexto(nome, 150);
+		ButtonGroup ano = new ButtonGroup();
+		JPanel opcoesAno = criarOpcoesAno(ano);
 		JComboBox<Opcao<Docente>> docente = opcoes(docenteController.listar(),
 				Docente::getNomeCompleto, "Sem docente");
 		JComboBox<Opcao<Curso>> curso = opcoes(cursoController.listar(), Curso::getNome,
 				"Disciplina geral (cadeira comum)");
-		mostrarFormulario("Nova disciplina", formulario("Nome", nome, "Docente", docente,
-				"Tipo / Curso", curso), () -> {
+		mostrarFormulario("Nova disciplina", formulario("Nome", nome, "Ano", opcoesAno,
+				"Docente", docente, "Tipo / Curso", curso), () -> {
 			if (!validarTextoObrigatorio(nome, "Informe o nome da disciplina.", 150)) return false;
 			String nomeDisciplina = nome.getText().trim();
+			int anoDisciplina = anoSelecionado(ano);
 			Docente docenteSelecionado = valorSelecionado(docente);
 			Curso cursoSelecionado = valorSelecionado(curso);
 			return executarOperacao("A guardar disciplina...", () -> disciplinaController.salvar(
 					new Disciplina(disciplinaController.gerarProximoId(), nomeDisciplina,
-							docenteSelecionado, cursoSelecionado)), "Disciplina registada.");
+							docenteSelecionado, cursoSelecionado, anoDisciplina)), "Disciplina registada.");
 		});
 	}
 
@@ -527,22 +621,22 @@ public class AdminUI extends PerfilDashboardUI {
 	private void criarDocente() {
 		JTextField nome = new JTextField(20);
 		JTextField apelido = new JTextField(20);
-		JTextField nivel = new JTextField(20);
+		ButtonGroup nivel = new ButtonGroup();
+		JPanel opcoesNivel = criarOpcoesRadio(nivel,
+				"Licenciatura", "Mestrado", "Doutorado", "Phd");
 		JTextField celular = new JTextField(20);
 		JPasswordField senha = new JPasswordField(20);
 		Validacao.filtrarNomePessoa(nome);
 		Validacao.filtrarNomePessoa(apelido);
-		Validacao.filtrarTexto(nivel, 100);
 		Validacao.filtrarDigitos(celular, 9);
 		mostrarFormulario("Novo docente", formulario(
-				"Nome", nome, "Apelido", apelido, "Nivel academico", nivel,
+				"Nome", nome, "Apelido", apelido, "Nivel academico", opcoesNivel,
 				"Celular", celular, "Senha", campoSenha(senha)), () -> {
 			String email = emGen.gerarEmail(nome, apelido);
 			validarDadosUsuario(nome, apelido, celular, email, senha);
-			Validacao.validarTextoObrigatorio(nivel.getText(), "nivel academico", 100);
 			String nomeDocente = nome.getText().trim();
 			String apelidoDocente = apelido.getText().trim();
-			String nivelDocente = nivel.getText().trim();
+			String nivelDocente = radioSelecionado(nivel);
 			int celularDocente = Validacao.validarCelular(celular.getText());
 			String emailDocente = Validacao.validarEnderecoEmail(email);
 			String senhaDocente = new String(senha.getPassword());
@@ -558,15 +652,15 @@ public class AdminUI extends PerfilDashboardUI {
 		JTextField nome = new JTextField(20);
 		JTextField apelido = new JTextField(20);
 		JComboBox<Opcao<Curso>> curso = opcoes(cursoController.listar(), Curso::getNome, null);
-		JTextField ano = new JTextField(20);
+		ButtonGroup ano = new ButtonGroup();
+		JPanel opcoesAno = criarOpcoesAno(ano);
 		JTextField celular = new JTextField(20);
 		JPasswordField senha = new JPasswordField(20);
 		Validacao.filtrarNomePessoa(nome);
 		Validacao.filtrarNomePessoa(apelido);
-		Validacao.filtrarDigitos(ano, 4);
 		Validacao.filtrarDigitos(celular, 9);
 		mostrarFormulario("Novo estudante", formulario(
-				"Nome", nome, "Apelido", apelido, "Curso", curso, "Ano", ano,
+				"Nome", nome, "Apelido", apelido, "Curso", curso, "Ano", opcoesAno,
 				"Celular", celular, "Senha", campoSenha(senha)), () -> {
 			String email = emGen.gerarEmail(nome, apelido);
 			validarDadosUsuario(nome, apelido, celular, email, senha);
@@ -574,7 +668,7 @@ public class AdminUI extends PerfilDashboardUI {
 			if (cursoSelecionado == null) {
 				throw new IllegalArgumentException("Selecione um curso para o estudante.");
 			}
-			int anoEstudo = Validacao.validarInteiro(ano.getText(), "ano", 1, 9999);
+			int anoEstudo = anoSelecionado(ano);
 			String nomeEstudante = nome.getText().trim();
 			String apelidoEstudante = apelido.getText().trim();
 			int celularEstudante = Validacao.validarCelular(celular.getText());
@@ -596,7 +690,7 @@ public class AdminUI extends PerfilDashboardUI {
 	private void criarSecretario() {
 		JTextField nome = new JTextField(20);
 		JTextField apelido = new JTextField(20);
-		JTextField cargo = new JTextField(20);
+		JTextField cargo = new JTextField("Secretário", 20);
 		JTextField celular = new JTextField(20);
 		JPasswordField senha = new JPasswordField(20);
 		Validacao.filtrarNomePessoa(nome);
@@ -670,13 +764,13 @@ public class AdminUI extends PerfilDashboardUI {
 					"Sem salas", JOptionPane.INFORMATION_MESSAGE);
 			return;
 		}
-		JComboBox<DiaSemana> dia = new JComboBox<>(DiaSemana.values());
+		HorarioGestaoUI.SeletorDia dia = HorarioGestaoUI.criarSeletorDia(DiaSemana.SEGUNDA);
 		JTextField inicio = new JTextField("08:00", 20);
 		JTextField fim = new JTextField("09:00", 20);
 		Validacao.filtrarDataHora(inicio, false);
 		Validacao.filtrarDataHora(fim, false);
 		mostrarFormulario("Novo horario", formulario(
-				"Curso", curso, "Disciplina", disciplina, "Sala", sala, "Dia", dia,
+				"Curso", curso, "Disciplina", disciplina, "Sala", sala, "Dia", dia.componente(),
 				"Hora de inicio (HH:MM)", inicio, "Hora de fim (HH:MM)", fim), () -> {
 			Curso cursoSelecionado = valorSelecionado(curso);
 			if (cursoSelecionado == null) {
@@ -689,7 +783,7 @@ public class AdminUI extends PerfilDashboardUI {
 			}
 			Disciplina disciplinaSelecionada = valorSelecionado(disciplina);
 			Sala salaSelecionada = valorSelecionado(sala);
-			DiaSemana diaSelecionado = (DiaSemana) dia.getSelectedItem();
+			DiaSemana diaSelecionado = dia.diaSelecionado();
 			return executarOperacao("A guardar horario...", () -> horarioController.salvar(new Horario(
 					horarioController.gerarProximoId(), cursoSelecionado, disciplinaSelecionada,
 					salaSelecionada, diaSelecionado, horaInicio, horaFim)), "Horario registado.");
@@ -705,6 +799,47 @@ public class AdminUI extends PerfilDashboardUI {
 			form.add((Component) campos[i + 1]);
 		}
 		return form;
+	}
+
+	/** Cria opcoes de ano letivo de 1 a 5 para os formularios de registo. */
+	private JPanel criarOpcoesAno(ButtonGroup grupo) {
+		JPanel painel = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
+		painel.setOpaque(false);
+		for (int ano = 1; ano <= 5; ano++) {
+			JRadioButton opcao = new JRadioButton(ano + "º ano");
+			opcao.setActionCommand(Integer.toString(ano));
+			opcao.setOpaque(false);
+			grupo.add(opcao);
+			painel.add(opcao);
+			if (ano == 1) opcao.setSelected(true);
+		}
+		return painel;
+	}
+
+	/** Cria um grupo de radio buttons e seleciona a primeira opcao por padrao. */
+	private JPanel criarOpcoesRadio(ButtonGroup grupo, String... opcoes) {
+		JPanel painel = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
+		painel.setOpaque(false);
+		for (int indice = 0; indice < opcoes.length; indice++) {
+			JRadioButton opcao = new JRadioButton(opcoes[indice]);
+			opcao.setActionCommand(opcoes[indice]);
+			opcao.setOpaque(false);
+			grupo.add(opcao);
+			painel.add(opcao);
+			if (indice == 0) opcao.setSelected(true);
+		}
+		return painel;
+	}
+
+	private int anoSelecionado(ButtonGroup grupo) {
+		return Integer.parseInt(radioSelecionado(grupo));
+	}
+
+	private String radioSelecionado(ButtonGroup grupo) {
+		if (grupo.getSelection() == null) {
+			throw new IllegalArgumentException("Selecione uma opcao.");
+		}
+		return grupo.getSelection().getActionCommand();
 	}
 
 	/** Atualiza a lista de disciplinas conforme o curso selecionado. */

@@ -265,6 +265,11 @@ abstract class PerfilDashboardUI extends JPanel {
 
 	protected final boolean mostrarFormulario(String titulo, Component formulario,
 			BooleanSupplier confirmar) {
+		return mostrarFormulario(titulo, formulario, confirmar, 0);
+	}
+
+	protected final boolean mostrarFormulario(String titulo, Component formulario,
+			BooleanSupplier confirmar, int larguraMaxima) {
 		Window proprietaria = SwingUtilities.getWindowAncestor(this);
 		JDialog dialogo = new JDialog(proprietaria, titulo, Dialog.ModalityType.APPLICATION_MODAL);
 		dialogo.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
@@ -312,6 +317,9 @@ abstract class PerfilDashboardUI extends JPanel {
 		dialogo.setContentPane(conteudo);
 		dialogo.getRootPane().setDefaultButton(guardar);
 		dialogo.pack();
+		if (larguraMaxima > 0 && dialogo.getWidth() > larguraMaxima) {
+			dialogo.setSize(larguraMaxima, dialogo.getHeight());
+		}
 		dialogo.setLocationRelativeTo(this);
 		dialogo.setVisible(true);
 		boolean submetido = formularioSubmetido;

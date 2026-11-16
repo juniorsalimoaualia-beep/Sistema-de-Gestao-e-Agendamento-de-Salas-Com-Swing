@@ -1,6 +1,5 @@
 package com.mycompany.sistemadegestaoeagendamentodesalas.dao;
 import com.mycompany.sistemadegestaoeagendamentodesalas.model.Departamento;
-import com.mycompany.sistemadegestaoeagendamentodesalas.model.Curso;
 import com.mycompany.sistemadegestaoeagendamentodesalas.model.Secretario;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -18,8 +17,7 @@ public class DepartamentoDAO {
             throw new IllegalArgumentException("Departamento invalido.");
         }
         String sql = "INSERT INTO departamentos(id, nome, curso_id, secretario_id) "
-                + "VALUES(?, ?, ?, ?) ON DUPLICATE KEY UPDATE nome = VALUES(nome), "
-                + "curso_id = VALUES(curso_id), secretario_id = VALUES(secretario_id)";
+                + "VALUES(?, ?, ?, ?)";
         try (Connection connection = ConexaoSql.conectar();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setInt(1, dp.getId());

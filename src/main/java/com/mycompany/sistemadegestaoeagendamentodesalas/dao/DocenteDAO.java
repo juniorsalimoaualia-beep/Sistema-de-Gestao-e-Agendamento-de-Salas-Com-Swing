@@ -22,10 +22,7 @@ public class DocenteDAO {
 
     public void salvar(Docente dc){
         String sql = "INSERT INTO usuarios(id, perfil, nome, apelido, nivel_academico, celular, email, senha_hash) "
-                + "VALUES(?, 'DOCENTE', ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE "
-                + "perfil = VALUES(perfil), nome = VALUES(nome), apelido = VALUES(apelido), "
-                + "nivel_academico = VALUES(nivel_academico), celular = VALUES(celular), "
-                + "email = VALUES(email), senha_hash = VALUES(senha_hash)";
+                + "VALUES(?, 'DOCENTE', ?, ?, ?, ?, ?, ?)";
         try (Connection connection = ConexaoSql.conectar();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setInt(1, dc.getId());
@@ -143,10 +140,7 @@ public class DocenteDAO {
 
     public void atualizarTodos(List<Docente> lista) {
         String sql = "INSERT INTO usuarios(id, perfil, nome, apelido, nivel_academico, celular, email, senha_hash) "
-                + "VALUES(?, 'DOCENTE', ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE "
-                + "perfil = VALUES(perfil), nome = VALUES(nome), apelido = VALUES(apelido), "
-                + "nivel_academico = VALUES(nivel_academico), celular = VALUES(celular), "
-                + "email = VALUES(email), senha_hash = VALUES(senha_hash)";
+                + "VALUES(?, 'DOCENTE', ?, ?, ?, ?, ?, ?)";
         try (Connection connection = ConexaoSql.conectar();
              PreparedStatement delete = connection.prepareStatement("DELETE FROM usuarios WHERE perfil = 'DOCENTE'");
              PreparedStatement insert = connection.prepareStatement(sql)) {
