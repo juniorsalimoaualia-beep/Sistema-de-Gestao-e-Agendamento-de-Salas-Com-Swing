@@ -1,0 +1,21 @@
+Administrador:
+email: admin@admin.com
+senha: admin123
+
+Docentes:
+
+email: rubenmanhica735@uem.com
+senha: 12345678
+
+email: acaciozimbico135@uem.com
+senha: 12345678
+
+Estudante:
+
+email: salimoaualia917@uem.com
+senha 12345678
+
+Secretario:
+
+email: ayrtonsenna608@uem.com
+senha: 12345678
