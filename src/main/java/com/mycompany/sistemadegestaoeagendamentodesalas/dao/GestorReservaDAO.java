@@ -83,6 +83,10 @@ public class GestorReservaDAO {
         return rsDAO.cancelarReserva(idReserva);
     }
 
+    public boolean cancelarReservaDoDocente(int idReserva) {
+        return rsDAO.cancelarReservaDoDocente(idReserva);
+    }
+
     public boolean recusarReserva(int idReserva) {
         return rsDAO.recusarReserva(idReserva);
     }

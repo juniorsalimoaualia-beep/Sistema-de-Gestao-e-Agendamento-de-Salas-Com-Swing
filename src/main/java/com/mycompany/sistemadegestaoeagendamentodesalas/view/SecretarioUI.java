@@ -85,6 +85,12 @@ public class SecretarioUI extends PerfilDashboardUI {
 		JButton cancelar = new JButton("Cancelar");
 		panel.add(criarAcoes(atualizar, confirmar, recusar, cancelar), java.awt.BorderLayout.SOUTH);
 		mostrarAcoesAoSelecionar(table, confirmar, recusar, cancelar);
+		table.getSelectionModel().addListSelectionListener(event -> {
+			if (!event.getValueIsAdjusting()) {
+				int row = table.getSelectedRow();
+				cancelar.setEnabled(row >= 0 && !"EXPIRADA".equals(table.getValueAt(row, 8)));
+			}
+		});
 		Runnable reload = () -> executarAtualizacao(atualizar, reservaController::listar, reservas -> {
 			model.setRowCount(0);
 			if (departamento == null) return;
@@ -97,7 +103,7 @@ public class SecretarioUI extends PerfilDashboardUI {
 						reserva.getDocenteId() == null ? "-" : reserva.getDocenteId().getNomeCompleto(),
 						reserva.getDisciplina() == null ? "-" : reserva.getDisciplina().getNome(),
 						reserva.getData(), reserva.getHoraInicio(), reserva.getHoraFim(),
-						reserva.getTipoReserva(), reserva.getEstadoReserva()});
+						reserva.getTipoReserva(), reserva.getEstadoExibicao()});
 			}
 		});
 		atualizar.addActionListener(event -> reload.run());
@@ -105,6 +111,7 @@ public class SecretarioUI extends PerfilDashboardUI {
 		recusar.addActionListener(event -> atualizarEstadoReserva(table, "recusar"));
 		cancelar.addActionListener(event -> atualizarEstadoReserva(table, "cancelar"));
 		panel.putClientProperty("reload", reload);
+		atualizarPeriodicamenteQuandoVisivel(panel, reload, 60_000);
 		adicionarPainel("Reservas", panel);
 	}
 
@@ -279,6 +286,11 @@ public class SecretarioUI extends PerfilDashboardUI {
 		if (row < 0) {
 			JOptionPane.showMessageDialog(this, "Selecione uma reserva primeiro.",
 					"Reserva nao selecionada", JOptionPane.WARNING_MESSAGE);
+			return;
+		}
+		if ("cancelar".equals(operacao) && "EXPIRADA".equals(table.getValueAt(row, 8))) {
+			JOptionPane.showMessageDialog(this, "Uma reserva expirada nao pode ser cancelada.",
+					"Reserva expirada", JOptionPane.WARNING_MESSAGE);
 			return;
 		}
 		int id = Integer.parseInt(table.getValueAt(row, 0).toString());

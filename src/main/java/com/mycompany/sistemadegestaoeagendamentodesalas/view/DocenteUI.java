@@ -105,6 +105,7 @@ public class DocenteUI extends PerfilDashboardUI {
 		cancelar.addActionListener(event -> cancelarReservaSelecionada(tabela, cancelar));
 		carregarReservas(atualizar);
 		panel.putClientProperty("reload", (Runnable) () -> carregarReservas(atualizar));
+		atualizarPeriodicamenteQuandoVisivel(panel, () -> carregarReservas(atualizar), 60_000);
 		adicionarPainel("Reservas", panel);
 	}
 
@@ -119,7 +120,7 @@ public class DocenteUI extends PerfilDashboardUI {
 						reserva.getDocenteId().getNomeCompleto(),
 						reserva.getDisciplina() == null ? "-" : reserva.getDisciplina().getNome(),
 						reserva.getData(), reserva.getHoraInicio(), reserva.getHoraFim(),
-						reserva.getTipoReserva(), reserva.getEstadoReserva()});
+						reserva.getTipoReserva(), reserva.getEstadoExibicao()});
 			}
 		});
 	}
@@ -127,18 +128,22 @@ public class DocenteUI extends PerfilDashboardUI {
 	/** Indica se a reserva selecionada pode ser cancelada. */
 	private boolean reservaPodeSerCancelada(JTable tabela) {
 		int linha = tabela.getSelectedRow();
-		if (linha < 0) return false;
-		Object estado = tabela.getValueAt(linha, 8);
-		return "PENDENTE".equals(estado) || "CONFIRMADA".equals(estado);
+		return linha >= 0 && !"EXPIRADA".equals(tabela.getValueAt(linha, 8));
 	}
 
 	/** Confirma e executa o cancelamento da reserva selecionada. */
 	private void cancelarReservaSelecionada(JTable tabela, JButton cancelar) {
 		int linha = tabela.getSelectedRow();
-		if (linha < 0 || !reservaPodeSerCancelada(tabela)) {
+		if (linha < 0) {
 			cancelar.setEnabled(false);
-			JOptionPane.showMessageDialog(this, "Selecione uma reserva pendente ou confirmada.",
+			JOptionPane.showMessageDialog(this, "Selecione uma reserva.",
 					"Reserva indisponivel", JOptionPane.WARNING_MESSAGE);
+			return;
+		}
+		if (!reservaPodeSerCancelada(tabela)) {
+			cancelar.setEnabled(false);
+			JOptionPane.showMessageDialog(this, "Uma reserva expirada nao pode ser cancelada.",
+					"Reserva expirada", JOptionPane.WARNING_MESSAGE);
 			return;
 		}
 		int resposta = JOptionPane.showConfirmDialog(this,

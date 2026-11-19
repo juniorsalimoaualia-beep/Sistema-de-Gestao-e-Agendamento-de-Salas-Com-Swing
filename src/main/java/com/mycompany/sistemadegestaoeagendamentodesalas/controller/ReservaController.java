@@ -42,12 +42,16 @@ public class ReservaController implements Controller<Reserva> {
     }
 
     public boolean cancelar(int id) {
+        Reserva reserva = buscarPorId(id);
+        if (reserva == null || reserva.isExpirada()) {
+            return false;
+        }
         return gestorDAO.cancelarReserva(id);
     }
 
     public boolean cancelarDoDocente(int reservaId, int docenteId) {
         Reserva reserva = buscarPorId(reservaId);
-        if (reserva == null) {
+        if (reserva == null || reserva.isExpirada()) {
             return false;
         }
         try {
@@ -56,7 +60,7 @@ public class ReservaController implements Controller<Reserva> {
         } catch (Exception e) {
             return false;
         }
-        return gestorDAO.cancelarReserva(reservaId);
+        return gestorDAO.cancelarReservaDoDocente(reservaId);
     }
 
     public String estadoReserva(int id) {

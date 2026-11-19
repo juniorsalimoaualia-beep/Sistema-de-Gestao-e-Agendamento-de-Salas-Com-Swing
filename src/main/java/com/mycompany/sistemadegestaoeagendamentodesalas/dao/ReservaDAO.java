@@ -267,12 +267,21 @@ public class ReservaDAO {
     }
 
     public boolean cancelarReserva(int id) {
+        return cancelarReserva(id, false);
+    }
+
+    public boolean cancelarReservaDoDocente(int id) {
+        return cancelarReserva(id, true);
+    }
+
+    private boolean cancelarReserva(int id, boolean qualquerEstado) {
+        String filtroEstado = qualquerEstado ? "" : " AND estado IN ('PENDENTE', 'CONFIRMADA')";
         String encontrarReserva = "SELECT sala_id FROM reservas WHERE id = ? "
-                + "AND estado IN ('PENDENTE', 'CONFIRMADA')";
+                + filtroEstado;
         String bloquearReserva = "SELECT sala_id FROM reservas WHERE id = ? "
-                + "AND estado IN ('PENDENTE', 'CONFIRMADA') FOR UPDATE";
+                + filtroEstado + " FOR UPDATE";
         String cancelarReserva = "UPDATE reservas SET estado = 'CANCELADA' WHERE id = ? "
-                + "AND estado IN ('PENDENTE', 'CONFIRMADA')";
+                + filtroEstado;
         try (Connection connection = ConexaoSql.conectar()) {
             connection.setAutoCommit(false);
             try {

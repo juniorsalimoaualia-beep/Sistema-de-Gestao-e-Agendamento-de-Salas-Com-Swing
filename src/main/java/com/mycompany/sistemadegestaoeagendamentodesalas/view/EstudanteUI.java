@@ -365,26 +365,35 @@ public class EstudanteUI extends PerfilDashboardUI {
 	private void adicionarEventos() {
 		JPanel cartoes = new JPanel(new GridLayout(0, 1, 0, 10));
 		cartoes.setOpaque(false);
-		for (Reserva reserva : reservaController.listar()) {
-			if (!reservaDoCurso(reserva)) continue;
-			String disciplina = reserva.getDisciplina() == null ? "Evento geral"
-					: reserva.getDisciplina().getNome();
-			String sala = reserva.getSalaId() == null ? "Sala por definir" : reserva.getSalaId().getNome();
-			String docente = reserva.getDocenteId() == null ? "Docente por definir"
-					: reserva.getDocenteId().getNomeCompleto();
-			cartoes.add(criarCartao(reserva.getTipoReserva() + " | " + disciplina,
-					reserva.getData() + "  |  " + reserva.getHoraInicio() + " - "
-							+ reserva.getHoraFim() + "  |  " + sala + "  |  " + docente
-							+ "  |  " + reserva.getEstadoReserva()));
-		}
-		if (cartoes.getComponentCount() == 0) {
-			cartoes.add(new JLabel("Nao ha eventos ou reservas para o seu curso."));
-		}
+		List<Reserva> reservas = reservaController.listar();
+		Runnable atualizar = () -> {
+			cartoes.removeAll();
+			for (Reserva reserva : reservas) {
+				if (reserva.expirou() || !reservaDoCurso(reserva)) continue;
+				String disciplina = reserva.getDisciplina() == null ? "Evento geral"
+						: reserva.getDisciplina().getNome();
+				String sala = reserva.getSalaId() == null ? "Sala por definir" : reserva.getSalaId().getNome();
+				String docente = reserva.getDocenteId() == null ? "Docente por definir"
+						: reserva.getDocenteId().getNomeCompleto();
+				cartoes.add(criarCartao(reserva.getTipoReserva() + " | " + disciplina,
+						reserva.getData() + "  |  " + reserva.getHoraInicio() + " - "
+								+ reserva.getHoraFim() + "  |  " + sala + "  |  " + docente
+								+ "  |  " + reserva.getEstadoReserva()));
+			}
+			if (cartoes.getComponentCount() == 0) {
+				cartoes.add(new JLabel("Nao ha eventos ou reservas para o seu curso."));
+			}
+			cartoes.revalidate();
+			cartoes.repaint();
+		};
+		atualizar.run();
 		JPanel painel = new JPanel(new BorderLayout(0, 14));
 		painel.setBackground(PaletaCores.FUNDO);
 		painel.setBorder(BorderFactory.createEmptyBorder(22, 24, 24, 24));
 		painel.add(criarTitulo("Eventos do curso"), BorderLayout.NORTH);
 		painel.add(new JScrollPane(cartoes), BorderLayout.CENTER);
+		painel.putClientProperty("reload", atualizar);
+		atualizarPeriodicamenteQuandoVisivel(painel, atualizar, 60_000);
 		adicionarPainel("Eventos", painel);
 	}
 

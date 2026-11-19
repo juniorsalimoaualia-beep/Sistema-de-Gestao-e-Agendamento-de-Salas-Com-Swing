@@ -1,5 +1,6 @@
 package com.mycompany.sistemadegestaoeagendamentodesalas.model;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 
 public class Reserva {
@@ -64,6 +65,20 @@ public class Reserva {
 
     public EstadoReserva getEstadoReserva(){return this.estado;}
     public void setEstadoReserva(EstadoReserva estado){this.estado=estado;}
+
+    public boolean expirou() {
+        return data != null && horaFim != null
+                && !LocalDateTime.now().isBefore(LocalDateTime.of(data, horaFim));
+    }
+
+    public boolean isExpirada() {
+        return expirou() && (estado == EstadoReserva.PENDENTE || estado == EstadoReserva.CONFIRMADA);
+    }
+
+    public String getEstadoExibicao() {
+        if (isExpirada()) return "EXPIRADA";
+        return estado == null ? "" : estado.name();
+    }
 
     public TipoReserva getTipoReserva(){return this.tipoReserva;}
     public void setTipoReserva(TipoReserva tipoReserva){this.tipoReserva=tipoReserva;}
